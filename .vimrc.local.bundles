@@ -1,0 +1,32 @@
+" quoting/parenthesizing made simple
+Plug 'tpope/vim-surround'
+
+" Python auto pep 8
+Plug 'tell-k/vim-autopep8', {'for': 'python'}
+
+" Auto sort imports
+Plug 'fisadev/vim-isort', {'for': 'python'}
+
+" Devicons
+Plug 'ryanoasis/vim-devicons'
+
+" Pytest
+Plug 'alfredodeza/pytest.vim', {'for': 'python'}
+
+"present
+Plug 'corylanou/vim-present', {'for' : 'present'}
+
+" vim-eunuch
+Plug 'tpope/vim-eunuch'
+
+" Docker
+Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
+
+" Dispatch
+Plug 'tpope/vim-dispatch'
+
+" vim-delve
+" Plug 'sebdah/vim-delve'
+
+" Hub
+Plug 'tpope/vim-rhubarb'
