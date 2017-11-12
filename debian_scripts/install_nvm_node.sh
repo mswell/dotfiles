@@ -254,6 +254,7 @@ nvm_do_install() {
   nvm_reset
 }
 
+
 #
 # Unsets the various functions defined
 # during the execution of the install script
@@ -265,9 +266,9 @@ nvm_reset() {
 }
 
 [ "_$NVM_ENV" = "_testing" ] || nvm_do_install
-
-} # this ensures the entire script is downloaded #
 sleep 2
 exec $SHELL
 nvm install 9
 nvm use 9
+
+} # this ensures the entire script is downloaded #
