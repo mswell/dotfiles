@@ -267,9 +267,4 @@ nvm_reset() {
 
 [ "_$NVM_ENV" = "_testing" ] || nvm_do_install
 
-sleep 2
-exec $SHELL
-nvm install 9
-nvm use 9
-
 } # this ensures the entire script is downloaded #
