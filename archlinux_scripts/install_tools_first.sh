@@ -1,7 +1,7 @@
 pacaur -R google-chromium
 
 echo "Install applications"
-pacaur -S chromedriver rofi google-chrome slack-desktop go git-core ctags ncurses curl spotify python-pip zsh xclip phantomjs git autojump tree docker-compose docker geckodriver tlp tlp-rdw ttf-dejavu gvim powerline-fonts ttf-ancient-fonts the_silver_searcher xfce4-clipman-plugin
+pacaur -S papirus-icon-theme-git ant-dracula-gtk-theme chromedriver rofi google-chrome slack-desktop go git-core ctags ncurses curl spotify python-pip zsh xclip phantomjs git autojump tree docker-compose docker geckodriver tlp tlp-rdw ttf-dejavu gvim powerline-fonts ttf-ancient-fonts the_silver_searcher xfce4-clipman-plugin
 
 echo "Start TLP"
 sudo tlp start
