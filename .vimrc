@@ -78,6 +78,7 @@ Plug 'honza/vim-snippets'
 "" Color
 Plug 'tomasr/molokai'
 Plug 'dracula/vim'
+Plug 'luochen1990/rainbow'
 "*****************************************************************************
 "" Custom bundles
 "*****************************************************************************
@@ -265,6 +266,9 @@ let g:airline#extensions#branch#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tagbar#enabled = 1
 let g:airline_skip_empty_sections = 1
+
+" Rainbow
+let g:rainbow_active = 1
 
 "*****************************************************************************
 "" Abbreviations
