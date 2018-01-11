@@ -7,10 +7,10 @@ if has('vim_starting')
   set nocompatible               " Be iMproved
 endif
 
-let vimplug_exists=expand('~/.vim/autoload/plug.vim')
+let vimplug_exists=expand('~/.config/nvim/autoload/plug.vim')
 
 let g:vim_bootstrap_langs = "c,go,html,javascript,python,ruby"
-let g:vim_bootstrap_editor = "vim"				" nvim or vim
+let g:vim_bootstrap_editor = "nvim"				" nvim or vim
 
 if !filereadable(vimplug_exists)
   if !executable("curl")
@@ -19,14 +19,14 @@ if !filereadable(vimplug_exists)
   endif
   echo "Installing Vim-Plug..."
   echo ""
-  silent !\curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  silent !\curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   let g:not_finish_vimplug = "yes"
 
   autocmd VimEnter * PlugInstall
 endif
 
 " Required:
-call plug#begin(expand('~/.vim/plugged'))
+call plug#begin(expand('~/.config/nvim/plugged'))
 
 "*****************************************************************************
 "" Plug install packages
@@ -43,7 +43,8 @@ Plug 'vim-scripts/CSApprox'
 Plug 'bronson/vim-trailing-whitespace'
 Plug 'Raimondi/delimitMate'
 Plug 'majutsushi/tagbar'
-Plug 'scrooloose/syntastic'
+"Plug 'scrooloose/syntastic'
+Plug 'w0rp/ale'
 Plug 'Yggdroot/indentLine'
 Plug 'wakatime/vim-wakatime'
 Plug 'avelino/vim-bootstrap-updater'
@@ -51,7 +52,7 @@ Plug 'sheerun/vim-polyglot'
 if isdirectory('/usr/local/opt/fzf')
   Plug '/usr/local/opt/fzf' | Plug 'junegunn/fzf.vim'
 else
-  Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --bin' }
+  Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
   Plug 'junegunn/fzf.vim'
 endif
 let g:make = 'gmake'
@@ -76,7 +77,7 @@ endif
 Plug 'honza/vim-snippets'
 
 "" Color
-"Plug 'tomasr/molokai'
+Plug 'tomasr/molokai'
 Plug 'dracula/vim'
 Plug 'luochen1990/rainbow'
 "*****************************************************************************
@@ -124,8 +125,8 @@ Plug 'ecomba/vim-ruby-refactoring'
 "*****************************************************************************
 
 "" Include user's extra bundle
-if filereadable(expand("~/.vimrc.local.bundles"))
-  source ~/.vimrc.local.bundles
+if filereadable(expand("~/.config/nvim/local_bundles.vim"))
+  source ~/.config/nvim/local_bundles.vim
 endif
 
 call plug#end()
@@ -143,7 +144,7 @@ set fileencoding=utf-8
 set fileencodings=utf-8
 set bomb
 set binary
-set ttyfast
+
 
 "" Fix backspace indent
 set backspace=indent,eol,start
@@ -171,6 +172,7 @@ set nobackup
 set noswapfile
 
 set fileformats=unix,dos,mac
+set showcmd
 
 if exists('$SHELL')
     set shell=$SHELL
@@ -179,7 +181,7 @@ else
 endif
 
 " session management
-let g:session_directory = "~/.vim/session"
+let g:session_directory = "~/.config/nvim/session"
 let g:session_autoload = "no"
 let g:session_autosave = "no"
 let g:session_command_aliases = 1
@@ -216,21 +218,10 @@ else
   let g:indentLine_char = '┆'
   let g:indentLine_faster = 1
 
-  
-  if $COLORTERM == 'gnome-terminal'
-    set term=gnome-256color
-  else
-    if $TERM == 'xterm'
-      set term=xterm-256color
-    endif
-  endif
-  
-endif
 
 
-if &term =~ '256color'
-  set t_ut=
 endif
+
 
 
 "" Disable the blinking cursor.
@@ -261,7 +252,7 @@ endif
 
 " vim-airline
 let g:airline_theme = 'monochrome'
-let g:airline#extensions#syntastic#enabled = 1
+"let g:airline#extensions#syntastic#enabled = 1
 let g:airline#extensions#branch#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tagbar#enabled = 1
@@ -295,7 +286,7 @@ let g:NERDTreeMapOpenInTabSilent = '<RightMouse>'
 let g:NERDTreeWinSize = 50
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc,*.db,*.sqlite
 nnoremap <silent> <F2> :NERDTreeFind<CR>
-nnoremap <silent> <F3> :NERDTreeToggle<CR>
+noremap <F3> :NERDTreeToggle<CR>
 
 " grep.vim
 nnoremap <silent> <leader>f :Rgrep<CR>
@@ -422,13 +413,13 @@ let g:UltiSnipsJumpBackwardTrigger="<c-b>"
 let g:UltiSnipsEditSplit="vertical"
 
 " syntastic
-let g:syntastic_always_populate_loc_list=1
-let g:syntastic_error_symbol='✗'
-let g:syntastic_warning_symbol='⚠'
-let g:syntastic_style_error_symbol = '✗'
-let g:syntastic_style_warning_symbol = '⚠'
-let g:syntastic_auto_loc_list=1
-let g:syntastic_aggregate_errors = 1
+" let g:syntastic_always_populate_loc_list=1
+" let g:syntastic_error_symbol='✗'
+" let g:syntastic_warning_symbol='⚠'
+" let g:syntastic_style_error_symbol = '✗'
+" let g:syntastic_style_warning_symbol = '⚠'
+" let g:syntastic_auto_loc_list=1
+" let g:syntastic_aggregate_errors = 1
 
 " Tagbar
 nmap <silent> <F4> :TagbarToggle<CR>
@@ -505,11 +496,10 @@ function! s:build_go_files()
   endif
 endfunction
 
-let g:go_list_type = "quickfix"
 let g:go_fmt_command = "goimports"
 let g:go_fmt_fail_silently = 1
-let g:syntastic_go_checkers = ['golint', 'govet']
-let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go'] }
+" let g:syntastic_go_checkers = ['golint', 'govet']
+" let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go'] }
 
 let g:go_highlight_types = 1
 let g:go_highlight_fields = 1
@@ -517,14 +507,13 @@ let g:go_highlight_functions = 1
 let g:go_highlight_methods = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
-let g:go_highlight_structs = 1
 let g:go_highlight_generate_tags = 1
 let g:go_highlight_space_tab_error = 0
 let g:go_highlight_array_whitespace_error = 0
 let g:go_highlight_trailing_whitespace_error = 0
-let g:go_highlight_extra_types = 1
+let g:go_highlight_extra_types = 0
 
-autocmd BufNewFile,BufRead *.go setlocal noexpandtab tabstop=4 shiftwidth=4 softtabstop=4
+autocmd BufNewFile,BufRead *.go setlocal noexpandtab tabstop=4 shiftwidth=4
 
 augroup completion_preview_close
   autocmd!
@@ -551,9 +540,7 @@ augroup go
   au FileType go nmap <Leader>i <Plug>(go-info)
   au FileType go nmap <silent> <Leader>l <Plug>(go-metalinter)
   au FileType go nmap <C-g> :GoDecls<cr>
-  au FileType go nmap <leader>dr :GoDeclsDir<cr>
   au FileType go imap <C-g> <esc>:<C-u>GoDecls<cr>
-  au FileType go imap <leader>dr <esc>:<C-u>GoDeclsDir<cr>
   au FileType go nmap <leader>rb :<C-u>call <SID>build_go_files()<CR>
 
 augroup END
@@ -595,7 +582,7 @@ let g:jedi#completions_command = "<C-Space>"
 let g:jedi#smart_auto_mappings = 0
 
 " syntastic
-let g:syntastic_python_checkers=['python', 'flake8']
+" let g:syntastic_python_checkers=['python', 'flake8']
 
 " vim-airline
 let g:airline#extensions#virtualenv#enabled = 1
@@ -657,8 +644,8 @@ vnoremap <leader>rem  :RExtractMethod<cr>
 "*****************************************************************************
 
 "" Include user's local vim config
-if filereadable(expand("~/.vimrc.local"))
-  source ~/.vimrc.local
+if filereadable(expand("~/.config/nvim/local_init.vim"))
+  source ~/.config/nvim/local_init.vim
 endif
 
 "*****************************************************************************

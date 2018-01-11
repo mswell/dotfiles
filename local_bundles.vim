@@ -19,15 +19,22 @@ Plug 'corylanou/vim-present', {'for' : 'present'}
 " vim-eunuch
 Plug 'tpope/vim-eunuch'
 
+" tmux
+Plug 'tmux-plugins/vim-tmux', {'for': 'tmux'}
+
+"auto set paste mode
+Plug 'ConradIrwin/vim-bracketed-paste'
+
 " Docker
 Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 
 " Dispatch
 Plug 'tpope/vim-dispatch'
 
-" vim-delve
-Plug 'sebdah/vim-delve'
+" go-debug
+Plug 'sebdah/vim-delve', {'for': 'go'}
 
-" Hub
-Plug 'tpope/vim-rhubarb'
-Plug 'tell-k/vim-quick-radon'
+" Deoplete Auto complete
+Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'zchee/deoplete-go', { 'do': 'make'}
+Plug 'zchee/deoplete-jedi'

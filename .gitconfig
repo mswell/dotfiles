@@ -1,0 +1,12 @@
+# copy to ~/
+[user]
+	name = Wellington Moraes
+	email = wellpunk@gmail.com
+[push]
+	default = simple
+[credential]
+	helper = cache --timeout=86400
+[core]
+	editor = vim
+[merge]
+	tool = vimdiff
