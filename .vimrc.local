@@ -35,7 +35,4 @@ aug QFClose
   au!
   au WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix"|q|endif
 aug END
-if has('gui_running')
-    colorscheme dracula
-endif
 set guifont=Hack\ 11
