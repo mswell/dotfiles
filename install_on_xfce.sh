@@ -1,16 +1,9 @@
 # Install apps
-pacaur -S ctags ncurses curl spotify tmux neovim python-neovim python-pip zsh xclip phantomjs git termite autojump tree oh-my-zsh-git docker-compose docker geckodriver go tlp tlp-rdw ttf-dejavu vim gvim powerline-fonts ttf-ancient-fonts the_silver_searcher xfce4-clipman-plugin tp_smapi acpi_call gimp xfce4-whiskermenu-plugin xdg-utils xf86-video-intel papirus-icon-theme-git la-capitaine-icon-theme  osx-arc-darker chromedriver google-chrome slack-desktop git-core
+pacaur -S ctags ncurses curl tmux neovim python-neovim python-pip zsh xclip phantomjs git termite autojump tree docker-compose docker geckodriver go tlp tlp-rdw ttf-dejavu gvim powerline-fonts ttf-ancient-fonts the_silver_searcher xfce4-clipman-plugin tp_smapi acpi_call gimp xfce4-whiskermenu-plugin xdg-utils xf86-video-intel
+sleep 1
+pacaur -S spotify oh-my-zsh-git  papirus-icon-theme-git la-capitaine-icon-theme  osx-arc-darker chromedriver google-chrome slack-desktop
 # Set zsh to default shell
 chsh -s $(which zsh)
-# TLP and Docker
-sudo tlp start
-systemctl enable tlp.service
-systemctl enable tlp-sleep.service
-systemctl mask systemd-rfkill.service
-systemctl start docker
-systemctl enable docker
-sudo usermod -aG docker $USER
-su - $USER
 # Copy xfce terminal config
 cp terminalrc $HOME/.config/xfce4/terminal
 # Install python apps
@@ -43,3 +36,12 @@ go get -u github.com/kardianos/govendor
 go get -u golang.org/x/tools/cmd/present
 go get -u github.com/alecthomas/gometalinter
 gometalinter -i
+# TLP and Docker
+sudo tlp start
+systemctl enable tlp.service
+systemctl enable tlp-sleep.service
+systemctl mask systemd-rfkill.service
+systemctl start docker
+systemctl enable docker
+sudo usermod -aG docker $USER
+su - $USER
