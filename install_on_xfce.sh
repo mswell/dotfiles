@@ -1,7 +1,7 @@
 # Install apps
 pacaur -S ctags ncurses curl tmux neovim python-neovim python-pip zsh xclip phantomjs git termite autojump tree docker-compose docker geckodriver go tlp tlp-rdw ttf-dejavu gvim powerline-fonts ttf-ancient-fonts the_silver_searcher xfce4-clipman-plugin tp_smapi acpi_call gimp xfce4-whiskermenu-plugin xdg-utils xf86-video-intel
 sleep 1
-pacaur -S spotify oh-my-zsh-git  papirus-icon-theme-git la-capitaine-icon-theme  osx-arc-darker chromedriver google-chrome slack-desktop
+pacaur -S spotify zeal oh-my-zsh-git  papirus-icon-theme-git la-capitaine-icon-theme  osx-arc-darker chromedriver google-chrome slack-desktop
 # Set zsh to default shell
 chsh -s $(which zsh)
 # Copy xfce terminal config

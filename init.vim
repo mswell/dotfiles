@@ -194,7 +194,7 @@ set number
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme dracula
+  colorscheme nord
 endif
 
 set mousemodel=popup
