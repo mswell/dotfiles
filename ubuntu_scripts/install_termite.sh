@@ -10,4 +10,4 @@ cp ../termite_config $HOME/.config/termite/config
 rm -rf termite
 rm -rf vte-ng
 rm termite.sh
-cp ../gitconfig ~/
+cp ../.gitconfig ~/
