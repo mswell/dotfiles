@@ -76,7 +76,7 @@ endif
 Plug 'honza/vim-snippets'
 
 "" Color
-Plug 'arcticicestudio/nord-vim'
+Plug 'dracula/vim'
 Plug 'luochen1990/rainbow'
 "*****************************************************************************
 "" Custom bundles
@@ -194,7 +194,7 @@ set number
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme nord
+  colorscheme dracula
 endif
 
 set mousemodel=popup
