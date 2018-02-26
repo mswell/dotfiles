@@ -1,6 +1,6 @@
 # Dotfiles
 
-My personal dotfiles inspired by [Cassio Botaro](https://github.com/cassiobotaro/dotfiles)
+My personal dotfiles :)
 
 <p align="center">
 	<img src="https://raw.githubusercontent.com/mswell/dotfiles/master/images/dotfile.png" alt="Aprenda Python" style="max-width:100%;">
