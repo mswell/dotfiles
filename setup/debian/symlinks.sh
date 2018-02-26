@@ -30,6 +30,6 @@ ln -s $DOTFILES/config/git/.gitconfig $HOME/.gitconfig
 ln -s $DOTFILES/termite/termite_config $HOME/.config/termite/config
 
 # neovim
-ln -s $DOTFILES/nvim/init.vim $HOME/.config/nvim/init.vim
-ln -s $DOTFILES/nvim/local_init.vim $HOME/.config/nvim/local_init.vim
-ln -s $DOTFILES/nvim/local_bundles.vim $HOME/.config/nvim/local_bundles.vim
+ln -s $DOTFILES/config/nvim/init.vim $HOME/.config/nvim/init.vim
+ln -s $DOTFILES/config/nvim/local_init.vim $HOME/.config/nvim/local_init.vim
+ln -s $DOTFILES/config/nvim/local_bundles.vim $HOME/.config/nvim/local_bundles.vim
