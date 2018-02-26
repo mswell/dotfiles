@@ -9,7 +9,7 @@ mkdir $HOME/.config/nvim
 sudo pip install neovim
 
 # install base packages
-sudo apt install -y vim-nox vim-gtk git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
+sudo apt install -y vim-nox tmux vim-gtk git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
 
 echo "Setting Rust dev environment"
 
