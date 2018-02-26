@@ -21,7 +21,7 @@ echo "Tmux is ok! "
 # vim
 ln -s $DOTFILES/config/vim/.vimrc $HOME/.vimrc
 ln -s $DOTFILES/config/vim/.vimrc.local $HOME/.vimrc.local
-ln -s $DOTFILES/config/vim/.vimrc.local.bundles $HOME/.vimrc.local.bundles
+ln -s $DOTFILES/config/vim/.vimrc.local.bundles $HOME/.vimrc.local.bundlesdebian
 
 # git
 ln -s $DOTFILES/config/git/.gitconfig $HOME/.gitconfig
