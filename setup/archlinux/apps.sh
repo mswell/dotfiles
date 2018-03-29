@@ -4,18 +4,17 @@ set -e
 echo "Installing useful Apps"
 
 # install useful desktop apps
-pacaur -S --noconfirm --noedit google-chrome dropbox slack-desktop ttf-vista-fonts wps-office inkscape gimp etcher
+pacaur -S --noconfirm --noedit google-chrome slack-desktop ttf-vista-fonts wps-office inkscape gimp etcher
 
 
 # software from 'normal' repositories
 pacaur -S --noconfirm --needed darktable dconf-editor tmux htop
 pacaur -S --noconfirm --needed evince evolution filezilla firefox
-pacaur -S --noconfirm --needed galculator geary gimp git gksu glances gnome-disk-utility
+pacaur -S --noconfirm --needed gimp git
 pacaur -S --noconfirm --needed gparted gpick grsync
 pacaur -S --noconfirm --needed inkscape
-pacaur -S --noconfirm --needed simple-scan simplescreenrecorder smplayer sysstat
 pacaur -S --noconfirm --needed transmission-cli transmission-gtk
-pacaur -S --noconfirm --needed variety vlc vnstat wget unclutter curl
+pacaur -S --noconfirm --needed vlc wget unclutter curl
 echo "Install applications"
 pacaur -S --noconfirm --needed papirus-icon-theme-git ctags ncurses python-pip zsh xclip autojump docker-compose docker tlp tlp-rdw ttf-dejavu gvim
 
