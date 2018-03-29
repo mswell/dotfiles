@@ -9,4 +9,8 @@ sudo pip install neovim
 mkdir $HOME/.config/nvim
 
 # install base packages
-pacaur -S --noconfirm --noedit ctags ncurses curl unzip neovim go docker docker-compose tmux zsh htop fzf xsel silver-searcher-git tree exa dconf ranger
+pacaur -S --noconfirm --noedit ctags ncurses emacs curl unzip neovim go docker docker-compose tmux zsh htop fzf xsel silver-searcher-git tree exa dconf ranger
+
+# install spacemacs
+
+git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
