@@ -11,13 +11,6 @@ sudo pip install neovim
 # install base packages
 sudo apt install -y vim-nox tmux vim-gtk git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
 
-echo "Setting Rust dev environment"
-
-curl https://sh.rustup.rs -sSf | sh
-source $HOME/.cargo/env
-rustup install nightly
-rustup component add rls-preview --toolchain nightly
-
 echo "Setting Go dev environment"
 
 wget https://storage.googleapis.com/golang/go1.10.linux-amd64.tar.gz
