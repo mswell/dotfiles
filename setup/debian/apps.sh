@@ -1,12 +1,5 @@
 #!/bin/sh
 
-# Install Slack
-
-sudo apt install -y libappindicator1 libindicator7
-wget https://downloads.slack-edge.com/linux_releases/slack-desktop-3.0.5-amd64.deb
-sudo dpkg -i slack-desktop-3.0.5-amd64.deb
-rm slack-desktop-3.0.5-amd64.deb
-
 # Spotify
 
 wget http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.0.0_1.0.1t-1+deb8u6_amd64.deb
