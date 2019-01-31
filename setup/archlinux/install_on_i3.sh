@@ -6,24 +6,24 @@ pacaur -S spotify zeal oh-my-zsh-git  papirus-icon-theme-git la-capitaine-icon-t
 chsh -s $(which zsh)
 # Install python apps
 sudo pip install --upgrade virtualenvwrapper flake8-bugbear jedi ipython  bandit pylint pydocstyle pipenv radon autopep8 isort
-mkdir -p ~/.config/nvim
+mkdir -p $HOME/.config/nvim
 # Copy dotfiles
-cp .zshrc ~/
-cp .gitconfig ~/
-cp .tmux.conf ~/
-cp init.vim ~/.config/nvim
-cp local_init.vim ~/.config/nvim
-cp local_bundles.vim ~/.config/nvim
-cp .vimrc ~/
-cp .vimrc.local ~/
-cp .vimrc.local.bundles ~/
+cp ../../config/zsh/.zshrc $HOME/
+cp ../../config/git/.gitconfig $HOME/
+cp ../../config/tmux/.tmux.conf $HOME/
+cp ../../config/nvim/init.vim $HOME/.config/nvim
+cp ../../config/nvim/local_init.vim $HOME/.config/nvim
+cp ../../config/nvim/local_bundles.vim $HOME/.config/nvim
+cp ../../config/vim/.vimrc $HOME/
+cp ../../config/vim/.vimrc.local $HOME/
+cp ../../config/vim/.vimrc.local.bundles $HOME/
 sleep 1
 git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
 cd ~
 tmux source $HOME/.tmux.conf
 # Install fonts
-mkdir -p ~/.local/share/fonts
-cd ~/.local/share/fonts && curl -fLo "Knack Regular Nerd Font Complete Mono.ttf" https://raw.githubusercontent.com/ryanoasis/nerd-fonts/master/patched-fonts/Hack/Regular/complete/Knack%20Regular%20Nerd%20Font%20Complete%20Mono.ttf
+mkdir -p $HOME/.local/share/fonts
+cd $HOME/.local/share/fonts && curl -fLo "Knack Regular Nerd Font Complete Mono.ttf" https://github.com/ryanoasis/nerd-fonts/blob/master/patched-fonts/Hack/Regular/complete/Hack%20Regular%20Nerd%20Font%20Complete%20Mono.ttf
 # Setup GO
 cd ~
 mkdir -p go
