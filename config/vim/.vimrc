@@ -76,6 +76,7 @@ Plug 'honza/vim-snippets'
 
 "" Color
 Plug 'arcticicestudio/nord-vim'
+" Plug 'dracula/vim'
 Plug 'luochen1990/rainbow'
 "*****************************************************************************
 "" Custom bundles
