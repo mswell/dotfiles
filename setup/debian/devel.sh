@@ -11,6 +11,9 @@ sudo pip install neovim
 # install base packages
 sudo apt install -y vim-nox tmux vim-gtk git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
 
+git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
+tmux source $HOME/.tmux.conf
+
 echo "Setting Go dev environment"
 
 wget https://storage.googleapis.com/golang/go1.10.linux-amd64.tar.gz

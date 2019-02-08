@@ -1,13 +1,4 @@
 #!/bin/sh
-echo "Install termite..."
-chmod +x termite_install.sh
-./termite_install.sh
-sleep 1
-echo "Change config to nord theme :)"
-mkdir $HOME/.config/termite
-rm -rf termite
-rm -rf vte-ng
-
 
 # zsh
 
