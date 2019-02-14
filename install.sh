@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export EDITOR='vim'
-export DOTFILES=$HOME/Workspace/github/dotfiles
+export DOTFILES=$HOME/Workspace/dotfiles
 
 clear
 
