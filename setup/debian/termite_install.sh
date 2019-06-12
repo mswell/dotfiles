@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-
+mkdir $HOME/.config/termite
 sudo apt-get install -y \
 	git \
 	g++ \
