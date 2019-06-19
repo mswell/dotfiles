@@ -2,7 +2,7 @@
 
 echo "Installing fonts"
 
-pacaur -S $(pacman -Ss ttf | grep -v ^" " | awk '{print $1}') && fc-cache --noconfirm --needed
+pacaur -S $(pacman -Ss ttf | grep -v ^" " | awk '{print $1}') --noconfirm --needed && fc-cache
 pacaur -S noto-fonts powerline-fonts ttf-ancient-fonts --noconfirm --needed
 pacaur -S ttf-droid --noconfirm --noconfirm --needed
 pacaur -S ttf-inconsolata --noconfirm --needed
