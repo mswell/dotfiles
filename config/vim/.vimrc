@@ -76,7 +76,8 @@ Plug 'honza/vim-snippets'
 
 "" Color
 " Plug 'arcticicestudio/nord-vim'
-Plug 'dracula/vim'
+" Plug 'dracula/vim'
+Plug 'morhetz/gruvbox'
 Plug 'luochen1990/rainbow'
 "*****************************************************************************
 "" Custom bundles
@@ -193,9 +194,10 @@ set number
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme dracula
+  colorscheme gruvbox
 endif
-
+let g:gruvbox_contrast_dark = "hard"
+set background=dark
 set mousemodel=popup
 set t_Co=256
 set guioptions=egmrti

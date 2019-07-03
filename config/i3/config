@@ -156,6 +156,7 @@ exec_always --no-startup-id /usr/lib/policykit-1-gnome/polkit-gnome-authenticati
 # APPS
 exec_always --no-startup-id compton
 exec_always --no-startup-id nm-applet
+exec_always --no-startup-id redshift-gtk
 exec --no-startup-id nitrogen --restore &
 for_window [class="^.*"] border pixel 0
 
