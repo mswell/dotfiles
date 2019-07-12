@@ -5,11 +5,12 @@ export ZSH=$HOME/.oh-my-zsh
 export TERM="xterm-256color"
 
 # THEME
-ZSH_THEME="dracula"
+# ZSH_THEME="dracula"
+ZSH_THEME="robbyrussell"
 
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
-plugins=(git extract tmux ruby rails virtualenvwrapper autojump  docker go sudo docker-compose zsh-syntax-highlighting)
+plugins=(git extract tmux ruby virtualenvwrapper autojump  docker go sudo docker-compose zsh-syntax-highlighting)
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 
