@@ -6,7 +6,7 @@ export TERM="xterm-256color"
 
 # THEME
 # ZSH_THEME="dracula"
-ZSH_THEME="robbyrussell"
+ZSH_THEME="spaceship"
 
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
