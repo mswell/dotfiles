@@ -77,7 +77,8 @@ Plug 'honza/vim-snippets'
 "" Color
 " Plug 'arcticicestudio/nord-vim'
 " Plug 'dracula/vim'
-Plug 'morhetz/gruvbox'
+Plug 'joshdick/onedark.vim'
+" Plug 'morhetz/gruvbox'
 Plug 'luochen1990/rainbow'
 "*****************************************************************************
 "" Custom bundles
@@ -194,14 +195,14 @@ set number
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme gruvbox
+  colorscheme onedark
 endif
-let g:gruvbox_contrast_dark = "hard"
-set background=dark
+" let g:gruvbox_contrast_dark = "hard"
+" set background=dark
 set mousemodel=popup
 set t_Co=256
 set guioptions=egmrti
-set gfn=Monospace\ 10
+set gfn=Hack\ 10
 
 if has("gui_running")
   if has("gui_mac") || has("gui_macvim")
