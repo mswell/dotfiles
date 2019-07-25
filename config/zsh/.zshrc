@@ -10,7 +10,7 @@ ZSH_THEME="spaceship"
 
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
-plugins=(git extract tmux ruby virtualenvwrapper autojump  docker go sudo docker-compose zsh-syntax-highlighting)
+plugins=(git extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker go sudo docker-compose zsh-syntax-highlighting)
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 
