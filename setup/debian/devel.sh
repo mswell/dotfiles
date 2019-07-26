@@ -6,8 +6,9 @@ echo "Installing tools for developers"
 sudo apt install -y python-dev python3-dev python3-pip python-pip
 sudo -H pip install --upgrade  virtualenvwrapper
 mkdir $HOME/.config/nvim
-sudo pip install neovim
-
+sudo add-apt-repository -y ppa:neovim-ppa/stable
+sudo apt-get update
+sudo apt install -y neovim
 # install base packages
 sudo apt install -y vim-nox tmux vim-gtk git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
 
