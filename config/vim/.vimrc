@@ -191,14 +191,15 @@ let g:session_command_aliases = 1
 syntax on
 set ruler
 set number
-
+let g:onedark_color_overrides = {
+\ "black": {"gui": "#000000", "cterm": "232", "cterm16": "0" },
+\}
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
   colorscheme onedark
 endif
-" let g:gruvbox_contrast_dark = "hard"
-" set background=dark
+
 set mousemodel=popup
 set t_Co=256
 set guioptions=egmrti

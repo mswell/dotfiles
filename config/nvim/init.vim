@@ -76,7 +76,8 @@ endif
 Plug 'honza/vim-snippets'
 
 "" Color
-Plug 'arcticicestudio/nord-vim'
+" Plug 'arcticicestudio/nord-vim'
+Plug 'joshdick/onedark.vim'
 Plug 'luochen1990/rainbow'
 "*****************************************************************************
 "" Custom bundles
@@ -190,17 +191,19 @@ let g:session_command_aliases = 1
 syntax on
 set ruler
 set number
-
+let g:onedark_color_overrides = {
+\ "black": {"gui": "#000000", "cterm": "232", "cterm16": "0" },
+\}
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme nord
+  colorscheme onedark
 endif
 
 set mousemodel=popup
 set t_Co=256
 set guioptions=egmrti
-set gfn=Monospace\ 10
+set gfn=Hack\ 10
 
 if has("gui_running")
   if has("gui_mac") || has("gui_macvim")
