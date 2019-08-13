@@ -77,8 +77,9 @@ Plug 'honza/vim-snippets'
 
 "" Color
 " Plug 'arcticicestudio/nord-vim'
-Plug 'joshdick/onedark.vim'
-Plug 'luochen1990/rainbow'
+Plug 'dracula/vim'
+" Plug 'joshdick/onedark.vim'
+" Plug 'morhetz/gruvbox'
 "*****************************************************************************
 "" Custom bundles
 "*****************************************************************************
@@ -197,7 +198,7 @@ let g:onedark_color_overrides = {
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme onedark
+  colorscheme dracula
 endif
 
 set mousemodel=popup
