@@ -9,7 +9,7 @@ yay -S --noconfirm --needed termite inkscape
 
 # software from 'normal' repositories
 yay -S --noconfirm --needed darktable dconf-editor tmux htop
-yay -S --noconfirm --needed evince evolution evolution-ews pidgin pidgin-sipe
+yay -S --noconfirm --needed evince evolution evolution-ews pidgin
 yay -S --noconfirm --needed gimp git
 yay -S --noconfirm --needed gparted
 yay -S --noconfirm --needed transmission-cli transmission-gtk
