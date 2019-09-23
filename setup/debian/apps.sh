@@ -1,9 +1,4 @@
 #!/bin/sh
-
-# Spotify
-
-sudo apt-get install spotify-client
-
 # Docker
 
 wget -qO- https://get.docker.com/ | sh

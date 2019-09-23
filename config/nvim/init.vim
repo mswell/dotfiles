@@ -77,9 +77,9 @@ Plug 'honza/vim-snippets'
 
 "" Color
 " Plug 'arcticicestudio/nord-vim'
-Plug 'dracula/vim'
+" Plug 'dracula/vim'
 " Plug 'joshdick/onedark.vim'
-" Plug 'morhetz/gruvbox'
+Plug 'morhetz/gruvbox'
 "*****************************************************************************
 "" Custom bundles
 "*****************************************************************************
@@ -198,7 +198,7 @@ let g:onedark_color_overrides = {
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme dracula
+  colorscheme gruvbox
 endif
 
 set mousemodel=popup

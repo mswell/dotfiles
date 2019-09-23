@@ -49,44 +49,42 @@ urgent_on_bell = true
 ############################################################
 
 [colors]
-# https://critical.ch/xterm/
-#dracula theme adapted by Erik Dubois
-background = rgba(40, 42, 54, 0.8)
+# hard contrast: background = #1d2021
+background = #282828
+# soft contrast: background = #32302f
+foreground = #ebdbb2
+foreground_bold = #ebdbb2
 
-# special
-foreground      = #f8f8f2
-foreground_bold = #f8f8f2
-cursor          = #f8f8f2
-#background      = #282a36
+# dark0 + gray
+color0 = #282828
+color8 = #928374
 
-# black
-color0  = #000000
-color8  = #79A9FF
+# neutral_red + bright_red
+color1 = #cc241d
+color9 = #fb4934
 
-# red
-color1  = #ff5555
-color9  = #ff6e67
+# neutral_green + bright_green
+color2 = #98971a
+color10 = #b8bb26
 
-# green
-color2  = #50fa7b
-color10 = #5af78e
+# neutral_yellow + bright_yellow
+color3 = #d79921
+color11 = #fabd2f
 
-# yellow
-color3  = #f1fa8c
-color11 = #f4f99d
+# neutral_blue + bright_blue
+color4 = #458588
+color12 = #83a598
 
-# blue
-color4  = #6790EB
-color12 = #79A9FF
+# neutral_purple + bright_purple
+color5 = #b16286
+color13 = #d3869b
 
-# magenta
-color5  = #ff79c6
-color13 = #ff92d0
+# neutral_aqua + faded_aqua
+color6 = #689d6a
+color14 = #8ec07c
 
-# cyan
-color6  = #8be9fd
-color14 = #9aedfe
+# light4 + light1
+color7 = #a89984
+color15 = #ebdbb2
 
-# white
-color7  = #bfbfbf
-color15 = #e6e6e6
+# vim: ft=dosini cms=#%s
