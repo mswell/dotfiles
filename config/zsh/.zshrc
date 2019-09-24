@@ -45,3 +45,25 @@ export GOPATH=$HOME/go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+export PATH=$PATH:$HOME/Projects/desec
+alias zshconfig='nvim $HOME/.zshrc'
+alias zshreload='source $HOME/.zshrc'
+fd(){
+    findomain -o -t $1
+}
+
+am(){
+    amass enum --passive -d $1 -json $1.json
+    jq .name $1.json | sed "s/\"//g" | httprobe  | tee -a $1-domains.txt
+}
+certspotter(){
+    curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed "s/\"//g" | sed "s/\*\.//g" | sort -u | grep $1
+}
+crtsh(){
+curl -s https://crt.sh/?q=%.$1  | sed "s/<\/\?[^>]\+>//g" | grep $1
+}
+dirsearch(){
+    cd $HOME/tools/dirsearch
+    python3 dirsearch.py -x 502,503 -u $1 -e $2 -t 200 -H 'X-FORWARDER-FOR: 127.0.0.1'
+}
