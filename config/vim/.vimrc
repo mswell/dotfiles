@@ -371,6 +371,15 @@ noremap <Leader>gb :Gblame<CR>
 noremap <Leader>gd :Gvdiff<CR>
 noremap <Leader>gr :Gremove<CR>
 
+" Base64 decode word under cursor
+nmap <Leader>b :!echo <C-R><C-W> \| base64 -d<CR>
+
+" grep recursively for word under cursor
+nmap <Leader>g :tabnew\|read !grep -Hnr '<C-R><C-W>'<CR>
+
+" sort the buffer removing duplicates
+nmap <Leader>s :%!sort -u --version-sort<CR>
+
 " session management
 nnoremap <leader>so :OpenSession<Space>
 nnoremap <leader>ss :SaveSession<Space>
