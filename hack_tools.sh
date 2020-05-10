@@ -34,3 +34,8 @@ go get -v github.com/projectdiscovery/subfinder/cmd/subfinder
 echo "Install nuclei"
 sleep 2
 GO111MODULE=on go get -u -v github.com/projectdiscovery/nuclei/cmd/nuclei
+
+echo "Install amass"
+sleep 2
+go get -v github.com/OWASP/Amass/v3/...
+
