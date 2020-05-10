@@ -49,6 +49,9 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 export PATH=$PATH:$HOME/Projects/desec
 alias zshconfig='nvim $HOME/.zshrc'
 alias zshreload='source $HOME/.zshrc'
+alias v='nvim'
+alias vim='nvim'
+unalias gf
 fd(){
     findomain -o -t $1
 }
@@ -67,3 +70,5 @@ dirsearch(){
     cd $HOME/tools/dirsearch
     python3 dirsearch.py -x 502,503 -u $1 -e $2 -t 200 -H 'X-FORWARDER-FOR: 127.0.0.1'
 }
+
+source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.zsh
