@@ -39,3 +39,6 @@ echo "Install amass"
 sleep 2
 go get -v github.com/OWASP/Amass/v3/...
 
+echo "Install gron"
+sleep 2
+go get -u github.com/tomnomnom/gron
