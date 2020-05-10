@@ -76,9 +76,9 @@ Plug 'honza/vim-snippets'
 
 "" Color
 " Plug 'arcticicestudio/nord-vim'
-Plug 'dracula/vim'
+" Plug 'dracula/vim'
 " Plug 'joshdick/onedark.vim'
-" Plug 'morhetz/gruvbox'
+Plug 'morhetz/gruvbox'
 "*****************************************************************************
 "" Custom bundles
 "*****************************************************************************
@@ -193,7 +193,7 @@ set number
 let no_buffers_menu=1
 if !exists('g:not_finish_vimplug')
   " colorscheme molokai
-  colorscheme dracula
+  colorscheme gruvbox
 endif
 
 set mousemodel=popup
@@ -609,7 +609,7 @@ let g:airline#extensions#virtualenv#enabled = 1
 
 " Syntax highlight
 " Default highlight is better than polyglot
-let g:polyglot_disabled = ['python']
+" let g:polyglot_disabled = ['python']
 let python_highlight_all = 1
 
 
