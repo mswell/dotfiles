@@ -72,3 +72,7 @@ dirsearch(){
 }
 
 source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.zsh
+
+# alias for gron
+alias norg="gron --ungron"
+alias ungron="gron --ungron"
