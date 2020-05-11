@@ -12,7 +12,7 @@ go get -u github.com/tomnomnom/meg
 
 echo "Install ffuf"
 sleep 2
-go get -u github.com/tomnomnom/meg
+go get github.com/ffuf/ffuf
 
 echo "Install html-tool"
 sleep 2
