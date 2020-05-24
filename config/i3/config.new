@@ -33,7 +33,7 @@
 
 #set Super key
 set $mod Mod4
-
+set $term --no-startup-id alacritty
 
 
 #####################################################################################################################
@@ -152,29 +152,9 @@ bindsym $mod+F12 exec --no-startup-id rofi -show run -font "Noto Sans 13"
 #################                          how to exit, logoff, suspend, ...                        #################
 #####################################################################################################################
 
-
-# exit i3 (logs you out of your X session)
-bindsym $mod+Shift+e exec --no-startup-id "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
-
-
-#Press $mod (super) and X to exit - check toolbar for next choices
-bindsym $mod+X mode "$mode_system"
-bindsym control+mod1+Delete mode "$mode_system"
-
-set $mode_system System (k) lock, (l) logout, (u) suspend, (h) hibernate, (r) reboot, (s) shutdown
-mode "$mode_system" {
-    bindsym k exec --no-startup-id ~/.config/i3/scripts/i3exit.sh lock, mode "default"
-    bindsym l exec --no-startup-id ~/.config/i3/scripts/i3exit.sh logout, mode "default"
-    bindsym u exec --no-startup-id ~/.config/i3/scripts/i3exit.sh suspend, mode "default"
-    bindsym h exec --no-startup-id ~/.config/i3/scripts/i3exit.sh hibernate, mode "default"
-    bindsym r exec --no-startup-id ~/.config/i3/scripts/i3exit.sh reboot, mode "default"
-    bindsym s exec --no-startup-id ~/.config/i3/scripts/i3exit.sh shutdown, mode "default"
-
-    # back to normal: Enter or Escape
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
-}
-
+# Future code
+bindsym $mod+Shift+e exec --no-startup-id arcolinux-logout
+bindsym $mod+X exec --no-startup-id arcolinux-logout
 
 
 #####################################################################################################################
@@ -281,7 +261,6 @@ bindsym $mod+f fullscreen toggle
 # change container layout (stacked, tabbed, toggle split)
 # qwerty/azerty issue for letter z
 bindsym $mod+s layout stacking
-bindsym $mod+z layout tabbed
 bindsym $mod+e layout toggle split
 
 
@@ -294,8 +273,8 @@ bindsym $mod+a focus parent
 # focus the child container
 #bindsym $mod+d focus child
 
-
-
+# ZSHRC
+bindsym $mod+z			            exec --no-startup-id $term -e nvim ~/.zshrc
 
 
 #####################################################################################################################
@@ -356,7 +335,7 @@ font pango:Noto Mono Regular 13
 
 # Workspace 1 browser related
 #assign [class="Firefox|Vivaldi-stable|Vivaldi-snapshot|Opera"]                      → 1
-#assign [class="Chromium|Google-chrome"]                                             → 1
+assign [class="Chromium|Google-chrome"]                                             → 1
 
 # Workspace 2 text editor related
 #assign [class="sublime-text|sublime_text|Sublime_text|subl|Subl|subl3|Subl3"]       → 2
@@ -380,15 +359,15 @@ font pango:Noto Mono Regular 13
 #assign [class="Vmplayer|VirtualBox"]						    → 7
 
 # Workspace 8 file managers
-#assign [class="Nemo|Thunar|Caja|nautilus|Nautilus"]                                 → 8
+assign [class="Nemo|Thunar|Caja|nautilus|Nautilus"]                                 → 8
 
 # Workspace 9 email clients
-#assign [class="Geary|Evolution"]                                                    → 9
+assign [class="Geary|Evolution"]                                                    → 9
 
 # Workspace 10 music related
-#assign [class="Spotify|spotify"]                                                    → 10
+assign [class="Spotify|spotify"]                                                    → 10
 #fix for spotify not moving to workspace 10
-#for_window [class="Spotify"] move to workspace 10
+for_window [class="Spotify"] move to workspace 10
 
 
 
@@ -401,6 +380,9 @@ font pango:Noto Mono Regular 13
 
 # ArcoLinux Welcome App
 exec --no-startup-id dex $HOME/.config/autostart/arcolinux-welcome-app.desktop
+
+# Autotiling
+exec_always --no-startup-id autotiling
 
 #browser
 #exec --no-startup-id vivaldi-stable
@@ -465,7 +447,7 @@ exec --no-startup-id volumeicon
 exec --no-startup-id conky -c ~/.config/i3/system-overview
 
 #feh sets wallpaper
-exec --no-startup-id feh --bg-fill /home/mswell/Pictures/wallpaper.jpg &
+exec --no-startup-id feh --bg-fill $HOME/Pictures/wallpaper.jpg &
 
 #Polybar
 exec_always --no-startup-id ~/.config/polybar/launch.sh &
@@ -509,15 +491,20 @@ bindsym F12 exec --no-startup-id xfce4-terminal --drop-down; focus
 bindsym control+Shift+Escape exec --no-startup-id xfce4-taskmanager;focus
 
 #settings
-bindsym control+mod1+m exec --no-startup-id xfce4-settings-manager
+# bindsym control+mod1+m exec --no-startup-id xfce4-settings-manager
+
+# Spotify
+bindsym $mod+m		              exec --no-startup-id spotify
+
+# Discord
+bindsym $mod+Shift+m		        exec --no-startup-id discord
 
 #catfish
 bindsym control+mod1+c exec --no-startup-id catfish;focus
 
-#slimlock
-#arcolinux conflict
-bindsym Mod1+k exec slimlock
-#use super + X to get to slimlock
+#arcolinux-logout
+bindsym control+mod1+k exec --no-startup-id arcolinux-logout
+bindsym control+mod1+l exec --no-startup-id arcolinux-logout
 
 #rofi theme selector
 bindsym control+mod1+r exec --no-startup-id rofi-theme-selector
@@ -614,7 +601,7 @@ bindsym Control+Shift+Print exec --no-startup-id gnome-screenshot -i
 #floating enabled from some programs - find with xprop
 
 for_window [class="Arcolinux-welcome-app.py"] floating enable
-for_window [class="Arcolinux-tweak-tool.py"] floating enable
+#for_window [class="Arcolinux-tweak-tool.py"] floating enable
 for_window [class="Bleachbit"] floating disable
 for_window [class="Blueberry.py"] floating enable
 for_window [class="Brasero"] floating disable
@@ -797,7 +784,7 @@ popup_during_fullscreen smart
 # want it
 
 
-for_window [class="^.*"] border pixel 1
+for_window [class="^.*"] border pixel 2
 gaps inner 5
 gaps outer 5
 #smart_gaps on
@@ -854,14 +841,13 @@ mode "$mode_gaps_outer" {
 
 
 #####################################################################################################################
-#################                          compton of i3wm                                          #################
+#################                          picom of i3wm                                          #################
 #####################################################################################################################
 
 #if you want transparency on non-focused windows, ...
 exec_always --no-startup-id picom --config ~/.config/i3/picom.conf
 
-
-
+bindsym control+mod1+o exec --no-startup-id ~/.config/i3/scripts/picom-toggle.sh
 
 #####################################################################################################################
 #####################################################################################################################
@@ -871,94 +857,22 @@ exec_always --no-startup-id picom --config ~/.config/i3/picom.conf
 #####################################################################################################################
 #####################################################################################################################
 
-# bar {
-#
-#     height 22
-#     workspace_buttons yes
-#     font pango:Noto Sans 14
-#
-#     # position top
-#     position bottom
-#
-#     #system icons
-#     #tray_output none
-#     #tray_output $firstMonitor
-#     #tray_output $secondMonitor
-#
-#
-#
-#     # OPTION 1 : i3status
-#
-#     # type status_command i3status without the config file and
-#     # you will get the standard i3status bar
-#     # Second one is the standard statusbar with my personal settings
-#
-#     #status_command i3status
-#     status_command i3status -c ~/.config/i3/i3status.conf
-#
-#
-#
-#     # OPTION 2 : i3blocks
-#
-#     # https://github.com/vivien/i3blocks
-#     # another way to provide text in the statusbar
-#     # put hastag in front if not installed
-#
-#     #status_command i3blocks
-#     #status_command i3blocks -c ~/.config/i3/i3blocks.conf
-#     #status_command i3blocks -c ~/.config/i3/i3blocks-rainbow.conf
-#     #status_command i3blocks -c ~/.config/i3/i3blocks-original.conf
-#     #status_command i3blocks -c ~/.config/i3/i3blocks-awesome.conf
-#
-#
-#     # OPTION 3 : conky
-#
-#     # You can also replace the istatus bar with a conky
-#     # start-conky-i3statusbar.sh is started and conky will follow
-#     # documentation : https://i3wm.org/docs/user-contributed/conky-i3bar.html
-#     # conky configuration is in conky-i3statusbar
-#
-#     #status_command ~/.config/i3/start-conky-i3statusbar.sh
-#
-#
-#
-#     # OPTION 4 : polybar
-#
-#     # polybar is launched elsewhere - search for the word
-#     # from the opening of the "bar {...}" till the end has to go or hashtagged out
-#     # in order for the system trayicons to show up in polybar
-#
-#
-#     ##START THEMING
-#     #Theme name : ArcoLinux Default
-#
-#     colors {
-#         background #282C34
-#         statusline #eeeeee
-#         separator  #666666
-#         #                     border  backgr. text
-#         focused_workspace     #56B6C2 #56B6C2 #282C34
-#         active_workspace      #56B6C2 #E5C07B #56B6C2
-#         inactive_workspace    #56B6C2 #222222 #56B6C2
-#         urgent_workspace      #56B6C2 #C678DD #FFFFFF
-#         }
-#
-#     }
+    ##STOP THEMING BAR
 
+    ##START THEMING WM
+    #Theme name : ArcoLinux Default
 
-        # DarkGrey background with white text - not focus grey background - black text
-        # Windows decoration colors
-        # class                 border  backgr. text    indicator
-        client.placeholder      #242424 #242424 #242424
-        client.background       #242424 #242424 #242424
-        client.focused          #56B6C2 #56B6C2 #e5e5e5 #56B6C2
-        client.unfocused        #222222 #222222 #56B6C2 #222222
-        client.focused_inactive #222222 #222222 #56B6C2 #222222
-        client.urgent           #C678DD #C678DD #f7f7f7 #C678DD
+    # Window color settings
+    # class                 border  backgr. text    indicator
+    client.focused          #6790EB #6790EB #e5e5e5 #6790EB
+    client.unfocused        #222222 #222222 #aaaaaa #222222
+    client.focused_inactive #222222 #222222 #a9a9a9 #222222
+    client.placeholder      #222222 #222222 #aaaaaa #222222
+    client.urgent           #d42121 #d42121 #f7f7f7 #d42121
 
-      ##STOP THEMING
+    client.background       #242424
 
-
+    ##STOP THEMING WM
 
 #####################################################################################################################
 #####################################################################################################################

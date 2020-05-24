@@ -1,0 +1,51 @@
+# nm-applet
+nm-applet --indicator &
+
+# Starting compositor
+picom -b
+
+# Notification center
+deadd-notification-center &
+
+# Bluetooth
+blueman-applet &
+
+# Stop screen from going blank
+xset s off
+xset -dpms
+xset s noblank
+
+# add local binaries
+export PATH=$HOME/.local/bin:/usr/local/bin:$PATH
+
+# Faster key repeat and delay
+xset r rate 210 40
+
+# Hide Cursor when typing
+xbanish &
+
+# Open flameshot on startup
+flameshot &
+
+# Wallpaper
+feh --bg-fill --randomize ~/Pics/wallpapers/* &
+
+# Save your eyes
+#redshift & 
+redshift-gtk & 
+
+export LANG=en_US.UTF-8
+export PATH=$PATH:~/.scripts
+export PATH=$PATH:~/.local/bin
+#export PATH=$HOME/.miniconda/envs/jupyter-lab/bin:$PATH
+export PATH=$PATH:$HOME/.scripts
+
+export EDITOR="nvim"
+export TERMINAL="alacritty"
+export BROWSER="google-chrome-stable"
+
+export ANDROID_HOME=$HOME/.config/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
