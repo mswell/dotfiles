@@ -22,7 +22,7 @@ getscope(){
 }
 
 rapid7search(){
-  python ~/tools/Passivehunter/passivehunter.py $1
+  python ~/tools/Passivehunter/passivehunter.py domains
   cat *.com.txt | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' >> unsorted.rapid7.subdomains
   rm -f *.txt
   cat unsorted.rapid7.subdomains | sort -u >> sorted.rapid7.subdomains
@@ -69,7 +69,7 @@ checkscope(){
 # use massdns instead
 ####################################
 resolving(){
-   shuffledns -d $1 -list sorted.all.subdomains -r ~/tools/lists/my-lists/resolvers -o resolved.subdomains 
+   shuffledns -d domains -list sorted.all.subdomains -r ~/tools/lists/my-lists/resolvers -o resolved.subdomains 
 }
 
 getalive() {
@@ -109,7 +109,7 @@ dnsrecords() {
 
 screenshot() { 
   #python3 EyeWitness.py --web -f cleaned.alive.all.subdomains --user-agent "$UA" --show-selenium --resolve -d eyewitness-report
-  cat all.alive.subdomains | ~/tools/aquatone/aquatone -chrome-path /snap/bin/chromium -out aqua_out
+  cat all.alive.subdomains | aquatone -chrome-path /usr/sbin/chromium -out aqua_out
 }
 
 scanner() {
@@ -237,22 +237,24 @@ getjspaths() {
 # arjun parameth aron photon 
 #}
 
-#fullrecon(){
+fullrecon(){
 #  getscope
-#  subdomain-enum
-#  resolve
+  rapid7search
+  subdomain-enum
+  resolving
 #  checkscope
-#  getalive
-#  screenshot
+  getalive
+  getdata
+  screenshot
 #  scanner
-#  waybackrecon
+  waybackrecon
 #  crawler
-#  getjsurls
-#  getjspaths
+  getjsurls
+  getjspaths
 #  getcms
 #  check4wafs
 #  bruteforce
-#}
+}
 
 redUrl() { 
 gau -subs $1 | grep "redirect" >> $1_redirectall.txt | gau -subs $1 | grep "redirect=" >> $1_redirectequal.txt | gau -subs $1 | grep "url" >> $1_urlall.txt | gau -subs $1 | grep "url=" >> $1_urlequal.txt | gau -subs $1 | grep "next=" >> $1_next.txt | gau -subs $1 | grep "dest=" >> $1_dest.txt | gau -subs $1 | grep "destination" >> $1_destination.txt | gau -subs $1 | grep "return" >> $1_return.txt | gau -subs $1 | grep "go=" >> $1_go.txt | gau -subs $1 | grep "redirect_uri" >> $1_redirecturi.txt | gau -subs $1 | grep "continue=" >> $1_continue.txt | gau -subs $1 | grep "return_path=" >> $1_path.txt | gau -subs $1 | grep "externalLink=" >> $1_link.txt | gau -subs $1 | grep "URL=" >> $1_URL.txt 
@@ -468,3 +470,4 @@ fullOSINT(){
 #  theharvester
 #  recon-ng-v5
 }
+
