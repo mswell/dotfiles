@@ -4,13 +4,14 @@ export ZSH=$HOME/.oh-my-zsh
 # 256-color
 export TERM="xterm-256color"
 
+[ -f $HOME/.config/zsh/functions.zsh ] && source $HOME/.config/zsh/functions.zsh
 # THEME
 # ZSH_THEME="dracula"
 ZSH_THEME="spaceship"
 
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 
-plugins=(git node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker go sudo docker-compose zsh-syntax-highlighting)
+plugins=(git node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 
@@ -52,30 +53,33 @@ alias zshreload='source $HOME/.zshrc'
 alias v='nvim'
 alias vim='nvim'
 unalias gf
-fd(){
-    findomain -o -t $1
-}
-
-am(){
-    amass enum --passive -d $1 -json $1.json
-    jq .name $1.json | sed "s/\"//g" | httprobe  | tee -a $1-domains.txt
-}
-certspotter(){
-    curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed "s/\"//g" | sed "s/\*\.//g" | sort -u | grep $1
-}
-crtsh(){
-curl -s https://crt.sh/?q=%.$1  | sed "s/<\/\?[^>]\+>//g" | grep $1
-}
-dirsearch(){
-    cd $HOME/tools/dirsearch
-    python3 dirsearch.py -x 502,503 -u $1 -e $2 -t 200 -H 'X-FORWARDER-FOR: 127.0.0.1'
-}
 
 source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.zsh
 
 # alias for gron
 alias norg="gron --ungron"
 alias ungron="gron --ungron"
+
+# alias for keyboard layout
 alias keyus='setxkbmap -layout us -variant intl'
 alias keybr='setxkbmap -layout br'
 
+# change ls for lsd
+alias ls='lsd'
+alias l='ls -l'
+alias la='ls -a'
+alias lla='ls -la'
+alias lt='ls --tree'
+
+# alias for bashtop
+alias top='bashtop'
+
+# for axiom
+export PATH="$PATH:/home/mswell/.axiom/interact"
+alias upall="yay -Syu --noconfirm"
+#get fastest mirrors in your neighborhood
+alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
+alias mirrord="sudo reflector --latest 50 --number 20 --sort delay --save /etc/pacman.d/mirrorlist"
+alias mirrors="sudo reflector --latest 50 --number 20 --sort score --save /etc/pacman.d/mirrorlist"
+alias mirrora="sudo reflector --latest 50 --number 20 --sort age --save /etc/pacman.d/mirrorlist"
+alias nmirrorlist="sudo nano /etc/pacman.d/mirrorlist"

@@ -37,8 +37,17 @@ GO111MODULE=on go get -u -v github.com/projectdiscovery/nuclei/cmd/nuclei
 
 echo "Install amass"
 sleep 2
+GO111MODULE=on
 go get -v github.com/OWASP/Amass/v3/...
 
 echo "Install gron"
 sleep 2
 go get -u github.com/tomnomnom/gron
+
+echo "Install rescope"
+sleep 2
+go get -u github.com/root4loot/rescope
+
+echo "Install shuffledns"
+sleep 2
+GO111MODULE=on go get -u -v github.com/projectdiscovery/shuffledns/cmd/shuffledns
