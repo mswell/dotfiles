@@ -51,3 +51,8 @@ go get -u github.com/root4loot/rescope
 echo "Install shuffledns"
 sleep 2
 GO111MODULE=on go get -u -v github.com/projectdiscovery/shuffledns/cmd/shuffledns
+
+echo "Install Hakcheckurl"
+sleep 2
+go get github.com/hakluke/hakcheckurl
+
