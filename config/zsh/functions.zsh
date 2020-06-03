@@ -22,7 +22,7 @@ getscope(){
 }
 
 rapid7search(){
-  python3.7 ~/tools/Passive-hunter/Passivehunter/passivehunter.py $1
+  python ~/tools/Passivehunter/passivehunter.py $1
   cat *.com.txt | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' >> unsorted.rapid7.subdomains
   rm -f *.txt
   cat unsorted.rapid7.subdomains | sort -u >> sorted.rapid7.subdomains
@@ -35,17 +35,17 @@ getfreshresolvers(){
 
 # USE WITH CAUTION
 bf-subdomains(){
-  cat hosts | while read line; do
+  cat domains | while read line; do
     shuffledns -d $line -w ~/tools/lists/commonspeak2-wordlists-master/subdomains/subdomains.txt -r ~/tools/lists/my-lists/resolvers -o shuffledns.bf.subdomains
   done
 }
 
 ## findomain
 subdomain-enum(){
-  subfinder -nW -v -o subfinder.subdomains -dL hosts
+  subfinder -nW -v -o subfinder.subdomains -dL domains
   cat subfinder.subdomains sorted.rapid7.subdomains shuffledns.bf.subdomains >> all.subdomains
   rm -f subfinder.subdomains sorted.rapid7.subdomains shuffle.bf.subdomains
-  amass enum -nf all.subdomains -v -ip -active -config ~/amass/config.ini -min-for-recursive 3 -df hosts -o amass.subdomains
+  amass enum -nf all.subdomains -v -ip -active -config ~/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))' >> ipv6.addresses
@@ -82,7 +82,13 @@ getalive() {
   done
   echo "$(cat cleaned.alive.sudomains | sort -u)" > cleaned.all.alive.subdomains
   rm all.alive.sudomains
-  mv cleaned.all.alive.subdomains all.alive.subdomais
+  mv cleaned.all.alive.subdomains all.alive.subdomains
+}
+
+getdata () {
+  # hosts is for meg
+  cp all.alive.subdomains hosts
+  meg -d 1000 -v /
 }
 
 ##########################################################
@@ -124,7 +130,7 @@ scanner() {
 }
 
 getrobots(){
-  cat hosts | while read line; do 
+  cat domains | while read line; do 
     python3 ~/tools/waybackrobots.py $line
   done
   cat *-robots.txt | cut -c -2 | sort -u >> wayback-data/robots.paths.wobs
@@ -184,13 +190,13 @@ waybackrecon() {
 
 #gocewl hakrawler
 crawler() { 
-  cat hosts | while read line; do
+  cat domains | while read line; do
     gau -subs $line | tee -a crawled.urls
   done
 }
 
 getjsurls() {  
-  cat hosts | while read line; do
+  cat domains | while read line; do
     cat all.alive.subdomains | subjs -ua "$UA" | grep $line | tee -a js.urls
   done
   cat all.alive.subdomains | getJS -complete -resolve | sort -u | tee -a js.urls
