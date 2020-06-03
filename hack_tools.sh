@@ -59,3 +59,7 @@ go get github.com/hakluke/hakcheckurl
 echo "Install subjs"
 sleep 2
 GO111MODULE=on go get -u -v github.com/lc/subjs
+
+echo "Install getJS"
+sleep 2
+go get github.com/003random/getJS
