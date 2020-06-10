@@ -67,3 +67,7 @@ go get github.com/003random/getJS
 echo "Install gau"
 sleep 2
 GO111MODULE=on go get -u -v github.com/lc/gau
+
+echo "Install CORS-scanner"
+sleep 2
+go get -u github.com/Tanmay-N/CORS-Scanner
