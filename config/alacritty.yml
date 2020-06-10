@@ -1,0 +1,88 @@
+# Colors (Flat remix)
+colors:
+  # Default colors
+  primary:
+    background: "#1F2229"
+    foreground: "#E6E6E6"
+    #
+  # Normal colors
+  normal:
+    black: "#1F2229"
+    red: "#D41919"
+    green: "#5EBDAB"
+    yellow: "#FEA44C"
+    blue: "#367BF0"
+    magenta: "#BF25ED"
+    cyan: "#49AEE6"
+    white: "#E6E6E6"
+
+  # Bright colors
+  bright:
+    black: "#8C42AB"
+    red: "#EC0101"
+    green: "#47D489"
+    yellow: "#FF8A18"
+    blue: "#277FFF"
+    magenta: "#D71655"
+    cyan: "#05A1F7"
+    white: "#FFFFFF"
+
+background_opacity: 1.0
+
+font:
+  normal:
+    family: "Hack"
+    style: Regular
+  bold:
+    family: "Hack"
+    style: Bold
+  italic:
+    family: "Hack"
+    style: Italic
+  bold_italic:
+    family: "Hack"
+    style: Bold Italic
+
+  # Point size
+  size: 12.0
+
+  offset:
+    x: 0
+    y: 0
+
+window:
+  padding:
+    x: 2
+    y: 2
+
+scrolling:
+  # Maximum number of lines in the scrollback buffer.
+  # Specifying '0' will disable scrolling.
+  history: 10000
+
+  # Number of lines the viewport will move for every line scrolled when
+  # scrollback is enabled (history > 0).
+  multiplier: 10
+
+# If `true`, bold text is drawn using the bright color variants.
+draw_bold_text_with_bright_colors: true
+
+selection:
+  semantic_escape_chars: ',│`|:"'' ()[]{}<>'
+
+  # When set to `true`, selected text will be copied to both the primary and
+  # the selection clipboard. Otherwise, it will only be copied to the selection
+  # clipboard.
+  save_to_clipboard: true
+
+# Live config reload (changes require restart)
+live_config_reload: true
+
+key_bindings:
+  - { key: V, mods: Control|Shift, action: Paste }
+  - { key: C, mods: Control|Shift, action: Copy }
+  - { key: Key0, mods: Control, action: ResetFontSize }
+  - { key: Equals, mods: Control, action: IncreaseFontSize }
+  - { key: Add, mods: Control, action: IncreaseFontSize }
+  - { key: Subtract, mods: Control, action: DecreaseFontSize }
+  - { key: Minus, mods: Control, action: DecreaseFontSize }
