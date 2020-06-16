@@ -71,3 +71,10 @@ GO111MODULE=on go get -u -v github.com/lc/gau
 echo "Install CORS-scanner"
 sleep 2
 go get -u github.com/Tanmay-N/CORS-Scanner
+
+echo "Install waybackurls"
+go get github.com/tomnomnom/waybackurl
+
+echo "Install Gospider"
+go get -u github.com/jaeles-project/gospider
+
