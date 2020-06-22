@@ -49,6 +49,7 @@ subdomain-enum(){
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))' >> ipv6.addresses
+  cat domains | assetfinder --subs-only | tee -a all.subdomains
   sort -u all.subdomains -o sorted.all.subdomains
   rm -f all.subdomains 
 }
@@ -75,14 +76,8 @@ resolving(){
 getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
-  cat resolved.subdomains | httprobe -c 10 -t 3000 | tee -a all.alive.subdomains
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | while read line; do
-    probeurl=$(cat alive.all.subdomains | sort -u | grep -m 1 $line)
-    echo "$probeurl" >> cleaned.alive.all.subdomains
-  done
-  echo "$(cat cleaned.alive.sudomains | sort -u)" > cleaned.all.alive.subdomains
-  rm all.alive.sudomains
-  mv cleaned.all.alive.subdomains all.alive.subdomains
+  cat resolved.subdomains | httprobe -c 10 -t 3000 | tee all.alive.subdomains
+  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | tee cleaned.all.alive.subdomains
 }
 
 getdata () {
@@ -109,7 +104,7 @@ dnsrecords() {
 
 screenshot() { 
   #python3 EyeWitness.py --web -f cleaned.alive.all.subdomains --user-agent "$UA" --show-selenium --resolve -d eyewitness-report
-  cat all.alive.subdomains | aquatone -chrome-path /usr/sbin/chromium -out aqua_out
+  cat cleaned.all.alive.subdomains | aquatone -chrome-path /usr/sbin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out
 }
 
 scanner() {
@@ -200,7 +195,7 @@ getjsurls() {
     cat all.alive.subdomains | subjs -ua "$UA" | grep $line | tee -a js.urls
   done
   cat all.alive.subdomains | getJS -complete -resolve | sort -u | tee -a js.urls
-  [ - f wayback-data/jsurls ] && cat wayback-data/jsurls >> js.urls && rm wayback-data/jsurls -f
+  [ -f wayback-data/jsurls ] && cat wayback-data/jsurls >> js.urls && rm wayback-data/jsurls -f
   sort -u -o sorted.js.urls js.urls
   rm js.urls -f
   cat sorted.js.urls | hakcheckurl | grep 200 | awk '{print $2}' >> alive.js.urls
@@ -208,8 +203,8 @@ getjsurls() {
 }
 
 getjspaths() {
-  cat js.urls | while read line; do 
-    ruby /home/nickqy/tools/relative-url-extractor-master/extract.rb $line | tee -a js.extracted.paths
+  cat alive.js.urls | while read line; do 
+    ruby $HOME/tools/relative-url-extractor/extract.rb $line | tee -a js.extracted.paths
     python3 ~/tools/LinkFinder/linkfinder.py -i $line -o cli | tee -a js.extracted.paths
   done
   sort -u js.extracted.paths -o sorted.js.paths
@@ -239,7 +234,7 @@ getjspaths() {
 
 fullrecon(){
 #  getscope
-  rapid7search
+  # rapid7search
   subdomain-enum
   resolving
 #  checkscope
