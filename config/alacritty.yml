@@ -1,31 +1,31 @@
-# Colors (Flat remix)
+# Colors (One Darker)
 colors:
   # Default colors
   primary:
-    background: "#1F2229"
-    foreground: "#E6E6E6"
+    background: "#282c34"
+    foreground: "#abb2bf"
     #
   # Normal colors
   normal:
-    black: "#1F2229"
-    red: "#D41919"
-    green: "#5EBDAB"
-    yellow: "#FEA44C"
-    blue: "#367BF0"
-    magenta: "#BF25ED"
-    cyan: "#49AEE6"
-    white: "#E6E6E6"
+    black: "#282c34"
+    red: "#e06c75"
+    green: "#98c379"
+    yellow: "#d19a66"
+    blue: "#61afef"
+    magenta: "#c678dd"
+    cyan: "#56b6c2"
+    white: "#abb2bf"
 
   # Bright colors
   bright:
-    black: "#8C42AB"
-    red: "#EC0101"
-    green: "#47D489"
-    yellow: "#FF8A18"
-    blue: "#277FFF"
-    magenta: "#D71655"
-    cyan: "#05A1F7"
-    white: "#FFFFFF"
+    black: "#5c6370"
+    red: "#e06c75"
+    green: "#98c379"
+    yellow: "#d19a66"
+    blue: "#61afef"
+    magenta: "#c678dd"
+    cyan: "#56b6c2"
+    white: "#ffffff"
 
 background_opacity: 1.0
 
