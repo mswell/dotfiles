@@ -45,6 +45,17 @@ subdomain-enum(){
   subfinder -nW -v -o subfinder.subdomains -dL domains
   cat subfinder.subdomains sorted.rapid7.subdomains shuffledns.bf.subdomains >> all.subdomains
   rm -f subfinder.subdomains sorted.rapid7.subdomains shuffle.bf.subdomains
+  amass enum -nf all.subdomains -v -passive -config ~/amass/config.ini -df domains -o amass.subdomains
+  awk '{print $1}' amass.subdomains >> all.subdomains
+  cat domains | assetfinder --subs-only | tee -a all.subdomains
+  sort -u all.subdomains -o sorted.all.subdomains
+  rm -f all.subdomains 
+}
+
+amass-enum-active(){
+  subfinder -nW -v -o subfinder.subdomains -dL domains
+  cat subfinder.subdomains sorted.rapid7.subdomains shuffledns.bf.subdomains >> all.subdomains
+  rm -f subfinder.subdomains sorted.rapid7.subdomains shuffle.bf.subdomains
   amass enum -nf all.subdomains -v -ip -active -config ~/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
@@ -53,7 +64,6 @@ subdomain-enum(){
   sort -u all.subdomains -o sorted.all.subdomains
   rm -f all.subdomains 
 }
-
 #############
 #Ex: of .scope file is need the formative is regular expression that will sort the file like so
 # .*\.example\.com$
