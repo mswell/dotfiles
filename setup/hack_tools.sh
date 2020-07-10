@@ -73,8 +73,13 @@ sleep 2
 go get -u github.com/Tanmay-N/CORS-Scanner
 
 echo "Install waybackurls"
-go get -u github.com/tomnomnom/waybackurl
+go get github.com/tomnomnom/waybackurl
 
 echo "Install Gospider"
 go get -u github.com/jaeles-project/gospider
 
+echo "Install Naabu"
+GO111MODULE=on go get -v github.com/projectdiscovery/naabu/cmd/naabu
+
+echo "Install httpx"
+GO111MODULE=on go get -u -v github.com/projectdiscovery/httpx/cmd/httpx
