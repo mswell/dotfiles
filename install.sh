@@ -34,4 +34,9 @@ Archlinux(){
     echo "Initializing setup :)"
     source setup/archlinux/setup.sh
 }
+
+OSX(){
+    echo "Initializing setup :)"
+    source setup/osx/setup.sh
+}
 Menu
