@@ -14,6 +14,7 @@ Menu(){
     echo
     echo "[1] - Debian like"
     echo "[2] - ArchLinux like"
+    echo "[3] - OSX"
     echo
     echo -n "Choose your distro: "
     read option

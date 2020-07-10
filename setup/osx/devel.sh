@@ -4,6 +4,8 @@ echo "Installing tools for developers"
 brew install tmux
 brew install autojump
 brew install neovim
+brew install ripgrep
+brew install ranger
 
 git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
 tmux source $HOME/.tmux.conf
