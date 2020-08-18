@@ -42,9 +42,9 @@ bf-subdomains(){
 
 ## findomain
 subdomain-enum(){
-  subfinder -nW -v -o subfinder.subdomains -dL domains
-  cat subfinder.subdomains sorted.rapid7.subdomains shuffledns.bf.subdomains >> all.subdomains
-  rm -f subfinder.subdomains sorted.rapid7.subdomains shuffle.bf.subdomains
+  subfinder -nW -v -o subfinder.subdomains -dL domains -all
+  cat subfinder.subdomains >> all.subdomains
+  rm -f subfinder.subdomains
   amass enum -nf all.subdomains -v -passive -config ~/amass/config.ini -df domains -o amass.subdomains
   awk '{print $1}' amass.subdomains >> all.subdomains
   cat domains | assetfinder --subs-only | tee -a all.subdomains
@@ -54,8 +54,8 @@ subdomain-enum(){
 
 amass-enum-active(){
   subfinder -nW -v -o subfinder.subdomains -dL domains
-  cat subfinder.subdomains sorted.rapid7.subdomains shuffledns.bf.subdomains >> all.subdomains
-  rm -f subfinder.subdomains sorted.rapid7.subdomains shuffle.bf.subdomains
+  cat subfinder.subdomains >> all.subdomains
+  rm -f subfinder.subdomains 
   amass enum -nf all.subdomains -v -ip -active -config ~/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
@@ -86,7 +86,9 @@ resolving(){
 getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
-  cat resolved.subdomains | httprobe -c 10 -t 3000 | tee all.alive.subdomains
+  # cat resolved.subdomains | httprobe -c 10 -t 3000 | tee all.alive.subdomains
+
+  cat sorted.all.subdomains | httpx -silent | tee all.alive.subdomains
   cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | tee cleaned.all.alive.subdomains
 }
 
@@ -253,7 +255,7 @@ fullrecon(){
   screenshot
 #  scanner
   waybackrecon
-#  crawler
+  crawler
   getjsurls
   getjspaths
 #  getcms
@@ -280,6 +282,9 @@ blindssrftest(){
     echo "Firing the requests - check your server for potential callbacks"
     ffuf -w $1-bssrf -u FUZZ -t 50
   fi
+}
+CORStest() {
+    python $HOME/tools/corstest.py $1
 }
 
 ## must already be login to github 

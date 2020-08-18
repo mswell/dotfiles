@@ -6,6 +6,7 @@ brew install autojump
 brew install neovim
 brew install ripgrep
 brew install ranger
+brew install jq
 
 git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
 tmux source $HOME/.tmux.conf
