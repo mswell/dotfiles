@@ -1,3 +1,8 @@
+## VARIABLES
+ResultsPath="$HOME/Recon"
+ToolsPath="$HOME/tools"
+ConfigFolder="$HOME/tools/config"
+
 certspotter(){
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1
 }
@@ -21,46 +26,27 @@ getscope(){
   rescope --zap --name inscope -u $1 -o scope/zapscope.context
 }
 
-rapid7search(){
-  python ~/tools/Passivehunter/passivehunter.py domains
-  cat *.com.txt | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' >> unsorted.rapid7.subdomains
-  rm -f *.txt
-  cat unsorted.rapid7.subdomains | sort -u >> sorted.rapid7.subdomains
-  rm -f unsorted.rapid7.subdomains
-}
-
 getfreshresolvers(){
   dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/tools/lists/my-lists/resolvers
 }
 
-# USE WITH CAUTION
-bf-subdomains(){
-  cat domains | while read line; do
-    shuffledns -d $line -w ~/tools/lists/commonspeak2-wordlists-master/subdomains/subdomains.txt -r ~/tools/lists/my-lists/resolvers -o shuffledns.bf.subdomains
-  done
-}
-
 ## findomain
 subdomain-enum(){
-  subfinder -nW -v -o subfinder.subdomains -dL domains -all
+  echo "[+] Recon subdomains..."
+  subfinder -nW -v -o subfinder.subdomains -dL domains -all -config $ConfigFolder/subfinder/config.yaml
   cat subfinder.subdomains >> all.subdomains
   rm -f subfinder.subdomains
-  amass enum -nf all.subdomains -v -passive -config ~/amass/config.ini -df domains -o amass.subdomains
-  awk '{print $1}' amass.subdomains >> all.subdomains
-  cat domains | assetfinder --subs-only | tee -a all.subdomains
-  sort -u all.subdomains -o sorted.all.subdomains
-  rm -f all.subdomains 
-}
-
-amass-enum-active(){
-  subfinder -nW -v -o subfinder.subdomains -dL domains
-  cat subfinder.subdomains >> all.subdomains
-  rm -f subfinder.subdomains 
-  amass enum -nf all.subdomains -v -ip -active -config ~/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
+  amass enum -nf all.subdomains -v -ip -active -config $ConfigFolder/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))' >> ipv6.addresses
   cat domains | assetfinder --subs-only | tee -a all.subdomains
+}
+
+subdomain-brute () {
+  Domains=$(cat domains)
+  shuffledns -d $Domains -w /home/op/recon/amass/examples/wordlists/all.txt -r $ToolsPath/lists/my-lists/resolvers | tee -a all.subdomains
+
   sort -u all.subdomains -o sorted.all.subdomains
   rm -f all.subdomains 
 }
@@ -116,7 +102,7 @@ dnsrecords() {
 
 screenshot() { 
   #python3 EyeWitness.py --web -f cleaned.alive.all.subdomains --user-agent "$UA" --show-selenium --resolve -d eyewitness-report
-  cat cleaned.all.alive.subdomains | aquatone -chrome-path /usr/sbin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out
+  cat cleaned.all.alive.subdomains | aquatone -chrome-path /usr/bin/google-chrome -scan-timeout 900 -http-timeout 6000 -out aqua_out
 }
 
 scanner() {
@@ -137,7 +123,7 @@ scanner() {
 }
 
 getrobots(){
-  cat domains | while read line; do 
+  cat hosts | while read line; do 
     python3 ~/tools/waybackrobots.py $line
   done
   cat *-robots.txt | cut -c -2 | sort -u >> wayback-data/robots.paths.wobs
@@ -197,9 +183,7 @@ waybackrecon() {
 
 #gocewl hakrawler
 crawler() { 
-  cat domains | while read line; do
-    gau -subs $line | tee -a crawled.urls
-  done
+  cat hosts | hakrawler | tee -a crawled.urls
 }
 
 getjsurls() {  
@@ -219,11 +203,73 @@ getjspaths() {
     ruby $HOME/tools/relative-url-extractor/extract.rb $line | tee -a js.extracted.paths
     python3 ~/tools/LinkFinder/linkfinder.py -i $line -o cli | tee -a js.extracted.paths
   done
+
+  cat hosts | hakrawler -linkfinder | tee -a js.extracted.paths
   sort -u js.extracted.paths -o sorted.js.paths
   rm -f js.extracted.paths
   cat sorted.js.paths | cut -c 2- | sort -u >> sorted.js.paths.wobs
 }
 
+jsep()
+{
+  mkdir scripts
+  mkdir scriptsresponse
+  mkdir endpoints
+  mkdir responsebody
+  mkdir headers
+  response()
+  {
+    echo "Gathering Response"       
+    for x in $(cat hosts)
+    do
+      NAME=$(echo $x | awk -F/ '{print $3}')
+      curl -X GET -H "X-Forwarded-For: evil.com" $x -I > "headers/$NAME" 
+      curl -s -X GET -H "X-Forwarded-For: evil.com" -L $x > "responsebody/$NAME"
+    done
+  }
+
+  jsfinder()
+  {
+    echo "Gathering JS Files"       
+    for x in $(ls "responsebody")
+    do
+      printf "\n\n${RED}$x${NC}\n\n"
+      END_POINTS=$(cat "responsebody/$x" | grep -Eoi "src=\"[^>]+></script>" | cut -d '"' -f 2)
+      for end_point in $END_POINTS
+      do
+        len=$(echo $end_point | grep "http" | wc -c)
+        mkdir "scriptsresponse/$x/" > /dev/null 2>&1
+        URL=$end_point
+        if [ $len == 0 ]
+        then
+                URL="https://$x$end_point"
+        fi
+        file=$(basename $end_point)
+        curl -X GET $URL -L > "scriptsresponse/$x/$file"
+        echo $URL >> "scripts/$x"
+      done
+    done
+  }
+
+  endpoints()
+  {
+  echo "Gathering Endpoints"
+  for domain in $(ls scriptsresponse)
+  do
+    #looping through files in each domain
+    mkdir endpoints/$domain
+    for file in $(ls scriptsresponse/$domain)
+    do
+      ruby ~/tools/relative-url-extractor/extract.rb scriptsresponse/$domain/$file >> endpoints/$domain/$file 
+    done
+  done
+  }
+  response
+  jsfinder
+  endpoints
+
+  cat endpoints/*/* | sort -u | tee -a endpoints.txt
+}
 #getcms(){
 #  cmsmap webanalyzer cmseek builtwith whatweb wappalyze
 #}
@@ -248,6 +294,7 @@ fullrecon(){
 #  getscope
   # rapid7search
   subdomain-enum
+  subdomain-brute
   resolving
 #  checkscope
   getalive
@@ -256,8 +303,10 @@ fullrecon(){
 #  scanner
   waybackrecon
   crawler
+  #smuggling
   getjsurls
   getjspaths
+  nuc
 #  getcms
 #  check4wafs
 #  bruteforce
@@ -285,6 +334,25 @@ blindssrftest(){
 }
 CORStest() {
     python $HOME/tools/corstest.py $1
+}
+
+smuggling() {
+  cat hosts | python3 $ToolsPath/smuggler/smuggler.py -x -q | tee -a smuggler_op.txt
+}
+
+nuc(){
+  mkdir nuclei_op
+  
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/cves/ -c 60 -o nuclei_op/cves.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/dns/ -c 60 -o nuclei_op/dns.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/subdomain-takeover/ -c 60 -o nuclei_op/subdomain-takeover.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/files/ -c 60 -o nuclei_op/files.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/panels/ -c 60 -o nuclei_op/panels.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/security-misconfiguration/ -c 60 -o nuclei_op/security-misconfiguration.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/technologies/ -c 60 -o nuclei_op/technologies.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/tokens/ -c 60 -o nuclei_op/tokens.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/vulnerabilities/ -c 60 -o nuclei_op/vulnerabilities.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/default-credentials/ -c 60 -o nuclei_op/default-credentials.txt
 }
 
 ## must already be login to github 
@@ -479,5 +547,44 @@ fullOSINT(){
 #  OSRF
 #  theharvester
 #  recon-ng-v5
+}
+
+# reference for scripts
+# https://github.com/venom26/recon
+# https://github.com/offhourscoding/recon
+# https://github.com/Sambal0x/Recon-tools
+# https://github.com/JoshuaMart/AutoRecon
+
+fufapi(){
+  ffuf -u $1/FUZZ -w $ToolsPath/apiwords.txt -mc 200 -t 100
+}
+
+fufdir(){
+  ffuf -u $1/FUZZ -w $DIRS_LARGE -mc 200,301,302,403 -t 170
+}
+
+fufextension(){
+  ffuf -u $1/FUZZ -mc 200,301,302,403,401 -t 150 -w $ToolsPath/ffuf_extension.txt -e .php,.asp,.aspx,.jsp,.py,.txt,.conf,.config,.bak,.backup,.swp,.old,.db,.sql,.json,.xml,.log,.zip
+}
+
+fleetScan(){
+
+  company=$(cat domains)
+  liveHosts=$company-live.txt
+
+  # Start a fleet called stock with 9 instances and expire after 2 hours
+  axiom-fleet well -i=9 -t=2
+
+
+  # Run a scan, use the stok fleet, use the ranges file we just made, and set the ports to 443, then set the output file
+  axiom-scan 'well*' --rate=10000 -p443 --banners -iL=ipv4.ipaddresses -o=masscanIC.txt
+
+  echo 'Clean file ...'
+
+  cat masscanIC.txt | awk '{print $2}' | grep -v Masscan | grep -v Ports | sort -u | tee $liveHosts
+  axiom-scan "well*" -iL=$liveHosts -p443 -sV -sC -T4 -m=nmapx -o=output
+  
+  echo 'Remove servers ...'
+  axiom-rm "well0*" -f
 }
 
