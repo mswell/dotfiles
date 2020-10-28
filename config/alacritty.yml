@@ -1,50 +1,52 @@
-# Colors (One Darker)
+# Colors (Dracula PRO)
 colors:
   # Default colors
   primary:
-    background: "#282c34"
-    foreground: "#abb2bf"
+    background: "0x22212c"
+    foreground: "0xf8f8f2"
+
+    # Bright and dim foreground colors
     #
   # Normal colors
   normal:
-    black: "#282c34"
-    red: "#e06c75"
-    green: "#98c379"
-    yellow: "#d19a66"
-    blue: "#61afef"
-    magenta: "#c678dd"
-    cyan: "#56b6c2"
-    white: "#abb2bf"
+    black: "0x22212c"
+    red: "0xff9580"
+    green: "0x8aff80"
+    yellow: "0xffff80"
+    blue: "0x9580ff"
+    magenta: "0xff80bf"
+    cyan: "0x80ffea"
+    white: "0xf8f8f2"
 
   # Bright colors
   bright:
-    black: "#5c6370"
-    red: "#e06c75"
-    green: "#98c379"
-    yellow: "#d19a66"
-    blue: "#61afef"
-    magenta: "#c678dd"
-    cyan: "#56b6c2"
-    white: "#ffffff"
+    black: "0x22212c"
+    red: "0xffaa99"
+    green: "0xa2ff99"
+    yellow: "0xffff99"
+    blue: "0xaa99ff"
+    magenta: "0xff99cc"
+    cyan: "0x99ffee"
+    white: "0xffffff"
 
 background_opacity: 1.0
 
 font:
   normal:
-    family: "Hack"
+    family: "FiraCode Nerd Font"
     style: Regular
   bold:
-    family: "Hack"
+    family: "FiraCode Nerd Font"
     style: Bold
   italic:
-    family: "Hack"
+    family: "FiraCode Nerd Font"
     style: Italic
   bold_italic:
-    family: "Hack"
+    family: "FiraCode Nerd Font"
     style: Bold Italic
 
   # Point size
-  size: 12.0
+  size: 18.0
 
   offset:
     x: 0
