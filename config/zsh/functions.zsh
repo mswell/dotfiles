@@ -33,10 +33,14 @@ getfreshresolvers(){
 ## findomain
 subdomain-enum(){
   echo "[+] Recon subdomains..."
-  subfinder -nW -v -o subfinder.subdomains -dL domains -all -config $ConfigFolder/subfinder/config.yaml
+  Domains=$(cat domains)
+  chaos -d $Domains -o chaos.subdomains
+  cat chaos.subdomains >> all.subdomains
+  subfinder -nW -cd -v -t 50 -o subfinder.subdomains -dL domains -all -config $ConfigFolder/subfinder/config.yaml
   cat subfinder.subdomains >> all.subdomains
   rm -f subfinder.subdomains
-  amass enum -nf all.subdomains -v -ip -active -config $ConfigFolder/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
+  # amass enum -nf all.subdomains -v -ip -active -config $ConfigFolder/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
+  amass enum -nf all.subdomains -v -passive -config $ConfigFolder/amass/config.ini -df domains -o amass.subdomains  
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))' >> ipv6.addresses
@@ -45,7 +49,7 @@ subdomain-enum(){
 
 subdomain-brute () {
   Domains=$(cat domains)
-  shuffledns -d $Domains -w /home/op/recon/amass/examples/wordlists/all.txt -r $ToolsPath/lists/my-lists/resolvers | tee -a all.subdomains
+  shuffledns -d $Domains -w $ToolsPath/lists/all.txt -r $ToolsPath/lists/my-lists/resolvers | tee -a all.subdomains
 
   sort -u all.subdomains -o sorted.all.subdomains
   rm -f all.subdomains 
@@ -301,7 +305,7 @@ fullrecon(){
   getdata
   screenshot
 #  scanner
-  waybackrecon
+#  waybackrecon
   crawler
   #smuggling
   getjsurls
@@ -337,22 +341,21 @@ CORStest() {
 }
 
 smuggling() {
-  cat hosts | python3 $ToolsPath/smuggler/smuggler.py -x -q | tee -a smuggler_op.txt
+  cat hosts | rush -j 3 "python3 $ToolsPath/smuggler/smuggler.py -u {}" | tee -a smuggler_op.txt
 }
 
 nuc(){
   mkdir nuclei_op
   
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/cves/ -c 60 -o nuclei_op/cves.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/dns/ -c 60 -o nuclei_op/dns.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/subdomain-takeover/ -c 60 -o nuclei_op/subdomain-takeover.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/files/ -c 60 -o nuclei_op/files.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/panels/ -c 60 -o nuclei_op/panels.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/security-misconfiguration/ -c 60 -o nuclei_op/security-misconfiguration.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/technologies/ -c 60 -o nuclei_op/technologies.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/tokens/ -c 60 -o nuclei_op/tokens.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/vulnerabilities/ -c 60 -o nuclei_op/vulnerabilities.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/default-credentials/ -c 60 -o nuclei_op/default-credentials.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/cves/ -c 60 -pbar -o nuclei_op/cves.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/dns/ -c 60 -pbar -o nuclei_op/dns.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/subdomain-takeover/ -c 60 -pbar -o nuclei_op/subdomain-takeover.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/files/ -c 60 -pbar -o nuclei_op/files.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/panels/ -c 60 -pbar -o nuclei_op/panels.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/security-misconfiguration/ -c 60 -pbar -o nuclei_op/security-misconfiguration.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/tokens/ -c 60 -pbar -o nuclei_op/tokens.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/vulnerabilities/ -c 60 -pbar -o nuclei_op/vulnerabilities.txt
+  nuclei -l hosts -t $ToolsPath/nuclei-templates/default-credentials/ -c 60 -pbar -o nuclei_op/default-credentials.txt
 }
 
 ## must already be login to github 
