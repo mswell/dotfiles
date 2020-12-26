@@ -17,9 +17,9 @@ tmux source $HOME/.tmux.conf
 
 echo "Setting Go dev environment"
 
-wget https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz
-sudo tar -zxvf go1.14.2.linux-amd64.tar.gz -C /usr/local/
-rm go1.14.2.linux-amd64.tar.gz
+wget https://golang.org/dl/go1.15.6.linux-amd64.tar.gz
+sudo tar -zxvf go1.15.6.linux-amd64.tar.gz -C /usr/local/
+rm go1.15.6.linux-amd64.tar.gz
 echo "Set your env!"
 echo "echo 'export GOROOT=/usr/local/go' >> ~/.zshrc"
 echo "echo 'export GOPATH=\$HOME/go' >> ~/.zshrc"
