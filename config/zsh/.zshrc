@@ -13,7 +13,11 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 plugins=(git node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+#export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+
+# For WSL use this PATH
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files/Git/cmd:/mnt/c/Users/wsilva/AppData/Local/Microsoft/WindowsApps:/snap/bin"
 
 source $ZSH/oh-my-zsh.sh
 export EDITOR='vim'

@@ -23,6 +23,3 @@ cp $DOTFILES/config/vim/.vimrc.local.bundles $HOME/.vimrc.local.bundles
 
 # git
 cp $DOTFILES/config/git/.gitconfig $HOME/.gitconfig
-
-# termite
-cp $DOTFILES/config/termite/termite_config $HOME/.config/termite/config
