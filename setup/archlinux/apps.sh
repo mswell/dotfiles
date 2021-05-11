@@ -8,7 +8,7 @@ yay -S --noconfirm --needed termite inkscape
 
 
 # software from 'normal' repositories
-yay -S --noconfirm --needed darktable dconf-editor tmux htop
+yay -S --noconfirm --needed dconf-editor tmux htop
 yay -S --noconfirm --needed evince evolution evolution-ews pidgin
 yay -S --noconfirm --needed gimp git
 yay -S --noconfirm --needed gparted
@@ -19,7 +19,7 @@ yay -S --noconfirm --needed ctags ncurses zsh xclip autojump docker-compose dock
 
 sudo pip install virtualenvwrapper jedi ipython pylint pydocstyle pipenv
 
-mkdir -p $HOME/.config/termite
+mkdir -p $HOME/.config/alacritty
 
 # installation of zippers and unzippers
 yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract file-roller
