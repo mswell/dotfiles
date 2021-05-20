@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
+echo "Install chaos client"
+GO111MODULE=on go get -v github.com/projectdiscovery/chaos-client/cmd/chaos
+
+echo "Install Subfinder"
+GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder
+
+echo "Install Amass"
+go get -v github.com/OWASP/Amass/v3/...
+
 echo "Install assetfinder"
 go get -u github.com/tomnomnom/assetfinder
 
-echo "Install HTTPROBE"
-sleep 2
-go get -u github.com/tomnomnom/httprobe
+echo "Install unfurl"
+go get -u github.com/tomnomnom/unfurl
+
+echo "Install nuclei"
+GO111MODULE=on go get -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei
+go get -u github.com/tomnomnom/assetfinder
 
 echo "Install Meg"
 sleep 2
@@ -22,23 +34,7 @@ echo "Install gf"
 sleep 2
 go get -u github.com/tomnomnom/gf
 cp -r $GOPATH/src/github.com/tomnomnom/gf/examples ~/.gf
-
-echo "Install unurl"
 sleep 2
-go get -u github.com/tomnomnom/unfurl
-
-echo "Install subfinder"
-sleep 2
-go get -v github.com/projectdiscovery/subfinder/cmd/subfinder
-
-echo "Install nuclei"
-sleep 2
-GO111MODULE=on go get -u -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei
-
-echo "Install amass"
-sleep 2
-GO111MODULE=on
-go get -u -v github.com/OWASP/Amass/v3/...
 
 echo "Install gron"
 sleep 2
@@ -64,13 +60,9 @@ echo "Install getJS"
 sleep 2
 go get -u github.com/003random/getJS
 
-echo "Install gau"
+echo "Install Gauplus"
 sleep 2
-GO111MODULE=on go get -u -v github.com/lc/gau
-
-echo "Install CORS-scanner"
-sleep 2
-go get -u github.com/Tanmay-N/CORS-Scanner
+GO111MODULE=on go get -u -v github.com/bp0lr/gauplus
 
 echo "Install waybackurls"
 go get github.com/tomnomnom/waybackurl
@@ -82,4 +74,7 @@ echo "Install Naabu"
 GO111MODULE=on go get -v github.com/projectdiscovery/naabu/cmd/naabu
 
 echo "Install httpx"
-GO111MODULE=on go get -u -v github.com/projectdiscovery/httpx/cmd/httpx
+GO111MODULE=on go get -v github.com/projectdiscovery/httpx/cmd/httpx
+
+echo "Install Gxss"
+go get -u github.com/KathanP19/Gxss
