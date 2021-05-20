@@ -82,3 +82,12 @@ go get -u github.com/KathanP19/Gxss
 echo "Install dalfox"
 GO111MODULE=on go get -v github.com/hahwul/dalfox/v2
 
+echo "Install rush"
+go get -u github.com/shenwei356/rush/
+
+echo "Install notify"
+GO111MODULE=on go get -v github.com/projectdiscovery/notify/cmd/notify
+
+echo "Install Gowitness"
+go get -u github.com/sensepost/gowitness
+

@@ -21,6 +21,7 @@ Menu(){
     case $option in
         1) Debian ;;
         2) Archlinux ;;
+        3) OSX ;;
         0) exit ;;
         *) "Unknown option :(" ; echo ; Menu ;;
     esac
