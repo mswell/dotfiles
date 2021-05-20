@@ -78,3 +78,7 @@ GO111MODULE=on go get -v github.com/projectdiscovery/httpx/cmd/httpx
 
 echo "Install Gxss"
 go get -u github.com/KathanP19/Gxss
+
+echo "Install dalfox"
+GO111MODULE=on go get -v github.com/hahwul/dalfox/v2
+
