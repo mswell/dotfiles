@@ -18,6 +18,10 @@ certnmap(){
 ipinfo(){
   curl http://ipinfo.io/$1
 }
+workspaceRecon(){
+  name=$(echo $1 | unfurl -u domains)
+  mkdir -p $name/$(date +%F)/
+}
 
 # Use the output of this to make .scope files for checkscope
 getscope(){
@@ -33,27 +37,27 @@ getfreshresolvers(){
 ## findomain
 subdomain-enum(){
   echo "[+] Recon subdomains..."
-  Domains=$(cat domains)
-  chaos -d $Domains -o chaos.subdomains
+  Domain=$(cat domain)
+  chaos -d $Domain -o chaos.subdomains -silent
   cat chaos.subdomains >> all.subdomains
-  subfinder -nW -cd -v -t 50 -o subfinder.subdomains -dL domains -all -config $ConfigFolder/subfinder/config.yaml
+  subfinder -nW -t 1000 -o subfinder.subdomains -dL domain -all -silent
   cat subfinder.subdomains >> all.subdomains
   rm -f subfinder.subdomains
   # amass enum -nf all.subdomains -v -ip -active -config $ConfigFolder/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
-  amass enum -nf all.subdomains -v -passive -config $ConfigFolder/amass/config.ini -df domains -o amass.subdomains  
+  amass enum -nf all.subdomains -v -passive -df domain -o amass.subdomains  
   awk '{print $1}' amass.subdomains >> all.subdomains
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
   awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))' >> ipv6.addresses
-  cat domains | assetfinder --subs-only | tee -a all.subdomains
+  cat domain | assetfinder --subs-only | tee -a all.subdomains
 }
 
-subdomain-brute () {
-  Domains=$(cat domains)
-  shuffledns -d $Domains -w $ToolsPath/lists/all.txt -r $ToolsPath/lists/my-lists/resolvers | tee -a all.subdomains
+# subdomain-brute () {
+#   Domains=$(cat domains)
+#   shuffledns -d $Domains -w $ToolsPath/lists/all.txt -r $ToolsPath/lists/my-lists/resolvers | tee -a all.subdomains
 
-  sort -u all.subdomains -o sorted.all.subdomains
-  rm -f all.subdomains 
-}
+#   sort -u all.subdomains -o sorted.all.subdomains
+#   rm -f all.subdomains 
+# }
 #############
 #Ex: of .scope file is need the formative is regular expression that will sort the file like so
 # .*\.example\.com$
@@ -77,9 +81,12 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   # cat resolved.subdomains | httprobe -c 10 -t 3000 | tee all.alive.subdomains
-
-  cat sorted.all.subdomains | httpx -silent | tee all.alive.subdomains
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | tee cleaned.all.alive.subdomains
+  cat all.subdomains | anew clean.subdomains
+  httpx -l clean.subdomains -threads 1000 -status-code -mc 200 -silent | anew http200
+  httpx -l clean.subdomains -threads 1000 -status-code -silent | anew hosts
+  cat hosts | awk '{print $1}' | anew domains
+  # cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | tee cleaned.all.alive.subdomains
+  # cat sorted.all.subdomains | httpx -silent | tee all.alive.subdomains
 }
 
 getdata () {
@@ -347,15 +354,15 @@ smuggling() {
 nuc(){
   mkdir nuclei_op
   
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/cves/ -c 60 -pbar -o nuclei_op/cves.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/dns/ -c 60 -pbar -o nuclei_op/dns.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/subdomain-takeover/ -c 60 -pbar -o nuclei_op/subdomain-takeover.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/files/ -c 60 -pbar -o nuclei_op/files.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/panels/ -c 60 -pbar -o nuclei_op/panels.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/security-misconfiguration/ -c 60 -pbar -o nuclei_op/security-misconfiguration.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/tokens/ -c 60 -pbar -o nuclei_op/tokens.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/vulnerabilities/ -c 60 -pbar -o nuclei_op/vulnerabilities.txt
-  nuclei -l hosts -t $ToolsPath/nuclei-templates/default-credentials/ -c 60 -pbar -o nuclei_op/default-credentials.txt
+  nuclei -l hosts cves/ -c 60 -pbar -o nuclei_op/cves.txt
+  nuclei -l hosts dns/ -c 60 -pbar -o nuclei_op/dns.txt
+  nuclei -l hosts subdomain-takeover/ -c 60 -pbar -o nuclei_op/subdomain-takeover.txt
+  nuclei -l hosts files/ -c 60 -pbar -o nuclei_op/files.txt
+  nuclei -l hosts panels/ -c 60 -pbar -o nuclei_op/panels.txt
+  nuclei -l hosts security-misconfiguration/ -c 60 -pbar -o nuclei_op/security-misconfiguration.txt
+  nuclei -l hosts tokens/ -c 60 -pbar -o nuclei_op/tokens.txt
+  nuclei -l hosts vulnerabilities/ -c 60 -pbar -o nuclei_op/vulnerabilities.txt
+  nuclei -l hosts default-credentials/ -c 60 -pbar -o nuclei_op/default-credentials.txt
 }
 
 ## must already be login to github 
