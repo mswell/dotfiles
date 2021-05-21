@@ -10,16 +10,16 @@ sudo add-apt-repository -y ppa:neovim-ppa/stable
 sudo apt-get update
 sudo apt install -y neovim
 # install base packages
-sudo apt install -y vim-nox tmux vim-gtk git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
+sudo apt install -y vim-nox tmux git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl python-pip python3-pip
 
 git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
 tmux source $HOME/.tmux.conf
 
 echo "Setting Go dev environment"
 
-wget https://golang.org/dl/go1.15.6.linux-amd64.tar.gz
-sudo tar -zxvf go1.15.6.linux-amd64.tar.gz -C /usr/local/
-rm go1.15.6.linux-amd64.tar.gz
+wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
+sudo tar -zxvf go1.16.4.linux-amd64.tar.gz -C /usr/local/
+rm go1.16.4.linux-amd64.tar.gz
 echo "Set your env!"
 echo "echo 'export GOROOT=/usr/local/go' >> ~/.zshrc"
 echo "echo 'export GOPATH=\$HOME/go' >> ~/.zshrc"
