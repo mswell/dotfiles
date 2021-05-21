@@ -83,16 +83,15 @@ getalive() {
   # cat resolved.subdomains | httprobe -c 10 -t 3000 | tee all.alive.subdomains
   cat all.subdomains | anew clean.subdomains
   httpx -l clean.subdomains -threads 1000 -status-code -mc 200 -silent | anew http200
-  httpx -l clean.subdomains -threads 1000 -status-code -silent | anew hosts
-  cat hosts | awk '{print $1}' | anew domains
+  httpx -l clean.subdomains -threads 1000 -timeout 50 -status-code -silent | anew domains
+  cat domains | awk '{print $1}' | anew hosts
   # cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | tee cleaned.all.alive.subdomains
   # cat sorted.all.subdomains | httpx -silent | tee all.alive.subdomains
 }
 
 getdata () {
   # hosts is for meg
-  cp all.alive.subdomains hosts
-  meg -d 1000 -v /
+  httpx -l clean.subdomains -threads 1000 -sr -silent
 }
 
 ##########################################################
