@@ -91,3 +91,11 @@ GO111MODULE=on go get -v github.com/projectdiscovery/notify/cmd/notify
 echo "Install Gowitness"
 go get -u github.com/sensepost/gowitness
 
+echo "Install Anti-burl"
+go get -u github.com/tomnomnom/hacks/anti-burl
+
+echo "Install Anew"
+go get -u github.com/tomnomnom/anew
+
+echo "Install DnsX"
+GO111MODULE=on go get -v github.com/projectdiscovery/dnsx/cmd/dnsx
