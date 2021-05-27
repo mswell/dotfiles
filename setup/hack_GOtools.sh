@@ -102,3 +102,6 @@ GO111MODULE=on go get -v github.com/projectdiscovery/dnsx/cmd/dnsx
 
 echo "Install getJS"
 go get github.com/003random/getJS
+
+echo "Install ToJson"
+go get -u github.com/tomnomnom/hacks/tojson
