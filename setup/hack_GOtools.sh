@@ -105,3 +105,6 @@ go get github.com/003random/getJS
 
 echo "Install ToJson"
 go get -u github.com/tomnomnom/hacks/tojson
+
+echo "Install Subjs"
+GO111MODULE=on go get -u -v github.com/lc/subjs
