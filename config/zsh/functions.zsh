@@ -20,7 +20,10 @@ ipinfo(){
 }
 workspaceRecon(){
   name=$(echo $1 | unfurl -u domains)
-  mkdir -p $name/$(date +%F)/
+  wdir=$name/$(date +%F)/
+  mkdir -p $wdir
+  cd $wdir
+  echo $name | anew domain
 }
 
 # Use the output of this to make .scope files for checkscope
@@ -40,31 +43,17 @@ subdomain-enum(){
   Domain=$(cat domain)
   chaos -d $Domain -o chaos.subdomains -silent
   cat chaos.subdomains >> all.subdomains
-  subfinder -nW -t 1000 -o subfinder.subdomains -dL domain -all -silent
+  subfinder -nW -t 100 -o subfinder.subdomains -dL domain
   cat subfinder.subdomains >> all.subdomains
   rm -f subfinder.subdomains
-  # amass enum -nf all.subdomains -v -ip -active -config $ConfigFolder/amass/config.ini -min-for-recursive 3 -df domains -o amass.subdomains
   amass enum -nf all.subdomains -v -passive -df domain -o amass.subdomains  
   awk '{print $1}' amass.subdomains >> all.subdomains
-  awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '\b((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\.)){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\b' | sort -u >> ipv4.ipaddresses
-  awk '{print $2}' amass.subdomains | tr ',' '\n' | grep -E '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))' >> ipv6.addresses
   cat domain | assetfinder --subs-only | tee -a all.subdomains
+  xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
+  cat recondorecon | grep $Domain >> all.subdomains
+  cat all.subdomains | anew clean.subdomains
 }
 
-# subdomain-brute () {
-#   Domains=$(cat domains)
-#   shuffledns -d $Domains -w $ToolsPath/lists/all.txt -r $ToolsPath/lists/my-lists/resolvers | tee -a all.subdomains
-
-#   sort -u all.subdomains -o sorted.all.subdomains
-#   rm -f all.subdomains 
-# }
-#############
-#Ex: of .scope file is need the formative is regular expression that will sort the file like so
-# .*\.example\.com$
-# ^example\.com$
-# .*\.example\.net$
-# !.*outofscope\.example\.net$
-##########
 checkscope(){
   cat sorted.all.subdomains | inscope | tee -a inscope.sorted.all.subdomains 
 }
@@ -80,13 +69,7 @@ resolving(){
 getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
-  # cat resolved.subdomains | httprobe -c 10 -t 3000 | tee all.alive.subdomains
-  cat all.subdomains | anew clean.subdomains
-  httpx -l clean.subdomains -threads 1000 -status-code -mc 200 -silent | anew http200
-  httpx -l clean.subdomains -threads 1000 -timeout 50 -status-code -silent | anew domains
-  cat domains | awk '{print $1}' | anew hosts
-  # cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | tee cleaned.all.alive.subdomains
-  # cat sorted.all.subdomains | httpx -silent | tee all.alive.subdomains
+  httpx -l clean.subdomains -silent -o 200HTTP
 }
 
 getdata () {
@@ -111,8 +94,7 @@ dnsrecords() {
 }
 
 screenshot() { 
-  #python3 EyeWitness.py --web -f cleaned.alive.all.subdomains --user-agent "$UA" --show-selenium --resolve -d eyewitness-report
-  cat cleaned.all.alive.subdomains | aquatone -chrome-path /usr/bin/google-chrome -scan-timeout 900 -http-timeout 6000 -out aqua_out
+  gowitness file -f 200HTTP -t 60
 }
 
 scanner() {
@@ -139,63 +121,20 @@ getrobots(){
   cat *-robots.txt | cut -c -2 | sort -u >> wayback-data/robots.paths.wobs
 }
 
-waybackrecon() {
-  ## drishti
-  mkdir wayback-data/
-  getrobots
-  echo "${green}Scraping wayback for data... ${reset}"
-
-  cat all.alive.subdomains | waybackurls | sort -u >> wayback-data/waybackurls
-
-  cat wayback-data/waybackurls | unfurl --unique keys | sort -u >> wayback-data/params
-  [ -s wayback-data/params ] && echo "${yellow}Found : $(wc -l wayback-data/params | awk '{print $1}') : parameters ${reset}"
-
-  cat wayback-data/waybackurls | unfurl --unique values | sort -u >> wayback-data/values
-  [ -s wayback-data/values ] && echo "${yellow}Found : $(wc -l  wayback-data/values | awk '{print $1}') : values for parameters ${reset}"
-
-  cat wayback-data/waybackurls | unfurl --unique domains | sort -u >> wayback-data/domains
-  [ -s wayback-data/domains ] && echo "${yellow}Found : $(wc -l wayback-data/domains | awk '{print $1}') : domains ${reset}"
-
-  cat wayback-data/waybackurls | unfurl --unique paths | sort -u >> wayback-data/paths
-  cat wayback-data/paths | cut -c 2- | sort -u >> wayback-data/paths.wobs
-  [ -s wayback-data/paths ] && echo "${yellow}Found : $(wc -l wayback-data/paths | awk '{print $1}') : paths ${reset}"
-
-  cat wayback-data/waybackurls | unfurl --unique format %S | sort -u >> wayback-data/subdomains
-  [ -s wayback-data/subdomains ] && echo "${yellow}Found : $(wc -l wayback-data/subdomains | awk '{print $1}') : subdomains ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.js(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/jsurls
-  [ -s wayback-data/jsurls ] && echo "${yellow}Found : $(wc -l wayback-data/jsurls | awk '{print $1}') : javascript files ${reset}" 
-
-  cat wayback-data/waybackurls | grep -P "\w+\.php(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/phpurls
-  [ -s $domain/$foldername/wayback-data/phpurls ] && echo "${yellow}Found : $(wc -l $domain/$foldername/wayback-data/phpurls | awk '{print $1}') : php files ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.aspx(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/aspxurls
-  [ -s wayback-data/aspxurls ] && echo "${yellow}Found : $(wc -l wayback-data/aspxurls | awk '{print $1}') : aspx files ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.asp(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/aspurls
-  [ -s wayback-data/aspurls ] && echo "${yellow}Found : $(wc -l wayback-data/aspurls | awk '{print $1}') : asp files ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.jsp(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/jspurls
-  [ -s wayback-data/jspurls ] && echo "${yellow}Found : $(wc -l wayback-data/jspurls | awk '{print $1}') : javascript Server Pages ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.xml(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/xmlurls
-  [ -s wayback-data/xmlurls ] && echo "${yellow}Found : $(wc -l wayback-data/xmlurls | awk '{print $1}') : xml files ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.cgi(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/cgiurls
-  [ -s wayback-data/cgiurls ] && echo "${yellow}Found : $(wc -l wayback-data/cgiurls | awk '{print $1}') : cgi files ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.py(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/pyurls
-  [ -s wayback-data/pyurls ] && echo "${yellow}Found : $(wc -l wayback-data/pyurls | awk '{print $1}') : python files ${reset}"
-
-  cat wayback-data/waybackurls | grep -P "\w+\.bak(\?|$)" | hakcheckurl | grep 200 | awk '{print $2}' | sort -u >> wayback-data/backupurls
-  [ -s wayback-data/backupurls ] && echo "${yellow}Found : $(wc -l wayback-data/backupurls | awk '{print $1}') : backup files ${reset}"
-}
-
-#gocewl hakrawler
 crawler() { 
-  cat hosts | hakrawler | tee -a crawled.urls
+  cat 200HTTP | hakrawler | tee -a crawled.urls
 }
 
+paramspider() {
+  xargs -a 200HTTP -I@ sh -c 'python3 /root/tools/ParamSpider/paramspider.py -d @ -l high --exclude jpg,png,gif,woff,css,js,svg,woff2,ttf,eot,json'
+  cat output/http:/*.txt | anew params
+  cat output/https:/*.txt | anew params
+}
+xsshunter() {
+  cat params | anti-burl | awk '{print $4}' | anew xssvetor
+  cat xssvetor | Gxss -c 100 -p XSS | anew XSS
+  cat XSS | dalfox pipe --mining-dict-word $HOME/lists/arjun/db/params.txt --custom-payload $HOME/Fuzzing/xss/XSS-OFJAAAH.txt --skip-bav -o XSSresult | notify
+}
 getjsurls() {  
   cat domains | while read line; do
     cat all.alive.subdomains | subjs -ua "$UA" | grep $line | tee -a js.urls
@@ -304,19 +243,21 @@ fullrecon(){
 #  getscope
   # rapid7search
   subdomain-enum
-  subdomain-brute
-  resolving
-#  checkscope
+  #subdomain-brute
+  #resolving
+# checkscope
   getalive
-  getdata
+  #getdata
+  paramspider
   screenshot
+  xsshunter
 #  scanner
 #  waybackrecon
-  crawler
+#  crawler
   #smuggling
-  getjsurls
-  getjspaths
-  nuc
+#  getjsurls
+#  getjspaths
+#  nuc
 #  getcms
 #  check4wafs
 #  bruteforce
@@ -362,6 +303,11 @@ nuc(){
   nuclei -l hosts tokens/ -c 60 -pbar -o nuclei_op/tokens.txt
   nuclei -l hosts vulnerabilities/ -c 60 -pbar -o nuclei_op/vulnerabilities.txt
   nuclei -l hosts default-credentials/ -c 60 -pbar -o nuclei_op/default-credentials.txt
+}
+
+nucauto(){
+  nuclei -ut
+  nuclei -l $1 -c 60 -t /root/nuclei-templates/ -severity critical,high,medium,low | notify -silent
 }
 
 ## must already be login to github 
