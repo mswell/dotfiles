@@ -1,8 +1,8 @@
 ## VARIABLES
 ResultsPath="$HOME/Recon"
-ToolsPath="$HOME/tools"
+ToolsPath="$HOME/Tools"
 ConfigFolder="$HOME/tools/config"
-
+GITHUB_TOKENS=${ToolsPath}/.github_tokens
 certspotter(){
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1
 }
@@ -10,7 +10,9 @@ certspotter(){
 crtsh(){
   curl -s https://crt.sh/?q=%.$1  | sed 's/<\/\?[^>]\+>//g' | grep $1
 }
-
+cert(){
+ curl -s "https://crt.sh/?q=%.$1&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew
+}
 certnmap(){
   curl https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1  | nmap -T5 -Pn -sS -i - -$
 } 
@@ -38,7 +40,7 @@ getfreshresolvers(){
 }
 
 ## findomain
-subdomain-enum(){
+subdomainenum(){
   echo "[+] Recon subdomains..."
   Domain=$(cat domain)
   chaos -d $Domain -o chaos.subdomains -silent
@@ -49,9 +51,11 @@ subdomain-enum(){
   amass enum -nf all.subdomains -v -passive -df domain -o amass.subdomains  
   awk '{print $1}' amass.subdomains >> all.subdomains
   cat domain | assetfinder --subs-only | tee -a all.subdomains
-  xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
+  cat all.subdomains | grep -v "^$Domain$" | anew subdwithoutdup
+  xargs -a subdwithoutdup -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
   cat recondorecon | grep $Domain >> all.subdomains
   cat all.subdomains | anew clean.subdomains
+  echo "[+] subdomain recon completed :)" 
 }
 
 checkscope(){
@@ -69,12 +73,13 @@ resolving(){
 getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
+  echo "[+] Check live hosts"
   httpx -l clean.subdomains -silent -o 200HTTP
 }
 
 getdata () {
-  # hosts is for meg
-  httpx -l clean.subdomains -threads 1000 -sr -silent
+  echo "[+] Get all responses and save on roots folder" 
+  cat 200HTTP | fff -d 1 -S -o roots
 }
 
 ##########################################################
@@ -93,9 +98,11 @@ dnsrecords() {
   cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r AAAA -silent -o dnshistory/AAAA-records
 }
 
-screenshot() { 
+screenshot() {
+  echo "[+] Begin screenshots"
   gowitness file -f 200HTTP -t 60
 }
+
 
 scanner() {
   # do udp scan as well
@@ -121,30 +128,32 @@ getrobots(){
   cat *-robots.txt | cut -c -2 | sort -u >> wayback-data/robots.paths.wobs
 }
 
-crawler() { 
-  cat 200HTTP | hakrawler | tee -a crawled.urls
+crawler() {
+  echo 'Crawler in action :)'
+  cat 200HTTP | waybackurls | anew -q full_url_extract.txt
+  cat 200HTTP | gauplus -subs | anew -q full_url_extract.txt
+  cat 200HTTP | hakrawler -js -robots -subs -sitemap -depth 2 | anew -q hakrawler.txt
+  cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew -q full_url_extract.txt
 }
 
 paramspider() {
-  xargs -a 200HTTP -I@ sh -c 'python3 /root/tools/ParamSpider/paramspider.py -d @ -l high --exclude jpg,png,gif,woff,css,js,svg,woff2,ttf,eot,json'
+  xargs -a 200HTTP -I@ sh -c 'python3 /root/Tools/ParamSpider/paramspider.py -d @ -l high --exclude jpg,png,gif,woff,css,js,svg,woff2,ttf,eot,json'
   cat output/http:/*.txt | anew params
   cat output/https:/*.txt | anew params
 }
 xsshunter() {
-  cat params | anti-burl | awk '{print $4}' | anew xssvetor
-  cat xssvetor | Gxss -c 100 -p XSS | anew XSS
+  echo "INIT XSS HUNTER AT $(cat domain)" | notify -silent 
+  echo "INIT XSS HUNTER"
+  cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvetor
+  cat xssvetor | Gxss -c 100 -p FFF | anew XSS
   cat XSS | dalfox pipe --mining-dict-word $HOME/lists/arjun/db/params.txt --custom-payload $HOME/Fuzzing/xss/XSS-OFJAAAH.txt --skip-bav -o XSSresult | notify
 }
-getjsurls() {  
-  cat domains | while read line; do
-    cat all.alive.subdomains | subjs -ua "$UA" | grep $line | tee -a js.urls
-  done
-  cat all.alive.subdomains | getJS -complete -resolve | sort -u | tee -a js.urls
-  [ -f wayback-data/jsurls ] && cat wayback-data/jsurls >> js.urls && rm wayback-data/jsurls -f
-  sort -u -o sorted.js.urls js.urls
-  rm js.urls -f
-  cat sorted.js.urls | hakcheckurl | grep 200 | awk '{print $2}' >> alive.js.urls
-  rm sorted.js.urls -f
+getjsurls() {
+  echo "[+]Get JS and test live endpoints"
+  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | anew -q url_extract_js.txt
+  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep $Domain | anew -q jsfile_links.txt
+  cat url_extract_js.txt | subjs | grep $Domain | anew -q jsfile_links.txt
+  cat jsfile_links.txt | hakcheckurl | grep 200 | cut -d " " -f 2 | anew -q js_livelinks.txt
 }
 
 getjspaths() {
@@ -240,27 +249,29 @@ jsep()
 #}
 
 fullrecon(){
+  echo "[+] START RECON AT $(cat domain)" | notify -silent
 #  getscope
   # rapid7search
-  subdomain-enum
+  subdomainenum
   #subdomain-brute
   #resolving
 # checkscope
   getalive
-  #getdata
+  getdata
+  crawler
+  getjsurls
   paramspider
   screenshot
   xsshunter
 #  scanner
 #  waybackrecon
-#  crawler
   #smuggling
-#  getjsurls
 #  getjspaths
 #  nuc
 #  getcms
 #  check4wafs
 #  bruteforce
+echo "[+] END RECON AT $(cat domain)" | notify -silent  
 }
 
 redUrl() { 
