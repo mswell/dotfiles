@@ -114,3 +114,9 @@ go get github.com/hakluke/hakrawler
 
 echo "Install Hakcheckurl"
 go get github.com/hakluke/hakcheckurl
+
+echo "Install Github endpoints"
+go get -u github.com/gwen001/github-endpoints
+
+echo "Install FFF"
+go get -u github.com/tomnomnom/fff
