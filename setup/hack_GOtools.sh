@@ -108,3 +108,9 @@ go get -u github.com/tomnomnom/hacks/tojson
 
 echo "Install Subjs"
 GO111MODULE=on go get -u -v github.com/lc/subjs
+
+echo "Install Hakrawler"
+go get github.com/hakluke/hakrawler
+
+echo "Install Hakcheckurl"
+go get github.com/hakluke/hakcheckurl
