@@ -262,10 +262,10 @@ fullrecon(){
   getjsurls
   paramspider
   screenshot
-  xsshunter
+#  xsshunter
 #  scanner
 #  waybackrecon
-  #smuggling
+#  smuggling
 #  getjspaths
 #  nuc
 #  getcms
