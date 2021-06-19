@@ -38,3 +38,11 @@ if [[ $(eval type go $DEBUG_ERROR | grep -o 'go is') == "go is" ]] && [ "$versio
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:$GOROOT/bin:$HOME/.local/bin:$PATH
 cat << EOF >> ~/${profile_shell}
+
+# Golang vars
+export GOROOT=/usr/local/go
+export GOPATH=\$HOME/go
+export PATH=\$GOPATH/bin:\$GOROOT/bin:\$HOME/.local/bin:\$PATH
+EOF
+
+fi
