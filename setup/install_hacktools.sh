@@ -72,6 +72,17 @@ repos["urldedupe"]="ameenmaali/urldedupe"
 repos["cloud_enum"]="initstring/cloud_enum"
 repos["JSScanner"]="0x240x23elu/JSScanner"
 
+if [[ $(id -u | grep -o '^0$') == "0" ]]; then
+    SUDO=" "
+else
+    if sudo -n false 2>/dev/null; then
+        printf "${bred} Is strongly recommended to add your user to sudoers${reset}\n"
+        printf "${bred} This will avoid prompts for sudo password in the middle of the installation${reset}\n"
+        printf "${bred} And more important, in the middle of the scan (needed for nmap SYN scan)${reset}\n\n"
+        printf "${bred} echo \"${USERNAME}  ALL=(ALL:ALL) NOPASSWD: ALL\" > /etc/sudoers.d/reconFTW${reset}\n\n"
+    fi
+    SUDO="sudo"
+fi
 
 dir="$HOME/Tools"
 
