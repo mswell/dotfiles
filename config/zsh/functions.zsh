@@ -146,7 +146,7 @@ xsshunter() {
   echo "INIT XSS HUNTER"
   cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvetor
   cat xssvetor | Gxss -c 100 -p FFF | anew XSS
-  cat XSS | dalfox pipe --mining-dict-word $HOME/lists/arjun/db/params.txt --custom-payload $HOME/Fuzzing/xss/XSS-OFJAAAH.txt --skip-bav -o XSSresult | notify
+  cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --custom-payload $HOME/Lists/XSS-OFJAAAH.txt --skip-bav -o XSSresult | notify
 }
 getjsurls() {
   echo "[+]Get JS and test live endpoints"
