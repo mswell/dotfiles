@@ -43,8 +43,8 @@ getfreshresolvers(){
 subdomainenum(){
   echo "[+] Recon subdomains..."
   Domain=$(cat domain)
-  chaos -d $Domain -o chaos.subdomains -silent
-  cat chaos.subdomains >> all.subdomains
+  # chaos -d $Domain -o chaos.subdomains -silent
+  # cat chaos.subdomains >> all.subdomains
   subfinder -nW -t 100 -o subfinder.subdomains -dL domain
   cat subfinder.subdomains >> all.subdomains
   rm -f subfinder.subdomains
@@ -74,7 +74,9 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "[+] Check live hosts"
-  httpx -l clean.subdomains -silent -o 200HTTP
+  cat clean.subdomains | httpx -silent -status-code -o HTTPOK
+  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}'| anew 403HTTP
 }
 
 getdata () {
@@ -100,7 +102,7 @@ dnsrecords() {
 
 screenshot() {
   echo "[+] Begin screenshots"
-  gowitness file -f 200HTTP -t 60
+  cat 200HTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports medium
 }
 
 
@@ -135,6 +137,10 @@ crawler() {
   cat 200HTTP | hakrawler -js -robots -subs -sitemap -depth 2 | anew -q hakrawler.txt
   cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew -q full_url_extract.txt
 }
+bypass4xx(){
+  [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
+  [ -s "dirdarResult" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent
+}
 
 paramspider() {
   xargs -a 200HTTP -I@ sh -c 'python3 /root/Tools/ParamSpider/paramspider.py -d @ -l high --exclude jpg,png,gif,woff,css,js,svg,woff2,ttf,eot,json'
@@ -142,18 +148,22 @@ paramspider() {
   cat output/https:/*.txt | anew params
 }
 xsshunter() {
-  echo "INIT XSS HUNTER AT $(cat domain)" | notify -silent 
+  Domain=$(cat domain)
+  echo "INIT XSS HUNTER AT $Domain" | notify -silent 
   echo "INIT XSS HUNTER"
   cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvetor
-  cat xssvetor | Gxss -c 100 -p FFF | anew XSS
-  cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --custom-payload $HOME/Lists/XSS-OFJAAAH.txt --skip-bav -o XSSresult | notify
+  # gospider -S 200HTTP -c 10 -d 3 --blacklist ".(jpg|jpeg|gif|css|tif|tiff|png|ttf|woff|woff2|ico|pdf|svg|txt)" --other-source | grep -e "code-200" | awk '{print $5}'| grep "=" | qsreplace -a | anew xssvetor
+  cat xssvetor | grep $Domain | Gxss -p FFF | anew XSS
+  cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
 }
 getjsurls() {
+  Domain=$(cat domain)
   echo "[+]Get JS and test live endpoints"
   cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | anew -q url_extract_js.txt
   cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep $Domain | anew -q jsfile_links.txt
   cat url_extract_js.txt | subjs | grep $Domain | anew -q jsfile_links.txt
-  cat jsfile_links.txt | hakcheckurl | grep 200 | cut -d " " -f 2 | anew -q js_livelinks.txt
+  cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent  -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
+  cat js_livelinks.txt | fff -d 1 -S -o JSroots
 }
 
 getjspaths() {
@@ -258,6 +268,8 @@ fullrecon(){
 # checkscope
   getalive
   getdata
+  bypass4xx
+  Corstest
   crawler
   getjsurls
   paramspider
@@ -294,8 +306,9 @@ blindssrftest(){
     ffuf -w $1-bssrf -u FUZZ -t 50
   fi
 }
-CORStest() {
-    python $HOME/tools/corstest.py $1
+Corstest() {
+  gf cors | awk -F '/' '{print $2}' | anew | httpx -silent -o CORSHTTP
+  [ -s "CORSHTTP" ] && python3 /root/Tools/CORStest/corstest.py CORSHTTP -q | notify -silent 
 }
 
 smuggling() {
@@ -318,9 +331,13 @@ nuc(){
 
 nucauto(){
   nuclei -ut
-  nuclei -l $1 -c 60 -t /root/nuclei-templates/ -severity critical,high,medium,low | notify -silent
+  cat 200HTTP |  nuclei -c 60 -t /root/nuclei-templates/ -severity critical,high,medium,low | notify -silent
 }
 
+nucautoMedium(){
+  nuclei -ut
+  cat 200HTTP |  nuclei -c 60 -t /root/nuclei-templates/ -severity medium,low | notify -silent
+}
 ## must already be login to github 
 # this is part of jhaddix hunter.sh script
 github_dorks () {
