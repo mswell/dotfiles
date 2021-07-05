@@ -68,7 +68,7 @@ alias ungron="gron --ungron"
 
 # alias for keyboard layout
 alias keyus='setxkbmap -layout us -variant intl'
-alias keybr='setxkbmap -layout br'
+alias keybr='setxkbmap -model thinkpad60 -layout br'
 
 # change ls for lsd
 alias ls='lsd'
