@@ -54,7 +54,7 @@ subdomainenum(){
   cat all.subdomains | grep -v "^$Domain$" | anew subdwithoutdup
   xargs -a subdwithoutdup -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
   cat recondorecon | grep $Domain >> all.subdomains
-  cat all.subdomains | anew clean.subdomains
+  cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] subdomain recon completed :)" 
 }
 
@@ -74,16 +74,30 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "[+] Check live hosts"
-  cat clean.subdomains | httpx -silent -status-code -o HTTPOK
+  cat clean.subdomains | httpx -silent -status-code -mc 200,401,403 -o HTTPOK -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}'| anew 403HTTP
 }
 
+getaliveAxiom() {
+  # sperate http and https compare if http doest have or redirect to https put in seperate file
+  # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
+  echo "[+] Check live hosts"
+  axiom-scan clean.subdomains -m httpx -silent -status-code -mc 200,401,403 -o HTTPOK -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
+  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}'| anew 403HTTP
+}
 getdata () {
   echo "[+] Get all responses and save on roots folder" 
   cat 200HTTP | fff -d 1 -S -o roots
 }
 
+subtakeover() {
+  echo "test for posible subdomain-takeover"
+  [ -s "200HTTP" ] && cat 200HTTP | anew allhttp
+  [ -s "403HTTP" ] && cat 403HTTP | anew allhttp
+  [ -s "allhttp" ] && cat allhttp | nuclei -tags takeover -o subtakeover | notify -silent
+}
 ##########################################################
 # use massdns
 # use dns history to check for possible domain takeover
@@ -102,7 +116,7 @@ dnsrecords() {
 
 screenshot() {
   echo "[+] Begin screenshots"
-  cat 200HTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports medium
+  cat 200HTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports xlarge
 }
 
 
@@ -159,13 +173,16 @@ xsshunter() {
 getjsurls() {
   Domain=$(cat domain)
   echo "[+]Get JS and test live endpoints"
-  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | anew -q url_extract_js.txt
-  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep $Domain | anew -q jsfile_links.txt
+  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
+  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' |  grep $Domain | anew -q jsfile_links.txt
   cat url_extract_js.txt | subjs | grep $Domain | anew -q jsfile_links.txt
   cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent  -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
   cat js_livelinks.txt | fff -d 1 -S -o JSroots
 }
 
+getjsdata() {
+  [ -s "js_livelinks.txt" ] && python3 /root/Tools/JSScanner/jsscanner.py js_livelinks.txt $ToolsPath/JSScanner/regex.txt
+}
 getjspaths() {
   cat alive.js.urls | while read line; do 
     ruby $HOME/tools/relative-url-extractor/extract.rb $line | tee -a js.extracted.paths
@@ -258,6 +275,22 @@ jsep()
 # arjun parameth aron photon 
 #}
 
+fullreconAxiom(){
+  echo "[+] START RECON AT $(cat domain)" | notify -silent
+  subdomainenum
+  getaliveAxiom
+  getdata
+  bypass4xx
+  Corstest
+  crawler
+  getjsurls
+  getjsdata
+  paramspider
+  screenshot
+  nucauto
+echo "[+] END RECON AT $(cat domain)" | notify -silent  
+}
+
 fullrecon(){
   echo "[+] START RECON AT $(cat domain)" | notify -silent
 #  getscope
@@ -268,10 +301,12 @@ fullrecon(){
 # checkscope
   getalive
   getdata
+  subtakeover
   bypass4xx
   Corstest
   crawler
   getjsurls
+  getjsdata
   paramspider
   screenshot
 #  xsshunter
@@ -307,7 +342,7 @@ blindssrftest(){
   fi
 }
 Corstest() {
-  gf cors | awk -F '/' '{print $2}' | anew | httpx -silent -o CORSHTTP
+  gf cors roots | awk -F '/' '{print $2}' | anew | httpx -silent -o CORSHTTP
   [ -s "CORSHTTP" ] && python3 /root/Tools/CORStest/corstest.py CORSHTTP -q | notify -silent 
 }
 
@@ -333,7 +368,9 @@ nucauto(){
   nuclei -ut
   cat 200HTTP |  nuclei -c 60 -t /root/nuclei-templates/ -severity critical,high,medium,low | notify -silent
 }
-
+nucaxiom(){
+    axiom-scan 200HTTP -m nuclei -t /root/nuclei-templates -severity critical,high,medium,low -o resultNuclei | notify -silent
+}
 nucautoMedium(){
   nuclei -ut
   cat 200HTTP |  nuclei -c 60 -t /root/nuclei-templates/ -severity medium,low | notify -silent
@@ -539,7 +576,7 @@ fullOSINT(){
 # https://github.com/JoshuaMart/AutoRecon
 
 fufapi(){
-  ffuf -u $1/FUZZ -w $ToolsPath/apiwords.txt -mc 200 -t 100
+  ffuf -u $1/FUZZ -w $HOME/Lists/apiwords.txt -mc 200 -t 100
 }
 
 fufdir(){
@@ -570,4 +607,23 @@ fleetScan(){
   echo 'Remove servers ...'
   axiom-rm "well0*" -f
 }
+discoverLive(){
+  echo 'scan network' $1
+  sudo nmap -v -sn $1 -oG liveHosts
+  cat liveHosts | grep Up | awk '{print $2}' | anew IpLiveHosts
+  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
+  cat largePorts | grep -v 404 | anew HTTPOK
+  cat HTTPOK | awk '{print $1}' | anew hostwithPorts
+  cat HTTPOK | aquatone -ports large -scan-timeout 900 -http-timeout 6000 -out aqua_out -threads 20
+  cat hostwithPorts | nuclei -t technologies -o techs -c 60 -stats
+  echo 'end discovery'
+}
 
+discoverLive4faraday(){
+  echo 'scan network' $1
+  sudo nmap -v -sn $1 -oG liveHosts
+  cat liveHosts | grep Up | awk '{print $2}' | anew IpLiveHosts
+  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
+  cat largePorts | awk '{print $1}' | cut -d '/' -f 3 | cut -d ':' -f 1 | anew host4faraday
+  echo 'end discovery'
+}
