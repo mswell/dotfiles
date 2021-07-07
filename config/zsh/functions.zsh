@@ -98,6 +98,14 @@ subtakeover() {
   [ -s "403HTTP" ] && cat 403HTTP | anew allhttp
   [ -s "allhttp" ] && cat allhttp | nuclei -tags takeover -o subtakeover | notify -silent
 }
+
+gitexposed(){
+    echo "Probe gitexposed"
+    echo "Init gitexposed probe" | notify -silent 
+    [ -s "allhttp" ] && cat allhttp | unfurl domains | anew gitexpprobe
+    [ -s "gitexpprobe" ] && python3 $ToolsPath/GitTools/Finder/gitfinder.py -i gitexpprobe -o gitexpresult
+    [ -s "gitexpresult" ] && cat gitexpresult | notify -silent
+}
 ##########################################################
 # use massdns
 # use dns history to check for possible domain takeover
@@ -153,7 +161,7 @@ crawler() {
 }
 bypass4xx(){
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
-  [ -s "dirdarResult" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent
+  [ -s "dirdarResult.txt" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent
 }
 
 paramspider() {
@@ -181,7 +189,8 @@ getjsurls() {
 }
 
 getjsdata() {
-  [ -s "js_livelinks.txt" ] && python3 /root/Tools/JSScanner/jsscanner.py js_livelinks.txt $ToolsPath/JSScanner/regex.txt
+  # [ -s "js_livelinks.txt" ] && python3 /root/Tools/JSScanner/jsscanner.py js_livelinks.txt $ToolsPath/JSScanner/regex.txt
+  [ -s "js_livelinks.txt" ] && cat js_livelinks.txt | nuclei -tags token -o jsinfo
 }
 getjspaths() {
   cat alive.js.urls | while read line; do 
@@ -302,6 +311,7 @@ fullrecon(){
   getalive
   getdata
   subtakeover
+  gitexposed
   bypass4xx
   Corstest
   crawler
