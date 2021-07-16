@@ -10,8 +10,6 @@ cp $DOTFILES/config/zsh/.zshrc $HOME/.zshrc
 # neovim
 # create .config folder and nvim folder
 cp $DOTFILES/config/nvim/init.vim $HOME/.config/nvim/init.vim
-cp $DOTFILES/config/nvim/local_init.vim $HOME/.config/nvim/local_init.vim
-cp $DOTFILES/config/nvim/local_bundles.vim $HOME/.config/nvim/local_bundles.vim
 
 # tmux
 cp $DOTFILES/config/tmux/.tmux.conf $HOME/.tmux.conf

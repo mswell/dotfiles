@@ -72,7 +72,11 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "[+] Check live hosts"
+<<<<<<< HEAD
   cat clean.subdomains | httpx -silent -timeout 50 -status-code -ports 80,443,8000,8080,8443 -o HTTPOK
+=======
+  cat clean.subdomains | httpx -silent -timeout 50 -status-code -o HTTPOK
+>>>>>>> 9e811882283b5aef376b08ee756d0fec357b0f0d
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}'| anew 403HTTP
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
@@ -93,7 +97,11 @@ getdata () {
 
 subtakeover() {
   echo "test for posible subdomain-takeover"
+<<<<<<< HEAD
   python3 $ToolsPath/takeover/takeover.py -l clean.subdomains -o subtakeover.txt -k -v -t 50
+=======
+  python3 $ToolsPath/takeover/takeover.py -l clean.subdomains -o subtakeover.txt -v -t 50
+>>>>>>> 9e811882283b5aef376b08ee756d0fec357b0f0d
   [ -s "subtakeover.txt" ] && cat subtakeover.txt | notify -silent
 }
 
