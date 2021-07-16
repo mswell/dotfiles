@@ -71,6 +71,7 @@ repos["JSA"]="six2dez/JSA"
 repos["urldedupe"]="ameenmaali/urldedupe"
 repos["cloud_enum"]="initstring/cloud_enum"
 repos["JSScanner"]="0x240x23elu/JSScanner"
+repos["GitTools"]="internetwache/GitTools"
 
 if [[ $(id -u | grep -o '^0$') == "0" ]]; then
     SUDO=" "
