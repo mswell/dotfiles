@@ -43,8 +43,6 @@ getfreshresolvers(){
 subdomainenum(){
   echo "[+] Recon subdomains..."
   Domain=$(cat domain)
-  # chaos -d $Domain -o chaos.subdomains -silent
-  # cat chaos.subdomains >> all.subdomains
   subfinder -nW -t 100 -o subfinder.subdomains -dL domain
   cat subfinder.subdomains >> all.subdomains
   rm -f subfinder.subdomains
@@ -74,9 +72,10 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "[+] Check live hosts"
-  cat clean.subdomains | httpx -silent -status-code -mc 200,401,403 -o HTTPOK -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
+  cat clean.subdomains | httpx -silent -timeout 50 -status-code -ports 80,443,8000,8080,8443 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}'| anew 403HTTP
+  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
 }
 
 getaliveAxiom() {
@@ -89,20 +88,19 @@ getaliveAxiom() {
 }
 getdata () {
   echo "[+] Get all responses and save on roots folder" 
-  cat 200HTTP | fff -d 1 -S -o roots
+  cat ALLHTTP | fff -d 1 -S -o roots
 }
 
 subtakeover() {
   echo "test for posible subdomain-takeover"
-  [ -s "200HTTP" ] && cat 200HTTP | anew allhttp
-  [ -s "403HTTP" ] && cat 403HTTP | anew allhttp
-  [ -s "allhttp" ] && cat allhttp | nuclei -tags takeover -o subtakeover | notify -silent
+  python3 $ToolsPath/takeover/takeover.py -l clean.subdomains -o subtakeover.txt -k -v -t 50
+  [ -s "subtakeover.txt" ] && cat subtakeover.txt | notify -silent
 }
 
 gitexposed(){
     echo "Probe gitexposed"
     echo "Init gitexposed probe" | notify -silent 
-    [ -s "allhttp" ] && cat allhttp | unfurl domains | anew gitexpprobe
+    [ -s "ALLHTTP" ] && cat ALLHTTP | unfurl domains | anew gitexpprobe
     [ -s "gitexpprobe" ] && python3 $ToolsPath/GitTools/Finder/gitfinder.py -i gitexpprobe -o gitexpresult
     [ -s "gitexpresult" ] && cat gitexpresult | notify -silent
 }
@@ -111,20 +109,21 @@ gitexposed(){
 # use dns history to check for possible domain takeover
 ##########################################################
 dnsrecords() {
+  echo "[+] Get dnshistory data"
   mkdir dnshistory
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r A -silent -o dnshistory/A-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r NS -silent -o dnshistory/NS-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r CNAME -silent -o dnshistory/CNAME-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r SOA -silent -o dnshistory/SOA-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r PTR -silent -o dnshistory/PTR-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r MX -silent -o dnshistory/MX-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r TXT  -silent -o dnshistory/TXT-records
-  cat all.alive.subdomains | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | dnsprobe -s ~/tools/lists/my-lists/resolvers -r AAAA -silent -o dnshistory/AAAA-records
+  cat clean.subdomains | dnsx -a -resp -silent -o dnshistory/A-records
+  cat clean.subdomains | dnsx -ns -resp -silent -o dnshistory/NS-records
+  cat clean.subdomains | dnsx -cname -resp -silent -o dnshistory/CNAME-records
+  cat clean.subdomains | dnsx -soa -resp -silent -o dnshistory/SOA-records
+  cat clean.subdomains | dnsx -ptr -resp -silent -o dnshistory/PTR-records
+  cat clean.subdomains | dnsx -mx -resp -silent -o dnshistory/MX-records
+  cat clean.subdomains | dnsx -txt -resp -silent -o dnshistory/TXT-records
+  cat clean.subdomains | dnsx -aaaa -resp -silent -o dnshistory/AAAA-records
 }
 
 screenshot() {
   echo "[+] Begin screenshots"
-  cat 200HTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports xlarge
+  cat ALLHTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports xlarge
 }
 
 
@@ -154,9 +153,9 @@ getrobots(){
 
 crawler() {
   echo 'Crawler in action :)'
-  cat 200HTTP | waybackurls | anew -q full_url_extract.txt
-  cat 200HTTP | gauplus -subs | anew -q full_url_extract.txt
-  cat 200HTTP | hakrawler -js -robots -subs -sitemap -depth 2 | anew -q hakrawler.txt
+  cat ALLHTTP | waybackurls | anew -q full_url_extract.txt
+  cat ALLHTTP | gauplus | anew -q full_url_extract.txt
+  cat ALLHTTP | hakrawler -js -depth 2 | anew -q hakrawler.txt
   cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew -q full_url_extract.txt
 }
 bypass4xx(){
@@ -165,7 +164,7 @@ bypass4xx(){
 }
 
 paramspider() {
-  xargs -a 200HTTP -I@ sh -c 'python3 /root/Tools/ParamSpider/paramspider.py -d @ -l high --exclude jpg,png,gif,woff,css,js,svg,woff2,ttf,eot,json'
+  xargs -a ALLHTTP -I@ sh -c 'python3 /root/Tools/ParamSpider/paramspider.py -d @ -l high --exclude jpg,png,gif,woff,css,js,svg,woff2,ttf,eot,json'
   cat output/http:/*.txt | anew params
   cat output/https:/*.txt | anew params
 }
@@ -204,6 +203,11 @@ getjspaths() {
   cat sorted.js.paths | cut -c 2- | sort -u >> sorted.js.paths.wobs
 }
 
+secretfinder(){
+  echo '[+] Run secretfinder'
+  regexs=$(curl -s 'https://gist.githubusercontent.com/m4ll0k/493eaab4e1661b9c6eae78d8776570b0/raw/647555cdeab44b3675b8c2fb24eca7a9ec1641b7/file.txt'|tr '\n' '|')
+  rush -i js_livelinks.txt 'python3 /root/Tools/secretfinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | anew js_secrets_result'
+}
 jsep()
 {
   mkdir scripts
@@ -289,6 +293,7 @@ fullreconAxiom(){
   subdomainenum
   getaliveAxiom
   getdata
+  dnsrecords
   bypass4xx
   Corstest
   crawler
@@ -310,6 +315,7 @@ fullrecon(){
 # checkscope
   getalive
   getdata
+  dnsrecords
   subtakeover
   gitexposed
   bypass4xx
@@ -317,6 +323,7 @@ fullrecon(){
   crawler
   getjsurls
   getjsdata
+  secretfinder
   paramspider
   screenshot
 #  xsshunter
