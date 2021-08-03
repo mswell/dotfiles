@@ -5,5 +5,5 @@
 # install yay
 
 echo "Installing base-dev libs"
-sudo pacman -Syu --noconfirm git gvim
-sudo pacman -Syu --noconfirm base-devel
+paru -Syu --noconfirm git gvim python-pip
+paru -Syu --noconfirm base-devel

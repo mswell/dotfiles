@@ -4,22 +4,22 @@ set -e
 echo "Installing useful Apps"
 
 # install useful desktop apps
-yay -S --noconfirm --needed termite inkscape 
+paru -S --noconfirm --needed termite inkscape 
 
 
 # software from 'normal' repositories
-yay -S --noconfirm --needed dconf-editor tmux htop
-yay -S --noconfirm --needed evince evolution evolution-ews pidgin
-yay -S --noconfirm --needed gimp git
-yay -S --noconfirm --needed gparted
-yay -S --noconfirm --needed transmission-cli transmission-gtk
-yay -S --noconfirm --needed vlc wget unclutter curl
+paru -S --noconfirm --needed dconf-editor tmux htop
+paru -S --noconfirm --needed evince evolution evolution-ews pidgin
+paru -S --noconfirm --needed gimp git lsd
+paru -S --noconfirm --needed gparted
+paru -S --noconfirm --needed transmission-cli transmission-gtk
+paru -S --noconfirm --needed vlc wget unclutter curl
 echo "Install applications"
-yay -S --noconfirm --needed ctags ncurses zsh xclip autojump docker-compose docker tlp gvim
+paru -S --noconfirm --needed ctags ncurses zsh xclip autojump docker-compose docker tlp gvim
 
 sudo pip install virtualenvwrapper jedi ipython pylint pydocstyle pipenv
 
 mkdir -p $HOME/.config/alacritty
 
 # installation of zippers and unzippers
-yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract file-roller
+paru -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract file-roller
