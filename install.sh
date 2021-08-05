@@ -47,6 +47,6 @@ OSX(){
 
 UbuntuServer(){
     echo "Initializing setup :)"
-    source setup/UbuntuServer/setup.sh
+    source setup/ubuntuServer/setup.sh
 }
 Menu
