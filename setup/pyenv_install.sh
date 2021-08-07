@@ -41,6 +41,7 @@ cat <<"EOT" >> $HOME/.zshrc
 
 # Pyenv initialization
 eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 EOT
 
