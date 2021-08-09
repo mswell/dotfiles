@@ -94,3 +94,5 @@ alias mirrorx="sudo reflector --age 6 --latest 20  --fastest 20 --threads 5 --so
 # pacman or pm
 alias pacman='sudo pacman --color auto'
 alias update='sudo pacman -Syyu'
+# Fix dual monitors in home XMONAD
+alias dualhome="xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP"
