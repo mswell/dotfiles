@@ -73,6 +73,7 @@ repos["cloud_enum"]="initstring/cloud_enum"
 repos["JSScanner"]="0x240x23elu/JSScanner"
 repos["GitTools"]="internetwache/GitTools"
 repos["SecretFinder"]="m4ll0k/SecretFinder"
+repos["M4ll0k Tools"]="m4ll0k/BBTz"
 
 if [[ $(id -u | grep -o '^0$') == "0" ]]; then
     SUDO=" "
