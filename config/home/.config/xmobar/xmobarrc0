@@ -40,7 +40,7 @@ Config { font    = "xft:Ubuntu:weight=bold:pixelsize=11:antialias=true:hinting=t
                     , Run DiskU [("/", "<fn=2>\xf0c7</fn>  hdd: <free> free")] [] 60
                       -- Runs custom script to check for pacman updates.
                       -- This script is in my dotfiles repo in .local/bin.
-                    , Run Com "/home/dt/.local/bin/pacupdate" [] "pacupdate" 36000
+                    , Run Com "/home/mswell/.local/bin/pacupdate" [] "pacupdate" 36000
                       -- Runs a standard shell command 'uname -r' to get kernel version
                     , Run Com "uname" ["-r"] "" 3600
                     , Run UnsafeStdinReader

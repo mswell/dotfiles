@@ -14,7 +14,7 @@ Config { font    = "xft:Ubuntu:weight=bold:pixelsize=11:antialias=true:hinting=t
        , hideOnStart = False
        , allDesktops = True
        , persistent = True
-       , iconRoot = "/home/dt/.xmonad/xpm/"  -- default: "."
+       , iconRoot = "/home/mswell/.xmonad/xpm/"  -- default: "."
        , commands = [
                     -- Time and date
                       Run Date "<fn=2>\xf017</fn>  %b %d %Y - (%H:%M) " "date" 50
@@ -28,11 +28,11 @@ Config { font    = "xft:Ubuntu:weight=bold:pixelsize=11:antialias=true:hinting=t
                     , Run DiskU [("/", "<fn=2>\xf0c7</fn>  hdd: <free> free")] [] 60
                       -- Runs custom script to check for pacman updates.
                       -- This script is in my dotfiles repo in .local/bin.
-                    , Run Com "/home/dt/.local/bin/pacupdate" [] "pacupdate" 36000
+                    , Run Com "/home/mswell/.local/bin/pacupdate" [] "pacupdate" 36000
                       -- Runs a standard shell command 'uname -r' to get kernel version
                     , Run Com "uname" ["-r"] "" 3600
                       -- Script that dynamically adjusts xmobar padding depending on number of trayer icons.
-                    , Run Com "/home/dt/.config/xmobar/trayer-padding-icon.sh" [] "trayerpad" 20
+                    , Run Com "/home/mswell/.config/xmobar/trayer-padding-icon.sh" [] "trayerpad" 20
                       -- Prints out the left side items such as workspaces, layout, etc.
                       -- The workspaces are 'clickable' in my configs.
                     , Run UnsafeStdinReader
