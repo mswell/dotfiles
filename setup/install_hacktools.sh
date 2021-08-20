@@ -74,6 +74,7 @@ repos["JSScanner"]="0x240x23elu/JSScanner"
 repos["GitTools"]="internetwache/GitTools"
 repos["SecretFinder"]="m4ll0k/SecretFinder"
 repos["M4ll0k Tools"]="m4ll0k/BBTz"
+repos["Git-Dumper"]="arthaud/git-dumper"
 
 if [[ $(id -u | grep -o '^0$') == "0" ]]; then
     SUDO=" "
