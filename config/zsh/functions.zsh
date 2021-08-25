@@ -183,10 +183,10 @@ xsshunter() {
   Domain=$(cat domain)
   echo "INIT XSS HUNTER AT $Domain" | notify -silent 
   echo "INIT XSS HUNTER"
-  cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvetor
-  # gospider -S 200HTTP -c 10 -d 3 --blacklist ".(jpg|jpeg|gif|css|tif|tiff|png|ttf|woff|woff2|ico|pdf|svg|txt)" --other-source | grep -e "code-200" | awk '{print $5}'| grep "=" | qsreplace -a | anew xssvetor
-  cat xssvetor | grep $Domain | Gxss -p FFF | anew XSS
-  cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
+  [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
+  [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
+  # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
+  [ -s "XSS" ] cat XSS | dalfox pipe --skip-bav -o XSSresult | notify
 }
 getjsurls() {
   Domain=$(cat domain)
@@ -217,7 +217,9 @@ getjspaths() {
 secretfinder(){
   echo '[+] Run secretfinder'
   regexs=$(curl -s 'https://gist.githubusercontent.com/m4ll0k/493eaab4e1661b9c6eae78d8776570b0/raw/647555cdeab44b3675b8c2fb24eca7a9ec1641b7/file.txt'|tr '\n' '|')
-  rush -i js_livelinks.txt 'python3 /root/Tools/secretfinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | anew js_secrets_result'
+  rush -i js_livelinks.txt 'python3 /root/Tools/secretfinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
+  cat js_secrets_result | grep -v custom_regex | grep -iv '[URL]:' | anew JSPathNoUrl
+  cat JSPathNoUrl | python3 /root/Tools/BBTz/collector.py JSOutput
 }
 jsep()
 {
