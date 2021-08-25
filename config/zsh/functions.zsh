@@ -643,7 +643,7 @@ discoverLive(){
   echo 'scan network' $1
   sudo nmap -v -sn $1 -oG liveHosts
   cat liveHosts | grep Up | awk '{print $2}' | anew IpLiveHosts
-  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
+  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888,9191
   cat largePorts | grep -v 404 | anew HTTPOK
   cat HTTPOK | awk '{print $1}' | anew hostwithPorts
   cat HTTPOK | aquatone -ports large -scan-timeout 900 -http-timeout 6000 -out aqua_out -threads 20
@@ -655,7 +655,7 @@ discoverLive4faraday(){
   echo 'scan network' $1
   sudo nmap -v -sn $1 -oG liveHosts
   cat liveHosts | grep Up | awk '{print $2}' | anew IpLiveHosts
-  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
+  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888,9191
   cat largePorts | awk '{print $1}' | cut -d '/' -f 3 | cut -d ':' -f 1 | anew host4faraday
   echo 'end discovery'
 }
