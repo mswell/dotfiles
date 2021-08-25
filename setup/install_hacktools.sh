@@ -43,6 +43,7 @@ gotools["resolveDomains"]="go get -v github.com/Josue87/resolveDomains"
 gotools["interactsh-client"]="GO111MODULE=on go get -v github.com/projectdiscovery/interactsh/cmd/interactsh-client"
 gotools["analyticsrelationships"]="go get -v github.com/Josue87/analyticsrelationships"
 gotools["gotator"]="go get -v github.com/Josue87/gotator"
+gotools["kxss"]="go get -u github.com/tomnomnom/hacks/kxss"
 
 declare -A repos
 repos["degoogle_hunter"]="six2dez/degoogle_hunter"
