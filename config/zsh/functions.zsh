@@ -217,7 +217,7 @@ getjspaths() {
 secretfinder(){
   echo '[+] Run secretfinder'
   regexs=$(curl -s 'https://gist.githubusercontent.com/m4ll0k/493eaab4e1661b9c6eae78d8776570b0/raw/647555cdeab44b3675b8c2fb24eca7a9ec1641b7/file.txt'|tr '\n' '|')
-  rush -i js_livelinks.txt 'python3 /root/Tools/secretfinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
+  rush -i js_livelinks.txt 'python3 /root/Tools/SecretFinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
   cat js_secrets_result | grep -v custom_regex | grep -iv '[URL]:' | anew JSPathNoUrl
   cat JSPathNoUrl | python3 /root/Tools/BBTz/collector.py JSOutput
 }
