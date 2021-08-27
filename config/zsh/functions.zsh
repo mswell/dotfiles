@@ -48,10 +48,9 @@ subdomainenum(){
   rm -f subfinder.subdomains
   amass enum -nf all.subdomains -v -passive -df domain -o amass.subdomains  
   awk '{print $1}' amass.subdomains >> all.subdomains
-  cat domain | assetfinder --subs-only | tee -a all.subdomains
-  cat all.subdomains | grep -v "^$Domain$" | anew subdwithoutdup
-  xargs -a subdwithoutdup -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
-  cat recondorecon | grep $Domain >> all.subdomains
+  cat domain | assetfinder --subs-only | anew all.subdomains
+  xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
+  cat recondorecon | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] subdomain recon completed :)" 
 }
@@ -186,14 +185,14 @@ xsshunter() {
   [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
   [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
   # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
-  [ -s "XSS" ] cat XSS | dalfox pipe --skip-bav -o XSSresult | notify
+  [ -s "XSS" ] cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
 }
 getjsurls() {
-  Domain=$(cat domain)
   echo "[+]Get JS and test live endpoints"
-  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
-  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' |  grep $Domain | anew -q jsfile_links.txt
-  cat url_extract_js.txt | subjs | grep $Domain | anew -q jsfile_links.txt
+  cat full_url_extract.txt | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
+  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q jsfile_links.txt
+  cat ALLHTTP | subjs | anew -q jsfile_links.txt
+  cat ALLHTTP | getJS --complete | anew -q jsfile_links.txt
   cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent  -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
   cat js_livelinks.txt | fff -d 1 -S -o JSroots
 }
@@ -216,8 +215,8 @@ getjspaths() {
 
 secretfinder(){
   echo '[+] Run secretfinder'
-  regexs=$(curl -s 'https://gist.githubusercontent.com/m4ll0k/493eaab4e1661b9c6eae78d8776570b0/raw/647555cdeab44b3675b8c2fb24eca7a9ec1641b7/file.txt'|tr '\n' '|')
-  rush -i js_livelinks.txt 'python3 /root/Tools/SecretFinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
+  regexs=$(cat $HOME/Lists/regexJS)
+  rush -i js_livelinks.txt 'python3 /root/Tools/secretfinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
   cat js_secrets_result | grep -v custom_regex | grep -iv '[URL]:' | anew JSPathNoUrl
   cat JSPathNoUrl | python3 /root/Tools/BBTz/collector.py JSOutput
 }
@@ -643,7 +642,7 @@ discoverLive(){
   echo 'scan network' $1
   sudo nmap -v -sn $1 -oG liveHosts
   cat liveHosts | grep Up | awk '{print $2}' | anew IpLiveHosts
-  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888,9191
+  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
   cat largePorts | grep -v 404 | anew HTTPOK
   cat HTTPOK | awk '{print $1}' | anew hostwithPorts
   cat HTTPOK | aquatone -ports large -scan-timeout 900 -http-timeout 6000 -out aqua_out -threads 20
@@ -655,7 +654,7 @@ discoverLive4faraday(){
   echo 'scan network' $1
   sudo nmap -v -sn $1 -oG liveHosts
   cat liveHosts | grep Up | awk '{print $2}' | anew IpLiveHosts
-  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888,9191
+  cat IpLiveHosts | httpx -silent -o largePorts -timeout 60 -threads 100 -tech-detect -status-code -title -follow-redirects -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
   cat largePorts | awk '{print $1}' | cut -d '/' -f 3 | cut -d ':' -f 1 | anew host4faraday
   echo 'end discovery'
 }
