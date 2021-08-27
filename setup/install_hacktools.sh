@@ -44,6 +44,7 @@ gotools["interactsh-client"]="GO111MODULE=on go get -v github.com/projectdiscove
 gotools["analyticsrelationships"]="go get -v github.com/Josue87/analyticsrelationships"
 gotools["gotator"]="go get -v github.com/Josue87/gotator"
 gotools["kxss"]="go get -u github.com/tomnomnom/hacks/kxss"
+gotools["GetJs"]="go get github.com/003random/getJS"
 
 declare -A repos
 repos["degoogle_hunter"]="six2dez/degoogle_hunter"
