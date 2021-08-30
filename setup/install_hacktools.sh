@@ -45,6 +45,7 @@ gotools["analyticsrelationships"]="go get -v github.com/Josue87/analyticsrelatio
 gotools["gotator"]="go get -v github.com/Josue87/gotator"
 gotools["kxss"]="go get -u github.com/tomnomnom/hacks/kxss"
 gotools["GetJs"]="go get github.com/003random/getJS"
+gotools["Aquatone"]="shelld3v/aquatone"
 
 declare -A repos
 repos["degoogle_hunter"]="six2dez/degoogle_hunter"
@@ -78,7 +79,6 @@ repos["SecretFinder"]="m4ll0k/SecretFinder"
 repos["M4ll0k Tools"]="m4ll0k/BBTz"
 repos["Git-Dumper"]="arthaud/git-dumper"
 repos["CORStest"]="RUB-NDS/CORStest"
-repos["Aquatone"]="shelld3v/aquatone"
 
 if [[ $(id -u | grep -o '^0$') == "0" ]]; then
     SUDO=" "
