@@ -78,6 +78,7 @@ repos["SecretFinder"]="m4ll0k/SecretFinder"
 repos["M4ll0k Tools"]="m4ll0k/BBTz"
 repos["Git-Dumper"]="arthaud/git-dumper"
 repos["CORStest"]="RUB-NDS/CORStest"
+repos["Aquatone"]="shelld3v/aquatone"
 
 if [[ $(id -u | grep -o '^0$') == "0" ]]; then
     SUDO=" "
