@@ -5,17 +5,19 @@ export ZSH=$HOME/.oh-my-zsh
 export TERM="xterm-256color"
 
 [ -f $HOME/.config/zsh/functions.zsh ] && source $HOME/.config/zsh/functions.zsh
+eval "$(starship init zsh)"
+colorscript random
 # THEME
 # ZSH_THEME="dracula"
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="spaceship"
+# ZSH_THEME="spaceship"
 
-plugins=(git node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
+plugins=(git asdf terraform node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin"
 
 # For WSL use this PATH
 

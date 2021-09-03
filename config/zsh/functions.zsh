@@ -185,14 +185,14 @@ xsshunter() {
   [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
   [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
   # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
-  [ -s "XSS" ] cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
+  [ -s "XSS" ] && cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
 }
 getjsurls() {
   echo "[+]Get JS and test live endpoints"
-  cat full_url_extract.txt | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
-  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q jsfile_links.txt
-  cat ALLHTTP | subjs | anew -q jsfile_links.txt
-  cat ALLHTTP | getJS --complete | anew -q jsfile_links.txt
+  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
+  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | grep $Domain | anew -q jsfile_links.txt
+  cat ALLHTTP | subjs | grep $Domain |  anew -q jsfile_links.txt
+  cat ALLHTTP | getJS --complete | grep $Domain | anew -q jsfile_links.txt
   cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent  -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
   cat js_livelinks.txt | fff -d 1 -S -o JSroots
 }
@@ -215,8 +215,8 @@ getjspaths() {
 
 secretfinder(){
   echo '[+] Run secretfinder'
-  regexs=$(cat $HOME/Lists/regexJS)
-  rush -i js_livelinks.txt 'python3 /root/Tools/secretfinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
+  regexs=$(curl -s 'https://gist.githubusercontent.com/mswell/1070fae0021b08d5e5650743ea402b4b/raw/589e669dec183009f01eca2c2ef1401b5f77af2b/regexJS'| tr '\n' '|')
+  rush -i js_livelinks.txt 'python3 /root/Tools/SecretFinder/SecretFinder.py -i {} -o cli -r "\w+($regexs)\w+" | grep -v custom_regex | anew js_secrets_result'
   cat js_secrets_result | grep -v custom_regex | grep -iv '[URL]:' | anew JSPathNoUrl
   cat JSPathNoUrl | python3 /root/Tools/BBTz/collector.py JSOutput
 }
@@ -327,6 +327,7 @@ fullrecon(){
 # checkscope
   getalive
   getdata
+  screenshot
   dnsrecords
   graphqldetect
   prototypefuzz
@@ -339,7 +340,6 @@ fullrecon(){
   getjsdata
   secretfinder
   paramspider
-  screenshot
 #  xsshunter
 #  scanner
 #  waybackrecon
