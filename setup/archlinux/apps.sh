@@ -11,7 +11,7 @@ paru -S --noconfirm --needed termite inkscape
 paru -S --noconfirm --needed dconf-editor tmux htop
 paru -S --noconfirm --needed evince evolution evolution-ews pidgin
 paru -S --noconfirm --needed gimp git lsd
-paru -S --noconfirm --needed gparted
+paru -S --noconfirm --needed gparted shell-color-scripts
 paru -S --noconfirm --needed transmission-cli transmission-gtk
 paru -S --noconfirm --needed vlc wget unclutter xlayoutdisplay curl
 echo "Install applications"
