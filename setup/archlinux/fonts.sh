@@ -7,5 +7,5 @@ paru -S noto-fonts-emoji --noconfirm --needed
 paru -S noto-fonts --noconfirm --needed
 paru -S ttf-droid --noconfirm --noconfirm --needed
 paru -S ttf-inconsolata --noconfirm --needed
-paru -S nerd-fonts-jetbrains-mono
+paru -S nerd-fonts-complete --needed
 fc-cache -v
