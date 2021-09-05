@@ -4,7 +4,7 @@
 
 PY3=3.9.6 
 PY2=2.7.18
-PY3TOOLS="youtube-dl pytest nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
+PY3TOOLS="youtube-dl pytest bbrf nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
 PY2TOOLS="rename"
 
 VENVS=~/.ve
