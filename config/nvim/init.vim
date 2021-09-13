@@ -1,4 +1,4 @@
-" vim-bootstrap 2021-07-15 12:32:39
+" vim-bootstrap 2021-09-12 12:09:10
 
 "*****************************************************************************
 "" Vim-Plug core
@@ -10,7 +10,7 @@ else
   let curl_exists=expand('curl')
 endif
 
-let g:vim_bootstrap_langs = "c,go,haskell,html,javascript,php,python,ruby,rust,typescript"
+let g:vim_bootstrap_langs = "go,html,javascript,python,typescript"
 let g:vim_bootstrap_editor = "neovim"				" nvim or vim
 let g:vim_bootstrap_theme = "dracula"
 let g:vim_bootstrap_frams = "vuejs"
@@ -49,11 +49,8 @@ Plug 'dense-analysis/ale'
 Plug 'Yggdroot/indentLine'
 Plug 'editor-bootstrap/vim-bootstrap-updater'
 Plug 'tpope/vim-rhubarb' " required by fugitive to :Gbrowse
-Plug 'morhetz/gruvbox'
 Plug 'dracula/vim', { 'as': 'dracula' }
-Plug 'wakatime/vim-wakatime'
 Plug 'ryanoasis/vim-devicons'
-Plug 'sheerun/vim-polyglot'
 
 if isdirectory('/usr/local/opt/fzf')
   Plug '/usr/local/opt/fzf' | Plug 'junegunn/fzf.vim'
@@ -79,21 +76,9 @@ Plug 'honza/vim-snippets'
 "" Custom bundles
 "*****************************************************************************
 
-" c
-Plug 'vim-scripts/c.vim', {'for': ['c', 'cpp']}
-Plug 'ludwig/split-manpage.vim'
-
-
 " go
 "" Go Lang Bundle
 Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
-
-
-" haskell
-"" Haskell Bundle
-Plug 'eagletmt/neco-ghc'
-Plug 'dag/vim2hs'
-Plug 'pbrisbin/vim-syntax-shakespeare'
 
 
 " html
@@ -109,44 +94,10 @@ Plug 'mattn/emmet-vim'
 Plug 'jelera/vim-javascript-syntax'
 
 
-" php
-"" PHP Bundle
-Plug 'phpactor/phpactor', {'for': 'php', 'do': 'composer install --no-dev -o'}
-Plug 'stephpy/vim-php-cs-fixer'
-
-
 " python
 "" Python Bundle
 Plug 'davidhalter/jedi-vim'
 Plug 'raimon49/requirements.txt.vim', {'for': 'requirements'}
-
-
-" ruby
-Plug 'tpope/vim-rails'
-Plug 'tpope/vim-rake'
-Plug 'tpope/vim-projectionist'
-Plug 'thoughtbot/vim-rspec'
-Plug 'ecomba/vim-ruby-refactoring', {'tag': 'main'}
-
-
-" rust
-" Vim racer
-Plug 'racer-rust/vim-racer'
-
-" Rust.vim
-Plug 'rust-lang/rust.vim'
-
-" Async.vim
-Plug 'prabirshrestha/async.vim'
-
-" Vim lsp
-Plug 'prabirshrestha/vim-lsp'
-
-" Asyncomplete.vim
-Plug 'prabirshrestha/asyncomplete.vim'
-
-" Asyncomplete lsp.vim
-Plug 'prabirshrestha/asyncomplete-lsp.vim'
 
 
 " typescript
@@ -224,16 +175,20 @@ let g:session_command_aliases = 1
 syntax on
 set ruler
 set number
-packadd! dracula_pro
-let g:dracula_colorterm = 0
-let no_buffers_menu=1
-colorscheme dracula_pro
 
+let no_buffers_menu=1
+packadd! dracula_pro
+
+syntax enable
+
+let g:dracula_colorterm = 0
+
+colorscheme dracula_pro
 
 set mousemodel=popup
 set t_Co=256
 set guioptions=egmrti
-set gfn=Hack\ 10
+set gfn=Monospace\ 10
 
 if has("gui_running")
   if has("gui_mac") || has("gui_macvim")
@@ -295,12 +250,13 @@ if exists("*fugitive#statusline")
 endif
 
 " vim-airline
-" let g:airline_theme = 'dracula_pro'
+let g:airline_theme = 'dracula_pro'
 let g:airline#extensions#branch#enabled = 1
 let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tagbar#enabled = 1
 let g:airline_skip_empty_sections = 1
+let g:airline_powerline_fonts = 1
 
 "*****************************************************************************
 "" Abbreviations
@@ -403,15 +359,6 @@ noremap <Leader>gs :Gstatus<CR>
 noremap <Leader>gb :Gblame<CR>
 noremap <Leader>gd :Gvdiff<CR>
 noremap <Leader>gr :Gremove<CR>
-
-" Base64 decode word under cursor
-nmap <Leader>b :!echo <C-R><C-W> \| base64 -d<CR>
-
-" grep recursively for word under cursor
-nmap <Leader>g :tabnew\|read !grep -Hnr '<C-R><C-W>'<CR>
-
-" sort the buffer removing duplicates
-nmap <Leader>s :%!sort -u --version-sort<CR>
 
 " session management
 nnoremap <leader>so :OpenSession<Space>
@@ -524,11 +471,6 @@ nnoremap <Leader>o :.Gbrowse<CR>
 "" Custom configs
 "*****************************************************************************
 
-" c
-autocmd FileType c setlocal tabstop=4 shiftwidth=4 expandtab
-autocmd FileType cpp setlocal tabstop=4 shiftwidth=4 expandtab
-
-
 " go
 " vim-go
 " run :GoBuild or :GoTestCompile based on the go file
@@ -597,13 +539,6 @@ augroup END
     \"go": ['golint', 'go vet'], })
 
 
-" haskell
-let g:haskell_conceal_wide = 1
-let g:haskell_multiline_strings = 1
-let g:necoghc_enable_detailed_browse = 1
-autocmd Filetype haskell setlocal omnifunc=necoghc#omnifunc
-
-
 " html
 " for html files, 2 spaces
 autocmd Filetype html setlocal ts=2 sw=2 expandtab
@@ -617,33 +552,6 @@ augroup vimrc-javascript
   autocmd!
   autocmd FileType javascript setl tabstop=4|setl shiftwidth=4|setl expandtab softtabstop=4
 augroup END
-
-
-" php
-" Phpactor plugin
-" Include use statement
-nmap <Leader>u :call phpactor#UseAdd()<CR>
-" Invoke the context menu
-nmap <Leader>mm :call phpactor#ContextMenu()<CR>
-" Invoke the navigation menu
-nmap <Leader>nn :call phpactor#Navigate()<CR>
-" Goto definition of class or class member under the cursor
-nmap <Leader>oo :call phpactor#GotoDefinition()<CR>
-nmap <Leader>oh :call phpactor#GotoDefinitionHsplit()<CR>
-nmap <Leader>ov :call phpactor#GotoDefinitionVsplit()<CR>
-nmap <Leader>ot :call phpactor#GotoDefinitionTab()<CR>
-" Show brief information about the symbol under the cursor
-nmap <Leader>K :call phpactor#Hover()<CR>
-" Transform the classes in the current file
-nmap <Leader>tt :call phpactor#Transform()<CR>
-" Generate a new class (replacing the current file)
-nmap <Leader>cc :call phpactor#ClassNew()<CR>
-" Extract expression (normal mode)
-nmap <silent><Leader>ee :call phpactor#ExtractExpression(v:false)<CR>
-" Extract expression from selection
-vmap <silent><Leader>ee :<C-U>call phpactor#ExtractExpression(v:true)<CR>
-" Extract method from selection
-vmap <silent><Leader>em :<C-U>call phpactor#ExtractMethod()<CR>
 
 
 " python
@@ -675,61 +583,6 @@ let g:airline#extensions#virtualenv#enabled = 1
 
 " Syntax highlight
 let python_highlight_all = 1
-
-
-" ruby
-let g:rubycomplete_buffer_loading = 1
-let g:rubycomplete_classes_in_global = 1
-let g:rubycomplete_rails = 1
-
-augroup vimrc-ruby
-  autocmd!
-  autocmd BufNewFile,BufRead *.rb,*.rbw,*.gemspec setlocal filetype=ruby
-  autocmd FileType ruby set tabstop=2|set shiftwidth=2|set expandtab softtabstop=2
-augroup END
-
-let g:tagbar_type_ruby = {
-    \ 'kinds' : [
-        \ 'm:modules',
-        \ 'c:classes',
-        \ 'd:describes',
-        \ 'C:contexts',
-        \ 'f:methods',
-        \ 'F:singleton methods'
-    \ ]
-\ }
-
-" RSpec.vim mappings
-map <Leader>t :call RunCurrentSpecFile()<CR>
-map <Leader>s :call RunNearestSpec()<CR>
-map <Leader>l :call RunLastSpec()<CR>
-map <Leader>a :call RunAllSpecs()<CR>
-
-" For ruby refactory
-if has('nvim')
-  runtime! macros/matchit.vim
-else
-  packadd! matchit
-endif
-
-" Ruby refactory
-nnoremap <leader>rap  :RAddParameter<cr>
-nnoremap <leader>rcpc :RConvertPostConditional<cr>
-nnoremap <leader>rel  :RExtractLet<cr>
-vnoremap <leader>rec  :RExtractConstant<cr>
-vnoremap <leader>relv :RExtractLocalVariable<cr>
-nnoremap <leader>rit  :RInlineTemp<cr>
-vnoremap <leader>rrlv :RRenameLocalVariable<cr>
-vnoremap <leader>rriv :RRenameInstanceVariable<cr>
-vnoremap <leader>rem  :RExtractMethod<cr>
-
-
-" rust
-" Vim racer
-au FileType rust nmap gd <Plug>(rust-def)
-au FileType rust nmap gs <Plug>(rust-def-split)
-au FileType rust nmap gx <Plug>(rust-def-vertical)
-au FileType rust nmap <leader>gd <Plug>(rust-doc)
 
 
 " typescript
