@@ -337,10 +337,10 @@ fullrecon(){
   Corstest
   crawler
   getjsurls
-  getjsdata
+  # getjsdata
   secretfinder
   paramspider
-#  xsshunter
+  xsshunter
 #  scanner
 #  waybackrecon
 #  smuggling
@@ -397,7 +397,7 @@ nuc(){
 
 nucauto(){
   nuclei -ut
-  cat 200HTTP |  nuclei -c 60 -t /root/nuclei-templates/ -severity critical,high,medium,low | notify -silent
+  cat 200HTTP |  nuclei -c 60 -severity critical,high,medium,low | notify -silent
 }
 nucaxiom(){
     axiom-scan 200HTTP -m nuclei -t /root/nuclei-templates -severity critical,high,medium,low -o resultNuclei | notify -silent
