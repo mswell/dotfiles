@@ -133,7 +133,6 @@ for gotool in "${!gotools[@]}"; do
         printf "${yellow} $gotool installed (${go_step}/${#gotools[@]})${reset}\n"
     else
         printf "${red} Unable to install $gotool, try manually (${go_step}/${#gotools[@]})${reset}\n"
-        double_check=true
     fi
 done
 
