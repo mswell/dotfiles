@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DEBUG_STD="&>/dev/null"
+
 echo "Setting Go dev environment"
 
 # Installing latest Golang version
