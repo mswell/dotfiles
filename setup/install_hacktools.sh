@@ -54,64 +54,18 @@ gotools["interactsh-client"]="go install github.com/projectdiscovery/interactsh/
 gotools["gotator"]="go install github.com/Josue87/gotator@latest"
 gotools["kxss"]="go install github.com/tomnomnom/hacks/kxss@latest"
 gotools["GetJs"]="go install gi# TERM COLORS
-bred='\033[1;31m'
-bblue='\033[1;34m'
-bgreen='\033[1;32m'
-yellow='\033[0;33m'
-red='\033[0;31m'
-blue='\033[0;34m'
-green='\033[0;32m'
-reset='\033[0m'thub.com/003random/getJS@latest"
 
 declare -A repos
-repos["degoogle_hunter"]="six2dez/degoogle_hunter"
-repos["pwndb"]="davidtavarez/pwndb"
-repos["dnsvalidator"]="vortexau/dnsv# TERM COLORS
-bred='\033[1;31m'
-bblue='\033[1;34m'
-bgreen='\033[1;32m'
-yellow='\033[0;33m'
-red='\033[0;31m'
-blue='\033[0;34m'
-green='\033[0;32m'
-reset='\033[0m'alidator"
-repos["dnsrecon"]="darkoperator/dnsrecon"
-repos["theHarvester"]="laramies/theHarvester"
-repos["brutespray"]="x90skysn3k/brutespray"
-repos["wafw00f"]="EnableSecurity/wafw00f"
 repos["gf"]="tomnomnom/gf"
 repos["Gf-Patterns"]="1ndianl33t/Gf-Patterns"
-repos["github-search"]="gwen001/github-search"
-repos["ctfr"]="UnaPibaGeek/ctfr"
 repos["LinkFinder"]="dark-warlord14/LinkFinder"
-repos["Corsy"]="s0md3v/Corsy"
-repos["CMSeeK"]="Tuhinshubhra/CMSeeK"
-repos["fav-up"]="pielco11/fav-up"
 repos["Interlace"]="codingo/Interlace"
-repos["massdns"]="blechschmidt/massdns"
-repos["OpenRedireX"]="devanshbatham/OpenRedireX"
-repos["GitDorker"]="obheda12/GitDorker"
-repos["testssl"]="drwetter/testssl.sh"
-repos["ip2provider"]="oldrho/ip2provider"
-repos["commix"]="commixproject/commix"
-repos["JSA"]="six2dez/JSA"
-repos["urldedupe"]="ameenmaali/urldedupe"
-repos["cloud_enum"]="initstring/cloud_enum"
 repos["JSScanner"]="0x240x23elu/JSScanner"
 repos["GitTools"]="internetwache/GitTools"
 repos["SecretFinder"]="m4ll0k/SecretFinder"
 repos["M4ll0k"]="m4ll0k/BBTz"
 repos["Git-Dumper"]="arthaud/git-dumper"
 repos["CORStest"]="RUB-NDS/CORStest"
-
-if [[ $(id -u | grep -o '^0$') == "0" ]]; then
-    SUDO=" "
-else
-    if sudo -n false 2>/dev/null; then
-        printf "${bred} Is strongly recommended to add your user to sudoers${reset}\n"
-    fi
-    SUDO="sudo"
-fi
 
 dir="$HOME/Tools"
 
@@ -138,12 +92,6 @@ done
 
 eval wget -nc -O ~/Lists/XSS-OFJAAAH.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/XSS/XSS-OFJAAAH.txt
 eval wget -nc -O ~/Lists/params.txt https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
-
-eval wget -N -c https://bootstrap.pypa.io/get-pip.py $DEBUG_STD && eval python3 get-pip.py $DEBUG_STD
-eval rm -f get-pip.py $DEBUG_STD
-eval ln -s /usr/local/bin/pip3 /usr/bin/pip3 $DEBUG_STD
-eval pip3 install -I -r requirements.txt $DEBUG_STD
-
 eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json $DEBUG_STD
 
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
@@ -169,16 +117,10 @@ for repo in "${!repos[@]}"; do
     if [ -s "setup.py" ]; then
         eval $SUDO python3 setup.py install $DEBUG_STD
     fi
-    if [ "massdns" = "$repo" ]; then
-        eval make $DEBUG_STD && strip -s bin/massdns && eval $SUDO cp bin/massdns /usr/bin/ $DEBUG_ERROR
     elif [ "gf" = "$repo" ]; then
-        eval cp -r examples ~/.gf $DEBUG_ERROR
+        eval cp -r examples/*.json ~/.gf $DEBUG_ERROR
     elif [ "Gf-Patterns" = "$repo" ]; then
         eval mv *.json ~/.gf $DEBUG_ERROR
-    elif [ "urldedupe" = "$repo" ]; then
-        eval cmake CMakeLists.txt $DEBUG_STD
-        eval make $DEBUG_STD
-        eval $SUDO cp ./urldedupe /usr/bin/ $DEBUG_STD
     fi
     cd "$dir" || {
         echo "Failed to cd to $dir in ${FUNCNAME[0]} @ line ${LINENO}"
