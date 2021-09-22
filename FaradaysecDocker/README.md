@@ -18,8 +18,14 @@ Technologies used in this app:
 
 ### Run the machine
 
- ```sh
+```sh
  docker-compose up -d
+```
+
+### Create user
+
+```sh
+docker-compose run --rm server faraday-manage create-superuser --username admin --password admin --email admin@admin.com
 ```
 happy fun :)
 

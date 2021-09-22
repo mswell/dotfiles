@@ -20,8 +20,6 @@ services:
       - PGSQL_USER=postgres
       - PGSQL_PASSWD=postgres
       - PGSQL_DBNAME=faraday
-      - SUPERUSER_USERNAME=admin # CHANGE ME PLSSSS
-      - SUPERUSER_PASSWORD=admin # CHANGE ME PLSSSS
     ports:
       - 5985:5985
     links:
