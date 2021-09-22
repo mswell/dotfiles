@@ -4,6 +4,8 @@
 	email = wellpunk@gmail.com
 [push]
 	default = simple
+[init]
+  defaultBranch = main
 [credential]
 	helper = cache --timeout=86400
 [core]

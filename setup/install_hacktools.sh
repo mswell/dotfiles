@@ -4,11 +4,7 @@ DEBUG_STD="&>/dev/null"
 DEBUG_ERROR="2>/dev/null"
 
 # TERM COLORS
-bred='\033[1;31m'
 bblue='\033[1;34m'
-yellow='\033[0;33m'
-red='\033[0;31m'
-reset='\033[0m'
 
 declare -A gotools
 gotools["fff"]="go install github.com/tomnomnom/fff@latest"
@@ -53,7 +49,7 @@ gotools["resolveDomains"]="go install github.com/Josue87/resolveDomains@latest"
 gotools["interactsh-client"]="go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest"
 gotools["gotator"]="go install github.com/Josue87/gotator@latest"
 gotools["kxss"]="go install github.com/tomnomnom/hacks/kxss@latest"
-gotools["GetJs"]="go install gi# TERM COLORS
+gotools["GetJs"]="go install github.com/003random/getJS@latest"
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"
