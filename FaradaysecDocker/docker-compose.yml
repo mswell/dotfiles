@@ -1,0 +1,39 @@
+version: "3.12"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=faraday
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  server:
+    image: faradaysec/faraday:latest
+    environment:
+      - LISTEN_ADDR=0.0.0.0
+      - PGSQL_HOST=db
+      - PGSQL_USER=postgres
+      - PGSQL_PASSWD=postgres
+      - PGSQL_DBNAME=faraday
+      - SUPERUSER_USERNAME=admin # CHANGE ME PLSSSS
+      - SUPERUSER_PASSWORD=admin # CHANGE ME PLSSSS
+    ports:
+      - 5985:5985
+    links:
+      - db
+    restart: always
+    volumes:
+      - faraday-storage:/faraday-storage
+      - faraday-config:/faraday-config
+      - faraday-log:/home/faraday/.faraday/logs
+
+volumes:
+  postgres-data: {}
+  faraday-storage: {}
+  faraday-config: {}
+  faraday-log: {}
