@@ -167,17 +167,6 @@ crawler() {
   cat ALLHTTP | hakrawler -depth 2 | anew -q hakrawler.txt
   cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew -q full_url_extract.txt
 }
-
-getjsurls() {
-  echo "[+]Get JS and test live endpoints"
-  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
-  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | grep $Domain | anew -q jsfile_links.txt
-  cat ALLHTTP | subjs | grep $Domain | anew -q jsfile_links.txt
-  cat ALLHTTP | getJS --complete | grep $Domain | anew -q jsfile_links.txt
-  cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
-  cat js_livelinks.txt | fff -d 1 -S -o JSroots
-}
-
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
   [ -s "dirdarResult.txt" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent
@@ -196,6 +185,15 @@ xsshunter() {
   [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
   # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
   [ -s "XSS" ] && cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
+}
+getjsurls() {
+  echo "[+]Get JS and test live endpoints"
+  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
+  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | grep $Domain | anew -q jsfile_links.txt
+  cat ALLHTTP | subjs | grep $Domain | anew -q jsfile_links.txt
+  cat ALLHTTP | getJS --complete | grep $Domain | anew -q jsfile_links.txt
+  cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
+  cat js_livelinks.txt | fff -d 1 -S -o JSroots
 }
 
 getjsdata() {
@@ -331,6 +329,7 @@ fullrecon() {
   # getjsdata
   secretfinder
   paramspider
+  nucaxiom
   xsshunter
   #  scanner
   #  waybackrecon
@@ -391,7 +390,8 @@ nucauto() {
   cat 200HTTP | nuclei -c 60 -severity critical,high,medium,low | notify -silent
 }
 nucaxiom() {
-  axiom-scan 200HTTP -m nuclei -t /root/nuclei-templates -severity critical,high,medium,low -o resultNuclei | notify -silent
+  axiom-scan 200HTTP -m nuclei -t /root/nuclei-templates -severity critical,high,medium,low -o resultNuclei
+  [ -s resultNuclei ] && cat resultNuclei | notify -silent
 }
 nucautoMedium() {
   nuclei -ut
