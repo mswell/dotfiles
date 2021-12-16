@@ -113,7 +113,7 @@ for repo in "${!repos[@]}"; do
     if [ -s "setup.py" ]; then
         eval $SUDO python3 setup.py install $DEBUG_STD
     fi
-    elif [ "gf" = "$repo" ]; then
+    if [ "gf" = "$repo" ]; then
         eval cp -r examples/*.json ~/.gf $DEBUG_ERROR
     elif [ "Gf-Patterns" = "$repo" ]; then
         eval mv *.json ~/.gf $DEBUG_ERROR

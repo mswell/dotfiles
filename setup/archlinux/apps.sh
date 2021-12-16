@@ -3,10 +3,6 @@ set -e
 
 echo "Installing useful Apps"
 
-# install useful desktop apps
-paru -S --noconfirm --needed termite inkscape 
-
-
 # software from 'normal' repositories
 paru -S --noconfirm --needed dconf-editor tmux htop
 paru -S --noconfirm --needed evince evolution evolution-ews pidgin

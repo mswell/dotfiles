@@ -2,7 +2,7 @@
 # Author: Henrique Bastos <henrique@bastos.net>
 # Modified by Wellington Moraes <wellpunk@gmail.com>
 
-PY3=3.9.6 
+PY3=3.10.1
 PY2=2.7.18
 PY3TOOLS="youtube-dl pytest bbrf nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
 PY2TOOLS="rename"

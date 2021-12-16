@@ -330,7 +330,7 @@ fullrecon() {
   secretfinder
   paramspider
   nucaxiom
-  xsshunter
+  # xsshunter
   #  scanner
   #  waybackrecon
   #  smuggling

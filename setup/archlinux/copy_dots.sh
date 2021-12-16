@@ -19,4 +19,4 @@ cp $DOTFILES/config/tmux/.tmux.conf $HOME/.tmux.conf
 cp $DOTFILES/config/git/.gitconfig $HOME/.gitconfig
 
 # alacritty
-cp $DOTFILES/config/alacritty.yml $HOME/.config/alacritty/.alacritty.yml
+cp $DOTFILES/config/alacritty.yml $HOME/.config/alacritty/alacritty.yml
