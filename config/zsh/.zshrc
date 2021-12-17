@@ -17,7 +17,7 @@ colorscript random
 
 plugins=(git asdf terraform node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin"
 
 # For WSL use this PATH
 
@@ -62,7 +62,7 @@ alias v='nvim'
 alias vim='nvim'
 unalias gf
 
-source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.zsh
+source $HOME/Tools/gf/gf-completion.zsh
 
 # alias for gron
 alias norg="gron --ungron"
