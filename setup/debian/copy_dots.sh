@@ -5,19 +5,18 @@ echo "Copy dotfiles"
 # zsh
 
 # install oh-my-zsh and overwrite zsh file
-cp $DOTFILES/config/zsh/.zshrc $HOME/.zshrc
+cp "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
 
 # neovim
 # create .config folder and nvim folder
-cp $DOTFILES/config/nvim/init.vim $HOME/.config/nvim/init.vim
+mkdir -p "$HOME/.config/nvim"
+cp "$DOTFILES/config/nvim/init.vim" "$HOME/.config/nvim/init.vim"
 
 # tmux
-cp $DOTFILES/config/tmux/.tmux.conf $HOME/.tmux.conf
-
-# vim
-cp $DOTFILES/config/vim/.vimrc $HOME/.vimrc
-cp $DOTFILES/config/vim/.vimrc.local $HOME/.vimrc.local
-cp $DOTFILES/config/vim/.vimrc.local.bundles $HOME/.vimrc.local.bundles
+cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
 
 # git
-cp $DOTFILES/config/git/.gitconfig $HOME/.gitconfig
+cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
+
+# alacritty
+cp "$DOTFILES/config/alacritty.yml" "$HOME/.config/alacritty/alacritty.yml"
