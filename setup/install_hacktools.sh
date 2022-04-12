@@ -27,13 +27,13 @@ gotools["assetfinder"]="go install github.com/tomnomnom/assetfinder@latest"
 gotools["github-subdomains"]="go install github.com/gwen001/github-subdomains@latest"
 gotools["cf-check"]="go install github.com/dwisiswant0/cf-check@latest"
 gotools["waybackurls"]="go install github.com/tomnomnom/hacks/waybackurls@latest"
-gotools["nuclei"]="go install github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"
+gotools["nuclei"]="go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest"
 gotools["anew"]="go install github.com/tomnomnom/anew@latest"
 gotools["notify"]="go install github.com/projectdiscovery/notify/cmd/notify@latest"
 gotools["mildew"]="go install github.com/daehee/mildew/cmd/mildew@latest"
 gotools["dirdar"]="go install github.com/m4dm0e/dirdar@latest"
 gotools["unfurl"]="go install github.com/tomnomnom/unfurl@latest"
-gotools["httpx"]="go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
+gotools["httpx"]="go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest"
 gotools["github-endpoints"]="go install github.com/gwen001/github-endpoints@latest"
 gotools["dnsx"]="go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest"
 gotools["subfinder"]="go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
@@ -50,6 +50,14 @@ gotools["interactsh-client"]="go install github.com/projectdiscovery/interactsh/
 gotools["gotator"]="go install github.com/Josue87/gotator@latest"
 gotools["kxss"]="go install github.com/tomnomnom/hacks/kxss@latest"
 gotools["GetJs"]="go install github.com/003random/getJS@latest"
+gotools["Goop"]="go install github.com/deletescape/goop@latest"
+gotools["Meg"]="go install github.com/tomnomnom/meg@latest"
+gotools["Freq"]="go install github.com/takshal/freq@latest"
+gotools["Sdlookup"]="go install github.com/j3ssie/sdlookup@latest"
+gotools["Sigurlfinder"]="go install -v github.com/signedsecurity/sigurlfind3r/cmd/sigurlfind3r@latest"
+gotools["Chromedp"]="go install github.com/chromedp/chromedp@latest"
+gotools["Airixss"]="go install github.com/ferreiraklet/airixss@latest"
+gotools["Nilo"]="go install github.com/ferreiraklet/nilo@latest"
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"
@@ -62,6 +70,11 @@ repos["SecretFinder"]="m4ll0k/SecretFinder"
 repos["M4ll0k"]="m4ll0k/BBTz"
 repos["Git-Dumper"]="arthaud/git-dumper"
 repos["CORStest"]="RUB-NDS/CORStest"
+repos["Knock"]="guelfoweb/knock"
+repos["Photon"]="s0md3v/Photon"
+repos["Sudomy"]="screetsec/Sudomy"
+repos["DNSvalidator"]="vortexau/dnsvalidator"
+repos["Massdns"]="blechschmidt/massdns"
 
 dir="$HOME/Tools"
 
@@ -71,6 +84,8 @@ mkdir -p ~/.config/notify/
 mkdir -p ~/.config/amass/
 mkdir -p ~/.config/nuclei/
 mkdir -p ~/Lists/
+
+pip3 install uro
 
 printf "${bblue} Running: Installing Golang tools (${#gotools[@]})${reset}\n\n"
 go env -w GO111MODULE=auto
@@ -110,8 +125,15 @@ for repo in "${!repos[@]}"; do
     else
         printf "${red} Unable to install $repo, try manually (${repos_step}/${#repos[@]})${reset}\n"
     fi
+    if [ -s "requirements.txt" ]; then
+        eval $SUDO pip3 install -r requirements.txt $DEBUG_STD
+    fi
     if [ -s "setup.py" ]; then
         eval $SUDO python3 setup.py install $DEBUG_STD
+    fi
+    if [ -s "Makefile" ]; then
+        eval $SUDO make $DEBUG_STD
+        eval $SUDO make install $DEBUG_STD
     fi
     if [ "gf" = "$repo" ]; then
         eval cp -r examples/*.json ~/.gf $DEBUG_ERROR
