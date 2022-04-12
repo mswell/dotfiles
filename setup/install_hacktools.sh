@@ -8,6 +8,8 @@ bblue='\033[1;34m'
 
 printf "${bblue} Running: Installing Golang tools (${#gotools[@]})${reset}\n\n"
 
+go env -w GO111MODULE=auto
+
 echo "Install fff"
 go install github.com/tomnomnom/fff@latest
 echo "Install hakrawler"
