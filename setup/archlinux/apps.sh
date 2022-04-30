@@ -9,7 +9,7 @@ paru -S --noconfirm --needed evince evolution evolution-ews pidgin
 paru -S --noconfirm --needed gimp git lsd
 paru -S --noconfirm --needed gparted shell-color-scripts
 paru -S --noconfirm --needed transmission-cli transmission-gtk
-paru -S --noconfirm --needed vlc wget unclutter xlayoutdisplay curl
+paru -S --noconfirm --needed git-delta vlc wget unclutter xlayoutdisplay curl
 echo "Install applications"
 paru -S --noconfirm --needed ctags lazygit ncurses zsh xclip autojump docker-compose docker tlp gvim
 
