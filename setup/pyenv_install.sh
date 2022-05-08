@@ -2,9 +2,9 @@
 # Author: Henrique Bastos <henrique@bastos.net>
 # Modified by Wellington Moraes <wellpunk@gmail.com>
 
-PY3=3.10.1
+PY3=3.10.4
 PY2=2.7.18
-PY3TOOLS="youtube-dl pytest bbrf nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
+PY3TOOLS="poetry youtube-dl pytest bbrf nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
 PY2TOOLS="rename"
 
 VENVS=~/.ve
@@ -22,7 +22,7 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 
 git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
-
+git clone https://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
 # All my virtualenvs are here...
 mkdir -p $VENVS
 
