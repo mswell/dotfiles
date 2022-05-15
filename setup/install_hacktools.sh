@@ -129,6 +129,7 @@ repos["Photon"]="s0md3v/Photon"
 repos["Sudomy"]="screetsec/Sudomy"
 repos["DNSvalidator"]="vortexau/dnsvalidator"
 repos["Massdns"]="blechschmidt/massdns"
+repos["Dirsearch"]="maurosoria/dirsearch"
 
 dir="$HOME/Tools"
 
@@ -140,10 +141,12 @@ mkdir -p ~/.config/nuclei/
 mkdir -p ~/Lists/
 
 pip3 install uro
+pip3 install bhedak
 
 eval wget -nc -O ~/Lists/XSS-OFJAAAH.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/XSS/XSS-OFJAAAH.txt
 eval wget -nc -O ~/Lists/params.txt https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
 eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json $DEBUG_STD
+eval wget -nc -O ~/Lists/httparchive_apiroutes_2022_03_28.txt https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
 
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
 
