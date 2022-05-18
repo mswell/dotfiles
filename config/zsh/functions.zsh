@@ -267,7 +267,7 @@ scanPortsAndNuclei(){
 
   echo '[+] Enumerate httpx nuclei'
   cat naabuIP.txt | nuclei -silent -o nuclei.txt -severity low,medium,high,critical
-  [ -s "nuclei.txt" ] && cat nuclei.txt | notify -silent -id subs 
+  [ -s "nuclei.txt" ] && cat nuclei.txt | notify -silent -id nuclei 
 }
 
 faviconEnum(){
