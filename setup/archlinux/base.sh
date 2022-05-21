@@ -5,5 +5,5 @@
 # install yay
 
 echo "Installing base-dev libs"
-paru -Syu --noconfirm git gvim python-pip
-paru -Syu --noconfirm base-devel
+paru -Syu --noconfirm git vim python-pip
+paru -Syu --noconfirm base devel

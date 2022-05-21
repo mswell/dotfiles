@@ -10,7 +10,7 @@ paru -S --noconfirm --needed gimp git lsd
 paru -S --noconfirm --needed gparted shell-color-scripts
 paru -S --noconfirm --needed git-delta vlc wget unclutter xlayoutdisplay curl
 echo "Install applications"
-paru -S --noconfirm --needed ctags lazygit ncurses zsh xclip autojump docker-compose docker tlp gvim
+paru -S --noconfirm --needed ctags lazygit ncurses zsh xclip autojump docker-compose docker tlp 
 
 # sudo pip install virtualenvwrapper jedi ipython pylint pydocstyle pipenv
 
