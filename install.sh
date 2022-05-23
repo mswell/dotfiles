@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export EDITOR='vim'
-export DOTFILES=$HOME/Projects/dotfiles
+export DOTFILES=$PWD
 
 clear
 
@@ -26,7 +26,7 @@ Menu(){
         3) OSX ;;
         4) UbuntuServer ;;
         0) exit ;;
-        *) "Unknown option :(" ; echo ; Menu ;;
+        *) "Unknown option" ; echo ; Menu ;;
     esac
 }
 

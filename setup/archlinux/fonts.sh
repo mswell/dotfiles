@@ -7,5 +7,5 @@ paru -S noto-fonts-emoji --noconfirm --needed
 paru -S noto-fonts otf-font-awesome ttf-mononoki ttf-ubuntu-font-family --noconfirm --needed
 paru -S ttf-droid --noconfirm --noconfirm --needed
 paru -S ttf-inconsolata --noconfirm --needed
-paru -S nerd-fonts-complete --needed
+paru -S ttf-hack --needed --noconfirm
 fc-cache -v

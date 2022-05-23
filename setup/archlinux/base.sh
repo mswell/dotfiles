@@ -1,8 +1,9 @@
 #!/bin/sh
-# Antergos base config
 
-# in case pure Arch read about how install yay: https://www.ostechnix.com/install-yay-arch-linux/
-# install yay
+sudo pacman -S --needed base-devel
+git clone https://aur.archlinux.org/paru.git
+cd paru
+makepkg -si
 
 echo "Installing base-dev libs"
 paru -Syu --noconfirm git vim python-pip

@@ -4,7 +4,7 @@ echo "Installing tools for developers"
 
 # python and neovim dependencies
 paru -S --noconfirm python python-setuptools neovim
-mkdir $HOME/.config/nvim
+mkdir "$HOME/.config/nvim"
 
 # install base packages
 

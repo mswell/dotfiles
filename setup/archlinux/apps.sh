@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+
 echo "Installing useful Apps"
 
 # software from 'normal' repositories
