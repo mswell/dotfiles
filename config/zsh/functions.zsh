@@ -156,21 +156,21 @@ swaggerdetect() {
 }
 
 prototypefuzz() {
-  echo "Prototype FUZZ" | notify -silent
+  echo "Prototype FUZZ" | notify -silent -id subs
   cat ALLHTTP | sed 's/$/\/?__proto__[testparam]=exploit\//' | page-fetch -j 'window.testparam == "exploit"? "[VULNERABLE]" : "[NOT VULNERABLE]"' | sed "s/(//g" | sed "s/)//g" | sed "s/JS //g" | grep "VULNERABLE" | grep -v "NOT" | notify -silent
 }
 subtakeover() {
   echo "test for posible subdomain-takeover"
   python3 $ToolsPath/takeover/takeover.py -l clean.subdomains -o subtakeover.txt -k -v -t 50
-  [ -s "subtakeover.txt" ] && cat subtakeover.txt | notify -silent
+  [ -s "subtakeover.txt" ] && cat subtakeover.txt | notify -silent -id subs
 }
 
 gitexposed() {
   echo "Probe gitexposed"
-  echo "Init gitexposed probe" | notify -silent
+  echo "Init gitexposed probe" | notify -silent -id subs
   [ -s "ALLHTTP" ] && cat ALLHTTP | unfurl domains | anew -q gitexpprobe
   [ -s "gitexpprobe" ] && python3 $ToolsPath/GitTools/Finder/gitfinder.py -i gitexpprobe -o gitexpresult
-  [ -s "gitexpresult" ] && cat gitexpresult | notify -silent
+  [ -s "gitexpresult" ] && cat gitexpresult | notify -silent -id subs
 }
 ##########################################################
 # use massdns
@@ -221,14 +221,13 @@ getrobots() {
 
 crawler() {
   echo 'Crawler in action :)'
-  cat ALLHTTP | waybackurls | anew full_url_extract.txt
-  cat ALLHTTP | gauplus | anew full_url_extract.txt
+  cat ALLHTTP | gauplus -b png,jpg,gif | anew full_url_extract.txt
   cat ALLHTTP | hakrawler -d 2 | anew hakrawler.txt
   cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew full_url_extract.txt
 }
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
-  [ -s "dirdarResult.txt" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent
+  [ -s "dirdarResult.txt" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent -id subs
 }
 
 paramspider() {
@@ -240,14 +239,14 @@ xsshunter() {
   
   echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
-  echo '[+] URL Bhedak'
-  cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
-  [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
+  # echo '[+] URL Bhedak'
+  # cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
+  # [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
   echo '[+] Airixss xss'
-  cat domain | waybackurls | gf xss | uro | httpx -silent | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
+  cat domain | gauplus | gf xss | uro | httpx -silent | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
   [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
   echo '[+] Freq xss'
-  cat domain | waybackurls | gf xss | uro | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  cat domain | gauplus | gf xss | uro | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
   [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
   # [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
   # [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
@@ -269,7 +268,18 @@ scanPortsAndNuclei(){
   cat naabuIP.txt | nuclei -silent -o nuclei.txt -severity low,medium,high,critical
   [ -s "nuclei.txt" ] && cat nuclei.txt | notify -silent -id nuclei 
 }
+massHakip2host(){
+  echo "[+] Mass HakIP2host"
+  Domain=$(cat domain)
+  rush -i mapcidr.txt "prips {} | hakip2host | anew hakip2hostResult.txt"
+  [ -s "hakip2hostResult.txt" ] && cat "hakip2hostResult.txt" | grep $Domain | awk '{print $3}'  | anew cleanHakipResult.txt
+}
 
+nucauto() {
+  [ -s "cleanHakipResult.txt" ] && cat "cleanHakipResult.txt" | httpx -silent | anew ALLHTTP
+  nuclei -ut
+  cat ALLHTTP | nuclei -c 60 -severity critical,high,medium,low | notify -silent -id nuclei
+}
 faviconEnum(){
   echo '[+] Enumerate FavFreak'
   cat 200HTTP | python3 /root/Tools/FavFreak/favfreak.py --shodan -o outputFavFreak
@@ -286,8 +296,8 @@ getjsurls() {
 }
 
 getjsdata() {
-  # [ -s "js_livelinks.txt" ] && python3 /root/Tools/JSScanner/jsscanner.py js_livelinks.txt $ToolsPath/JSScanner/regex.txt
-  [ -s "js_livelinks.txt" ] && cat js_livelinks.txt | nuclei -tags token -o jsinfo
+  [ -s "js_livelinks.txt" ] && cat js_livelinks.txt | nuclei -tags exposure,token -o jsinfo
+  [ -s "jsinfo" ] && cat jsinfo | notify -silent -id nuclei
 }
 getjspaths() {
   cat alive.js.urls | while read line; do
@@ -416,13 +426,15 @@ fullrecon() {
   gitexposed
   bypass4xx
   scanPortsAndNuclei
+  massHakip2host
+  nucauto
   xsshunter
   faviconEnum
   #Corstest
-  # crawler
-  # getjsurls
-  # getjsdata
-  # secretfinder
+  crawler
+  getjsurls
+  getjsdata
+  secretfinder
   # paramspider
   #nucauto
   #  scanner
