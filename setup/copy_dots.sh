@@ -4,7 +4,7 @@ set -e
 echo "Copy dotfiles"
 # zsh
 
-mkdir "$HOME/.config/zsh"
+mkdir -p "$HOME/.config/zsh"
 
 # install oh-my-zsh and overwrite zsh file
 cp "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"

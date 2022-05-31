@@ -43,7 +43,8 @@ newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  naabu -l clean.subdomains -top-ports 100 -silent -sa | httpx -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
+  httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
