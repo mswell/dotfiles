@@ -16,5 +16,5 @@ cp "$DOTFILES/config/tmux-sessionizer" "$HOME/.local/bin/"
 # git
 cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
 
-# alacritty
-cp "$DOTFILES/config/alacritty.yml" "$HOME/.config/alacritty/alacritty.yml"
+# wezterm
+cp "$DOTFILES/config/.wezterm.lua" "$HOME/.wezterm.lua"
