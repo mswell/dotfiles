@@ -15,7 +15,7 @@ colorscript random
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 # ZSH_THEME="spaceship"
 
-plugins=(git asdf terraform node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
+plugins=(git fzf asdf terraform node yarn extract tmux ruby zsh-autosuggestions virtualenvwrapper autojump  docker golang sudo docker-compose zsh-syntax-highlighting)
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin"
 
@@ -98,3 +98,5 @@ alias pacman='sudo pacman --color auto'
 alias update='sudo pacman -Syyu'
 # Fix dual monitors in home XMONAD
 alias dualhome="xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP"
+
+bindkey -s ^f "tmux-sessionizer\n"

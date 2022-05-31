@@ -11,6 +11,7 @@ cp "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
 cp "$DOTFILES/config/zsh/functions.zsh" "$HOME/.config/zsh/"
 # tmux
 cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
+cp "$DOTFILES/config/tmux-sessionizer" "$HOME/.local/bin/"
 
 # git
 cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
