@@ -7,7 +7,7 @@ echo "Installing useful Apps"
 # software from 'normal' repositories
 paru -S --noconfirm --needed dconf-editor tmux htop
 paru -S --noconfirm --needed evince evolution evolution-ews pidgin
-paru -S --noconfirm --needed gimp git lsd wezterm-git
+paru -S --noconfirm --needed gimp git lsd alacritty
 paru -S --noconfirm --needed gparted shell-color-scripts
 paru -S --noconfirm --needed git-delta vlc wget unclutter xlayoutdisplay curl
 echo "Install applications"
