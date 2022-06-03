@@ -147,9 +147,11 @@ pip3 install bhedak
 
 eval wget -nc -O ~/Lists/XSS-OFJAAAH.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/XSS/XSS-OFJAAAH.txt
 eval wget -nc -O ~/Lists/params.txt https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
+eval wget -nc -O ~/Lists/raft-large-directories-lowercase.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
 eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json $DEBUG_STD
 eval wget -nc -O ~/Lists/httparchive_apiroutes_2022_03_28.txt https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
-
+eval wget -nc -O ~/Lists/raft-large-files.txt https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-files.txt
+eval wget -nc -O ~/Lists/raft-large-words-lowercase.txt https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-words-lowercase.txt
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
 
 cd "$dir" || {
