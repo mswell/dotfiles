@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# install shell-color-scripts
+git clone https://gitlab.com/dwt1/shell-color-scripts.git
+cd shell-color-scripts
+sudo make install
+cd -
+rm -rf shell-color-scripts
+
+# Install Starship
+
+sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 # zsh
 
 sudo apt install -y zsh git autojump tree ttf-ancient-fonts tmux
