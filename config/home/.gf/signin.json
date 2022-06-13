@@ -1,0 +1,4 @@
+{
+  "flags": "-HriE",
+  "pattern": "(>login|>sign (in|up)|>log in)"
+}
