@@ -90,7 +90,7 @@ myTerminal :: String
 myTerminal = "alacritty"    -- Sets default terminal
 
 myBrowser :: String
-myBrowser = "qutebrowser "  -- Sets qutebrowser as browser
+myBrowser = "google-chrome-stable"  -- Sets qutebrowser as browser
 
 myEmacs :: String
 myEmacs = "emacsclient -c -a 'emacs' "  -- Makes emacs keybindings easier to type
@@ -108,19 +108,24 @@ myNormColor   = colorBack   -- This variable is imported from Colors.THEME
 myFocusColor :: String      -- Border color of focused windows
 myFocusColor  = color15     -- This variable is imported from Colors.THEME
 
+mySoundPlayer :: String
+mySoundPlayer = "ffplay -nodisp -autoexit " -- The program that will play system sounds
+
 windowCount :: X (Maybe String)
 windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
 
 myStartupHook :: X ()
 myStartupHook = do
+    spawnOnce (mySoundPlayer ++ startupSound)
     spawn "killall conky"   -- kill current conky on each restart
     spawn "killall trayer"  -- kill current trayer on each restart
 
     spawnOnce "lxsession"
     spawnOnce "picom"
+    spawnOnce "xlayoutdisplay"
     spawnOnce "nm-applet"
     spawnOnce "volumeicon"
-    spawnOnce "/usr/bin/emacs --daemon" -- emacs daemon for the emacsclient
+    spawn "/usr/bin/emacs --daemon" -- emacs daemon for the emacsclient
 
     spawn ("sleep 2 && conky -c $HOME/.config/conky/xmonad/" ++ colorScheme ++ "-01.conkyrc")
     spawn ("sleep 2 && trayer --edge top --align right --widthtype request --padding 6 --SetDockType true --SetPartialStrut true --expand true --monitor 1 --transparent true --alpha 0 " ++ colorTrayer ++ " --height 22")
@@ -165,12 +170,12 @@ myAppGrid = [ ("Audacity", "audacity")
                  , ("Deadbeef", "deadbeef")
                  , ("Emacs", "emacsclient -c -a emacs")
                  , ("Firefox", "firefox")
-                 , ("Geany", "geany")
+                 , ("Brave", "brave")
                  , ("Geary", "geary")
                  , ("Gimp", "gimp")
-                 , ("Kdenlive", "kdenlive")
-                 , ("LibreOffice Impress", "loimpress")
-                 , ("LibreOffice Writer", "lowriter")
+                 , ("Google Chrome", "google-chrome-stable")
+                 , ("Discord", "discord")
+                 , ("Spotify", "spotify")
                  , ("OBS", "obs")
                  , ("PCManFM", "pcmanfm")
                  ]
@@ -347,6 +352,7 @@ myManageHook = composeAll
      , className =? "Yad"             --> doCenterFloat
      , title =? "Oracle VM VirtualBox Manager"  --> doFloat
      , title =? "Mozilla Firefox"     --> doShift ( myWorkspaces !! 1 )
+     , className =? "Google-chrome"   --> doShift ( myWorkspaces !! 1 )
      , className =? "Brave-browser"   --> doShift ( myWorkspaces !! 1 )
      , className =? "mpv"             --> doShift ( myWorkspaces !! 7 )
      , className =? "Gimp"            --> doShift ( myWorkspaces !! 8 )
@@ -355,13 +361,20 @@ myManageHook = composeAll
      , isFullscreen -->  doFullFloat
      ] <+> namedScratchpadManageHook myScratchPads
 
+soundDir = "/opt/dtos-sounds/" -- The directory that has the sound files
+
+startupSound      = soundDir ++ "startup-01.mp3"
+shutdownSound     = soundDir ++ "shutdown-01.mp3"
+dmenuSound        = soundDir ++ "menu-01.mp3"
+
 -- START_KEYS
 myKeys :: [(String, X ())]
 myKeys =
     -- KB_GROUP Xmonad
         [ ("M-C-r", spawn "xmonad --recompile")       -- Recompiles xmonad
         , ("M-S-r", spawn "xmonad --restart")         -- Restarts xmonad
-        , ("M-S-q", io exitSuccess)                   -- Quits xmonad
+        , ("M-S-q", sequence_ [spawn (mySoundPlayer ++ shutdownSound)
+                              , io exitSuccess]) -- Quits xmonad
 
     -- KB_GROUP Get Help
         , ("M-S-/", spawn "~/.xmonad/xmonad_keys.sh") -- Get list of keybindings
@@ -391,6 +404,7 @@ myKeys =
         , ("M-p r", spawn "dm-radio")         -- online radio
         , ("M-p s", spawn "dm-websearch")     -- search various search engines
         , ("M-p t", spawn "dm-translate")     -- translate text (Google Translate)
+        , ("M-p y", spawn "dm-youtube")     -- translate text (Google Translate)
 
     -- KB_GROUP Useful programs to have a keybinding for launch
         , ("M-<Return>", spawn (myTerminal))
