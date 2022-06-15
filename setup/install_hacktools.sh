@@ -132,15 +132,16 @@ repos["Sudomy"]="screetsec/Sudomy"
 repos["DNSvalidator"]="vortexau/dnsvalidator"
 repos["Massdns"]="blechschmidt/massdns"
 repos["Dirsearch"]="maurosoria/dirsearch"
+repos["Knoxnl"]="xnl-h4ck3r/knoxnl"
 
 dir="$HOME/Tools"
 
 mkdir -p ~/.gf
 mkdir -p ~/Tools/
+mkdir -p ~/Lists/
 mkdir -p ~/.config/notify/
 mkdir -p ~/.config/amass/
 mkdir -p ~/.config/nuclei/
-mkdir -p ~/Lists/
 
 pip3 install uro
 pip3 install bhedak

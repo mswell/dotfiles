@@ -51,23 +51,93 @@ newRecon(){
   getdata
   screenshot
   dnsrecords
+  nucauto
   # graphqldetect
   xsshunter
+}
+
+secrets () {
+
+        echo "[ + ] Checking for basic auth..."
+        grep -HnriEo 'basic [a-zA-Z0-9=:+/-]{5,100}'
+
+        echo "[ + ] Checking for Google Cloud or Maps Api..."
+        grep -HnriEo 'AIza[0-9A-Za-z\-]{35}'
+
+        echo "[ + ] Checking Slack webhooks..."
+        grep -HnriEo 'https://hooks.slack.com/services/T[a-zA-Z0-9]{8}/B[a-zA-Z0-9]{8}/[a-zA-Z0-9]{24}'
+
+        echo "[ + ] Checking Aws Access Key..."
+        grep -HnriEo 'AKIA[0-9A-Z]{16}'
+
+        echo "[ + ] Checking Bearer auth..."
+        grep -HnriEo 'bearer [a-zA-Z0-9\-\.=]+'
+
+        echo "[ + ] Checking Cloudinary auth key..."
+        grep -HnriEo 'cloudinary://[0-9]{15}:[0-9A-Za-z]+@[a-z]+'
+
+        echo "[ + ] Checking Mailgun api key..."
+        grep -HnriEo 'key-[0-9a-zA-Z]{32}'
+
+        echo "[ + ] Checking for Api key parameters..."
+        grep -HnriEo "(api_key|API_KEY)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+        grep -HnriEo "(api-key|API-KEY)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+        grep -HnriEo "(apikey|APIKEY)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for access keys..."
+        grep -HnriEo "(access_key|ACCESS_KEY)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for access token..."
+        grep -HnriEo "(access_token|ACCESSTOKEN)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for Bearer Token..."
+        grep -HnriEo 'bearer [a-zA-Z0-9-.=:_+/]{5,100}'
+
+        echo "[ + ] Checking for auth token..."
+        grep -HnriEo "(auth_token|AUTH_TOKEN)"
+
+        echo "[ + ] Checking for slack api..."
+        grep -HnriEo "(slack_api|SLACK_API)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for db password or username..."
+        grep -HnriEo "(db_password|DB_PASSWORD)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+        grep -HnriEo "(db_username|DB_USERNAME)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for authorization tokens..."
+        grep -HnriEo "(authorizationToken|AUTHORIZATIONTOKEN)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for app key ..."
+        grep -HnriEo "(app_key|APPKEY)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for authorization ..."
+        grep -HnriEo "(authorization|AUTHORIZATION)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for authentication ..."
+        grep -HnriEo "(authentication|AUTHENTICATION)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+
+        echo "[ + ] Checking for aws links, buckets and secrets..."
+        grep -HnriEo "(.{8}[A-z0-9-].amazonaws.com/)[A-z0-9-].{6}"
+        grep -HnriEo "(.{8}[A-z0-9-].s3.amazonaws.com/)[A-z0-9-].{6}"
+        grep -HnriEo "(.{8}[A-z0-9-].s3-amazonaws.com/)[A-z0-9_-].{6}"
+        grep -HnriEo 'amzn.mws.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+        grep -HnriEo "(amazonaws|AMAZONAWS)(:|=| : | = )( |\"|')[0-9A-Za-z\-]{5,100}"
+        grep -HnriEo "(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z/+]{40}['\"]"
+
 }
 
 ## findomain
 subdomainenum() {
   echo "[+] Recon subdomains..."
   Domain=$(cat domain)
-  subfinder -nW -t 100 -o subfinder.subdomains -dL domain
-  cat subfinder.subdomains | anew all.subdomains
-  rm -f subfinder.subdomains
-  amass enum -nf all.subdomains -v -norecursive -passive -df domain -o amass.subdomains
+  # subfinder -nW -t 100 -o subfinder.subdomains -dL domain
+  # cat subfinder.subdomains | anew all.subdomains
+  # rm -f subfinder.subdomains
+  amass enum -v -norecursive -passive -df domain -o amass.subdomains
   cat amass.subdomains | anew all.subdomains
   rm -f amass.subdomains
   cat domain | assetfinder --subs-only | anew all.subdomains
-  curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
-  findomain -t $Domain -q | anew all.subdomains
+  # curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
+  # findomain -t $Domain -q | anew all.subdomains
   #xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
   #cat recondorecon | grep $Domain | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
@@ -154,7 +224,8 @@ getaliveAxiom() {
 }
 getdata() {
   echo "[+] Get all responses and save on roots folder"
-  cat ALLHTTP | fff -d 50 -S -o roots
+  cat ALLHTTP | fff -d 50 -S -o AllHttpData
+  cat 200HTTP | fff -d 50 -S -o 200HttpData
 }
 
 graphqldetect() {
@@ -258,7 +329,7 @@ xsshunter() {
   # echo '[+] URL Bhedak'
   # cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
   # [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
-  [ -s "ALLHTTP" ] && cat ALLHTTP | gauplus | uro | anew waybackdata
+  [ -s "ALLHTTP" ] && cat ALLHTTP | gauplus -b png,jpg,gif | uro | anew waybackdata
   [ -s "ALLHTTP" ] && cat ALLHTTP | waybackurls | uro | anew waybackdata 
   [ -s "waybackdata" ] && cat waybackdata | uro | gf xss | httpx -silent | anew xssvector
   [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew xssvector
@@ -273,6 +344,12 @@ xsshunter() {
   # # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
   # [ -s "XSS" ] && cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
 }
+xssknox(){
+  [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew kxssresult
+  [ -s "kxssresult" ] && python3 $HOME/Tools/knoxnl/knoxnl.py -i kxssresult -s -o xssSuccess
+  [ -s "xssSuccess" ] && echo "XSS FOUND WITH KNOXSS" | notify -silent -id xss
+  [ -s "xssSuccess" ] && cat xssSuccess | notify -silent -id xss
+ }
 
 scanPortsAndNuclei(){
   echo '[+] Recon Blocks Mapcidr'
@@ -298,7 +375,8 @@ massHakip2host(){
 nucauto() {
   [ -s "cleanHakipResult.txt" ] && cat "cleanHakipResult.txt" | httpx -silent | anew ALLHTTP
   nuclei -ut
-  cat ALLHTTP | nuclei -c 60 -severity critical,high,medium,low | notify -silent -id nuclei
+  cat ALLHTTP | nuclei -c 60 -severity critical,high,medium,low -o resultNuclei 
+  [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
 }
 faviconEnum(){
   echo '[+] Enumerate FavFreak'
@@ -452,12 +530,10 @@ fullrecon() {
   xsshunter
   faviconEnum
   #Corstest
-  crawler
   getjsurls
   getjsdata
   secretfinder
   # paramspider
-  #nucauto
   #  scanner
   #  waybackrecon
   #  smuggling
@@ -512,10 +588,6 @@ nuc() {
   nuclei -l hosts default-credentials/ -c 60 -pbar -o nuclei_op/default-credentials.txt
 }
 
-nucauto() {
-  nuclei -ut
-  cat 200HTTP | nuclei -c 60 -severity critical,high,medium,low | notify -silent
-}
 nucaxiom() {
   axiom-scan 200HTTP -m nuclei -t /root/nuclei-templates -severity critical,high,medium,low -o resultNuclei
   [ -s resultNuclei ] && cat resultNuclei | notify -silent
@@ -746,10 +818,10 @@ fleetScan() {
   liveHosts=$company-live.txt
 
   # Start a fleet called stock with 9 instances and expire after 2 hours
-  axiom-fleet well -i=9 -t=2
+  axiom-fleet well -i= 
 
   # Run a scan, use the stok fleet, use the ranges file we just made, and set the ports to 443, then set the output file
-  axiom-scan 'well*' --rate=10000 -p443 --banners -iL=ipv4.ipaddresses -o=masscanIC.txt
+  axiom-scan 'well*' --rate=10000 -p443 --banners -iL=clean.subdomains -o=masscanIC.txt
 
   echo 'Clean file ...'
 
