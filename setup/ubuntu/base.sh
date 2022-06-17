@@ -4,7 +4,7 @@ echo "deb http://deb.volian.org/volian/ scar main" | sudo tee /etc/apt/sources.l
 wget -qO - https://deb.volian.org/volian/scar.key | sudo tee /etc/apt/trusted.gpg.d/volian-archive-scar-unstable.gpg > /dev/null
 echo "deb-src http://deb.volian.org/volian/ scar main" | sudo tee -a /etc/apt/sources.list.d/volian-archive-scar-unstable.list
 sudo apt update && sudo apt install nala -y
-sudo nala fetch --auto -y
+sudo nala fetch --auto -y --fetches 6
 
 echo "Installing base-dev libs"
 sudo nala install -y build-essential git vim xclip curl wget
