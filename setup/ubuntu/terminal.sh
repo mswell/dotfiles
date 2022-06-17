@@ -5,6 +5,13 @@ sudo nala install -y autojump tree ttf-ancient-fonts fzf tmux alacritty
 
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
+# Install Colorscripts
+
+git clone https://gitlab.com/dwt1/shell-color-scripts.git
+cd shell-color-scripts
+sudo make install
+cd -
+rm -rf shell-color-scripts
 # Install Starship
 
 sh -c "$(curl -fsSL https://starship.rs/install.sh)"

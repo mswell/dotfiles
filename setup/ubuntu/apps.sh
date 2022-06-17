@@ -9,7 +9,9 @@ echo \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo nala update
-sudo nala install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo nala install -y docker-ce npm docker-ce-cli containerd.io docker-compose-plugin
 
+export PATH="$HOME/.cargo/bin:$PATH"
 cargo install lsd
 cargo install git-delta
+sudo npm install -g neovim tree-sitter-cli
