@@ -9,7 +9,7 @@ echo \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo nala update
-sudo nala install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo nala install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 cargo install lsd
 cargo install git-delta
