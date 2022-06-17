@@ -1,18 +1,15 @@
 #!/bin/sh
+sudo nala install -y autojump tree ttf-ancient-fonts fzf tmux alacritty
 
-# install shell-color-scripts
-git clone https://gitlab.com/dwt1/shell-color-scripts.git
-cd shell-color-scripts
-sudo make install
-cd -
-rm -rf shell-color-scripts
+# Install tmux TPM
+
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Install Starship
 
 sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 # zsh
 
-sudo apt install -y zsh git autojump tree ttf-ancient-fonts tmux
 sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 echo "Now type \`chsh -s $(which zsh)\` to zsh becomes default."
 echo "Logout and login to effective your changes."

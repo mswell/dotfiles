@@ -12,27 +12,25 @@ Menu(){
     echo "#                               #"
     echo "#################################"
     echo
-    echo "[1] - Debian like"
+    echo "[1] - Ubuntu like"
     echo "[2] - ArchLinux like"
     echo "[3] - OSX"
-    echo "[4] - UbuntuServer"
     echo "[0] - Exit"
     echo
     echo -n "Choose your distro: "
     read option
     case $option in
-        1) Debian ;;
+        1) Ubuntu ;;
         2) Archlinux ;;
         3) OSX ;;
-        4) UbuntuServer ;;
         0) exit ;;
         *) "Unknown option" ; echo ; Menu ;;
     esac
 }
 
-Debian(){
+Ubuntu(){
     echo "Initializing setup :)"
-    source setup/debian/setup.sh
+    source setup/ubuntu/setup.sh
 }
 
 Archlinux(){
@@ -43,10 +41,5 @@ Archlinux(){
 OSX(){
     echo "Initializing setup :)"
     source setup/osx/setup.sh
-}
-
-UbuntuServer(){
-    echo "Initializing setup :)"
-    source setup/ubuntuServer/setup.sh
 }
 Menu
