@@ -3,7 +3,7 @@
 echo "Installing tools for developers"
 
 # python and neovim dependencies
-sudo -H pip3 install --upgrade  virtualenvwrapper
+sudo -H pip3 pynvim install --upgrade  virtualenvwrapper
 
 echo "Install latest Neovim"
 mkdir $HOME/.config/nvim
