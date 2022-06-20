@@ -13,7 +13,7 @@ paru -S --noconfirm --needed git-delta vlc wget unclutter xlayoutdisplay curl
 echo "Install applications"
 paru -S --noconfirm --needed ctags npm lazygit ncurses zsh xclip autojump docker-compose docker tlp 
   
-sudo npm install -g neovim tree-sitter-cli
+sudo npm install -g neovim tree-sitter-cli --force
 # sudo pip install virtualenvwrapper jedi ipython pylint pydocstyle pipenv
 
 # installation of zippers and unzippers
