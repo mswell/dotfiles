@@ -163,6 +163,7 @@ getalive() {
   cat clean.subdomains | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
 }
 
@@ -224,8 +225,8 @@ getaliveAxiom() {
 }
 getdata() {
   echo "[+] Get all responses and save on roots folder"
-  cat ALLHTTP | fff -d 50 -S -o AllHttpData
   cat 200HTTP | fff -d 50 -S -o 200HttpData
+  cat Without404 | fff -d 40 -S -o Without404data
 }
 
 graphqldetect() {
