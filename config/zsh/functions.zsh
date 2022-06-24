@@ -47,14 +47,13 @@ newRecon(){
   httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
-  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   getdata
-  screenshot
   dnsrecords
-  nucauto
-  # graphqldetect
   xsshunter
+  screenshot
+  nucauto
 }
 
 secrets () {
@@ -130,17 +129,17 @@ secrets () {
 subdomainenum() {
   echo "[+] Recon subdomains..."
   Domain=$(cat domain)
-  # subfinder -nW -t 100 -o subfinder.subdomains -dL domain
-  # cat subfinder.subdomains | anew all.subdomains
-  # rm -f subfinder.subdomains
-  amass enum -v -norecursive -passive -df domain -o amass.subdomains
+  subfinder -nW -t 100 -o subfinder.subdomains -dL domain
+  cat subfinder.subdomains | anew all.subdomains
+  rm -f subfinder.subdomains
+  amass enum -v -norecursive -passive -nf all.subdomains -df domain -o amass.subdomains
   cat amass.subdomains | anew all.subdomains
   rm -f amass.subdomains
-  cat domain | assetfinder --subs-only | anew all.subdomains
-  # curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
-  # findomain -t $Domain -q | anew all.subdomains
-  #xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
-  #cat recondorecon | grep $Domain | anew all.subdomains
+  cat domain | assetfinder -subs-only | anew all.subdomains
+  curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
+  findomain -t $Domain -q | anew all.subdomains
+  xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
+  cat recondorecon | grep $Domain | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] subdomain recon completed :)"
 }
@@ -227,7 +226,7 @@ getaliveAxiom() {
 getdata() {
   echo "[+] Get all responses and save on roots folder"
   cat 200HTTP | fff -d 50 -S -o 200HttpData
-  cat Without404 | fff -d 50 -S -o Without404data
+  cat Without404 | fff -d 40 -S -o Without404data
 }
 
 graphqldetect() {
@@ -310,9 +309,22 @@ getrobots() {
 
 crawler() {
   echo 'Crawler in action :)'
-  cat ALLHTTP | gauplus -b png,jpg,gif | anew full_url_extract.txt
-  cat ALLHTTP | hakrawler -d 2 | anew hakrawler.txt
-  cat hakrawler.txt | grep -Eo 'https?://[^ ]+' | grep '$Domain' | anew full_url_extract.txt
+  Domain=$(cat domain)
+  mdkir -p .tmp
+  gospider -S Without404 -d 10 -c 20 -t 50 -K 3 --no-redirect --js -a -w --blacklist ".(eot|jpg|jpeg|gif|css|tif|tiff|png|ttf|otf|woff|woff2|ico|svg|txt)" --include-subs -q -o .tmp/gospider 2> /dev/null | anew -q .tmp/gospider.list
+    xargs -a Without404 -P 50 -I % bash -c "echo % | waybackurls" 2> /dev/null | anew -q .tmp/waybackurls.list
+    xargs -a Without404 -P 50 -I % bash -c "echo % | gau --blacklist eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt --retries 3 --threads 50" 2> /dev/null | anew -q .tmp/gau.list 2> /dev/null &> /dev/null
+    cat .tmp/gospider.list .tmp/gau.list .tmp/waybackurls.list 2> /dev/null | sed '/\[/d' | grep $Domain | sort -u | uro | anew -q crawlerResults.txt
+}
+
+xsshunter() {
+  
+  echo "INIT XSS HUNTER" | notify -silent -id xss
+  echo "INIT XSS HUNTER"
+  python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domain -o urldump.txt
+  [ -s "urldump.txt" ] && cat urldump.txt | uro | anew filtered_urls.txt
+  [ -s "filtered_urls" ]  dalfox file filtered_urls.txt --skip-bav -o XSSresult
+  [ -s "XSSresult" ] && cat XSSresult | notify -id xss
 }
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
@@ -324,33 +336,11 @@ paramspider() {
   cat output/http:/*.txt | anew params
   cat output/https:/*.txt | anew params
 }
-xsshunter() {
-  
-  echo "INIT XSS HUNTER" | notify -silent -id xss
-  echo "INIT XSS HUNTER"
-  # echo '[+] URL Bhedak'
-  # cat domain | waybackurls | urldedupe -qs | bhedak '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew urlbhedak.txt
-  # [ -s "urlbhedak.txt" ] && cat urlbhedak.txt | notify -silent -id xss
-  [ -s "ALLHTTP" ] && cat ALLHTTP | gauplus -b png,jpg,gif | uro | anew waybackdata
-  [ -s "ALLHTTP" ] && cat ALLHTTP | waybackurls | uro | anew waybackdata 
-  [ -s "waybackdata" ] && cat waybackdata | uro | gf xss | httpx -silent | anew xssvector
-  [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew xssvector
-  echo '[+] Airixss xss'
-  [ -s "xssvector" ] && cat xssvector | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
-  [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
-  echo '[+] Freq xss'
-  [ -s "xssvector" ] && cat xssvector | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
-  [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
-  # [ -s "params" ] && cat params | hakcheckurl | grep 200 | awk '{print $2}' | anew xssvector
-  # [ -s "xssvector" ] && cat xssvector | grep $Domain | kxss | awk -F " " '{print $9}' | anew XSS
-  # # cat XSS | dalfox pipe --mining-dict-word $HOME/Lists/params.txt --skip-bav -o XSSresult | notify
-  # [ -s "XSS" ] && cat XSS | dalfox pipe --skip-bav -o XSSresult | notify -silent
-}
 xssknox(){
   [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew kxssresult
   [ -s "kxssresult" ] && python3 $HOME/Tools/knoxnl/knoxnl.py -i kxssresult -s -o xssSuccess
   [ -s "xssSuccess" ] && echo "XSS FOUND WITH KNOXSS" | notify -silent -id xss
-  [ -s "xssSucess" ] && cat xssSuccess | notify -silent -id xss
+  [ -s "xssSuccess" ] && cat xssSuccess | notify -silent -id xss
  }
 
 scanPortsAndNuclei(){
