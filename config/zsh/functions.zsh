@@ -48,6 +48,7 @@ newRecon(){
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
   getdata
   screenshot
   dnsrecords
@@ -226,7 +227,7 @@ getaliveAxiom() {
 getdata() {
   echo "[+] Get all responses and save on roots folder"
   cat 200HTTP | fff -d 50 -S -o 200HttpData
-  cat Without404 | fff -d 40 -S -o Without404data
+  cat Without404 | fff -d 50 -S -o Without404data
 }
 
 graphqldetect() {
@@ -349,7 +350,7 @@ xssknox(){
   [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew kxssresult
   [ -s "kxssresult" ] && python3 $HOME/Tools/knoxnl/knoxnl.py -i kxssresult -s -o xssSuccess
   [ -s "xssSuccess" ] && echo "XSS FOUND WITH KNOXSS" | notify -silent -id xss
-  [ -s "xssSuccess" ] && cat xssSuccess | notify -silent -id xss
+  [ -s "xssSucess" ] && cat xssSuccess | notify -silent -id xss
  }
 
 scanPortsAndNuclei(){
