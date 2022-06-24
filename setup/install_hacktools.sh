@@ -21,7 +21,7 @@ go install github.com/sensepost/gowitness@latest
 echo "Install rush"
 go install github.com/shenwei356/rush@latest
 echo "Install naabu"
-go install github.com/projectdiscovery/naabu/cmd/naabu@latest
+go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
 echo "Install hakcheckurl"
 go install github.com/hakluke/hakcheckurl@latest
 echo "Install shuffledns"
