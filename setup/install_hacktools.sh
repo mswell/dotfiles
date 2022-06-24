@@ -114,6 +114,8 @@ echo "Install Nilo"
 go install github.com/ferreiraklet/nilo@latest
 echo "Install haip2host"
 go install github.com/hakluke/hakip2host@latest
+echo "Install scopein"
+go install -v github.com/ferreiraklet/scopein@latest
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"
