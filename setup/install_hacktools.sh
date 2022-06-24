@@ -133,6 +133,7 @@ repos["DNSvalidator"]="vortexau/dnsvalidator"
 repos["Massdns"]="blechschmidt/massdns"
 repos["Dirsearch"]="maurosoria/dirsearch"
 repos["Knoxnl"]="xnl-h4ck3r/knoxnl"
+repos["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
 
 dir="$HOME/Tools"
 
