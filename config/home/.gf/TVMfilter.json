@@ -1,0 +1,4 @@
+{
+    "flags": "-Ev",
+    "pattern": "(.jpg|.JPG|.jpeg|.JPEG|.pdf|.PDF|.js|.JS|.svg|.SVG|.gif|.GIF|.png|.PNG|.ico|.ICO|.css|.CSS|.eot|.EOT|.tif|.TIF|.tiff|.TIFF|.ttf|.woff|.WOFF|.woff2|.WOFF2)"
+}
