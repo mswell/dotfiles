@@ -118,7 +118,7 @@ echo "Install scopein"
 go install -v github.com/ferreiraklet/scopein@latest
 
 declare -A repos
-repos["gf"]="tomnomnom/gf"
+repos["MSwellDOTS"]="mswell/dotfiles"
 repos["Gf-Patterns"]="1ndianl33t/Gf-Patterns"
 repos["LinkFinder"]="dark-warlord14/LinkFinder"
 repos["Interlace"]="codingo/Interlace"
@@ -186,8 +186,8 @@ for repo in "${!repos[@]}"; do
         eval $SUDO make $DEBUG_STD
         eval $SUDO make install $DEBUG_STD
     fi
-    if [ "gf" = "$repo" ]; then
-        eval cp -r examples/*.json ~/.gf $DEBUG_ERROR
+    if [ "MSwellDOTS" = "$repo" ]; then
+        eval cp -r config/home/.gf/*.json ~/.gf $DEBUG_ERROR
     elif [ "Gf-Patterns" = "$repo" ]; then
         eval mv *.json ~/.gf $DEBUG_ERROR
     fi
