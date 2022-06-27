@@ -323,7 +323,7 @@ xsshunter() {
   echo "INIT XSS HUNTER"
   python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domain -o urldump.txt
   [ -s "urldump.txt" ] && cat urldump.txt | uro | anew filtered_urls.txt
-  [ -s "filtered_urls" ]  dalfox file filtered_urls.txt --skip-bav -o XSSresult
+  [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
   [ -s "XSSresult" ] && cat XSSresult | notify -id xss
 }
 bypass4xx() {
