@@ -320,7 +320,7 @@ xsshunter() {
   
   echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
-  python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domain -o urldump.txt
+  python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domains -o urldump.txt
   for domain in $(cat domains)
   do
     python3 $HOME/Tools/waymore/waymore.py -i $domain -mode U
