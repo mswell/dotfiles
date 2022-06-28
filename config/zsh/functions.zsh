@@ -25,7 +25,7 @@ workspaceRecon() {
   wdir=$name/$(date +%F)/
   mkdir -p $wdir
   cd $wdir
-  echo $name | anew domain
+  echo $name | anew domains
 }
 
 # Use the output of this to make .scope files for checkscope
@@ -51,9 +51,8 @@ newRecon(){
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   getdata
   dnsrecords
-  xsshunter
-  screenshot
   nucauto
+  xsshunter
 }
 
 secrets () {
@@ -128,18 +127,18 @@ secrets () {
 ## findomain
 subdomainenum() {
   echo "[+] Recon subdomains..."
-  Domain=$(cat domain)
-  subfinder -nW -t 100 -o subfinder.subdomains -dL domain
+  Domain=$(cat domains)
+  subfinder -nW -t 100 -o subfinder.subdomains -dL domains
   cat subfinder.subdomains | anew all.subdomains
   rm -f subfinder.subdomains
-  amass enum -v -norecursive -passive -nf all.subdomains -df domain -o amass.subdomains
+  amass enum -v -norecursive -passive -nf all.subdomains -df domains -o amass.subdomains
   cat amass.subdomains | anew all.subdomains
   rm -f amass.subdomains
-  cat domain | assetfinder -subs-only | anew all.subdomains
+  cat domains | assetfinder -subs-only | anew all.subdomains
   curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
-  findomain -t $Domain -q | anew all.subdomains
-  xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
-  cat recondorecon | grep $Domain | anew all.subdomains
+  # findomain -t $Domain -q | anew all.subdomains
+  # xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
+  # cat recondorecon | grep $Domain | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] subdomain recon completed :)"
 }
@@ -309,7 +308,7 @@ getrobots() {
 
 crawler() {
   echo 'Crawler in action :)'
-  Domain=$(cat domain)
+  Domain=$(cat domains)
   mdkir -p .tmp
   gospider -S Without404 -d 10 -c 20 -t 50 -K 3 --no-redirect --js -a -w --blacklist ".(eot|jpg|jpeg|gif|css|tif|tiff|png|ttf|otf|woff|woff2|ico|svg|txt)" --include-subs -q -o .tmp/gospider 2> /dev/null | anew -q .tmp/gospider.list
     xargs -a Without404 -P 50 -I % bash -c "echo % | waybackurls" 2> /dev/null | anew -q .tmp/waybackurls.list
@@ -322,7 +321,12 @@ xsshunter() {
   echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
   python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domain -o urldump.txt
-  [ -s "urldump.txt" ] && cat urldump.txt | uro | anew filtered_urls.txt
+  for domain in $(cat domains)
+  do
+    python3 $HOME/Tools/waymore/waymore.py -i $domain -mode U
+    cat result/$domain/waymore.txt | anew urldump.txt
+  done
+  [ -s "urldump.txt" ] && cat urldump.txt | uro | kxss | awk '{print $9}' | anew filtered_urls.txt
   [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
   [ -s "XSSresult" ] && cat XSSresult | notify -id xss
 }
