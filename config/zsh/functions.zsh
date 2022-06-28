@@ -324,7 +324,7 @@ xsshunter() {
   for domain in $(cat domains)
   do
     python3 $HOME/Tools/waymore/waymore.py -i $domain -mode U
-    cat result/$domain/waymore.txt | anew urldump.txt
+    cat $HOME/Tools/waymore/results/$domain/waymore.txt | anew urldump.txt
   done
   [ -s "urldump.txt" ] && cat urldump.txt | uro | kxss | awk '{print $9}' | anew filtered_urls.txt
   [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
