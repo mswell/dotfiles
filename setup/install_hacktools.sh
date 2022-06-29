@@ -118,7 +118,7 @@ echo "Install scopein"
 go install -v github.com/ferreiraklet/scopein@latest
 
 declare -A repos
-repos["MSwellDOTS"]="mswell/dotfiles"
+repos["gf"]="tomnomnom/gf"
 repos["Gf-Patterns"]="1ndianl33t/Gf-Patterns"
 repos["LinkFinder"]="dark-warlord14/LinkFinder"
 repos["Interlace"]="codingo/Interlace"
@@ -136,6 +136,8 @@ repos["Massdns"]="blechschmidt/massdns"
 repos["Dirsearch"]="maurosoria/dirsearch"
 repos["Knoxnl"]="xnl-h4ck3r/knoxnl"
 repos["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
+repos["MSwellDOTS"]="mswell/dotfiles"
+repos["Waymore"]="xnl-h4ck3r/waymore"
 
 dir="$HOME/Tools"
 
@@ -186,8 +188,8 @@ for repo in "${!repos[@]}"; do
         eval $SUDO make $DEBUG_STD
         eval $SUDO make install $DEBUG_STD
     fi
-    if [ "MSwellDOTS" = "$repo" ]; then
-        eval cp -r config/home/.gf/*.json ~/.gf $DEBUG_ERROR
+    if [ "gf" = "$repo" ]; then
+        eval cp -r examples/*.json ~/.gf $DEBUG_ERROR
     elif [ "Gf-Patterns" = "$repo" ]; then
         eval mv *.json ~/.gf $DEBUG_ERROR
     fi
@@ -196,3 +198,7 @@ for repo in "${!repos[@]}"; do
         exit 1
     }
 done
+
+echo "Add my gf templates"
+cp -r $HOME/Tools/MSwellDOTS/config/home/.gf/*.json $HOME/.gf/
+
