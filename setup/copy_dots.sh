@@ -18,7 +18,8 @@ cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
 mkdir -p "$HOME/.config/alacritty"
 cp "$DOTFILES/config/alacritty.yml" "$HOME/.config/alacritty/"
 
-cp -R "$DOTFILES/config/nvim" "$HOME/.config/"
+# neovim 
+git clone https://github.com/mswell/myneovim.git ~/.config/nvim
 
 # tmux
 mkdir $HOME/.local/bin
