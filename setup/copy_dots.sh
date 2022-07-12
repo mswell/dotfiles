@@ -10,6 +10,7 @@ mkdir -p "$HOME/.config/zsh"
 # install oh-my-zsh and overwrite zsh file
 cp "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
 cp "$DOTFILES/config/zsh/functions.zsh" "$HOME/.config/zsh/"
+cp "$DOTFILES/config/zsh/.zprofile" "$HOME/.zprofile"
 
 # git
 cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
