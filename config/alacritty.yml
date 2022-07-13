@@ -113,11 +113,11 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
+    family: JetBrains Mono Nerd Font Mono
     # family: UbuntuMono Nerd Font
     # family: Monofur Nerd Font
     # family: TerminessTTF Nerd Font
-    family: Mononoki Nerd Font
+    # family: Mononoki Nerd Font
 
     # The `style` can be specified to pick a specific face.
     style: Regular
@@ -132,11 +132,11 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
+    family: JetBrains Mono Nerd Font Mono
     # family: UbuntuMono Nerd Font
     # family: Monofur Nerd Font
     # family: TerminessTTF Nerd Font
-    family: Mononoki Nerd Font
+    # family: Mononoki Nerd Font
 
     # The `style` can be specified to pick a specific face.
     style: Bold
@@ -151,11 +151,11 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
+    family: JetBrains Mono Nerd Font Mono
     # family: UbuntuMono Nerd Font
     # family: Monofuritalic Nerd Font Mono
     # family: TerminessTTF Nerd Font
-    family: Mononoki Nerd Font
+    # family: Mononoki Nerd Font
 
     # The `style` can be specified to pick a specific face.
     style: Italic
@@ -170,11 +170,11 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
+    family: JetBrains Mono Nerd Font Mono
     # family: UbuntuMono Nerd Font
     # family: Monofuritalic Nerd Font Mono
     # family: TerminessTTF Nerd Font
-    family: Mononoki Nerd Font
+    # family: Mononoki Nerd Font
 
     # The `style` can be specified to pick a specific face.
     style: Bold Italic
@@ -611,6 +611,61 @@ schemes:
       cyan: "0x99ffee"
       white: "0xffffff"
 
+  tokyo-night: &tokyo-night
+    # Default colors
+    primary:
+      background: '0x1a1b26'
+      foreground: '0xa9b1d6'
+
+    # Normal colors
+    normal:
+      black:   '0x32344a'
+      red:     '0xf7768e'
+      green:   '0x9ece6a'
+      yellow:  '0xe0af68'
+      blue:    '0x7aa2f7'
+      magenta: '0xad8ee6'
+      cyan:    '0x449dab'
+      white:   '0x787c99'
+
+    # Bright colors
+    bright:
+      black:   '0x444b6a'
+      red:     '0xff7a93'
+      green:   '0xb9f27c'
+      yellow:  '0xff9e64'
+      blue:    '0x7da6ff'
+      magenta: '0xbb9af7'
+      cyan:    '0x0db9d7'
+      white:   '0xacb0d0'
+
+  tokyo-night-storm: &tokyo-night-storm
+    # Default colors
+    primary:
+      background: '0x24283b'
+      foreground: '0xa9b1d6'
+
+    # Normal colors
+    normal:
+      black:   '0x32344a'
+      red:     '0xf7768e'
+      green:   '0x9ece6a'
+      yellow:  '0xe0af68'
+      blue:    '0x7aa2f7'
+      magenta: '0xad8ee6'
+      cyan:    '0x449dab'
+      white:   '0x9699a8'
+
+    # Bright colors
+    bright:
+      black:   '0x444b6a'
+      red:     '0xff7a93'
+      green:   '0xb9f27c'
+      yellow:  '0xff9e64'
+      blue:    '0x7da6ff'
+      magenta: '0xbb9af7'
+      cyan:    '0x0db9d7'
+      white:   '0xacb0d0'
 ######################################################################
 ## SET THEME: Choose ONE color scheme from those in the above list. ##
 ## ###################################################################
@@ -626,8 +681,10 @@ schemes:
 # *SolarizedDark
 # *TomorrowNight
 # *DraculaPro
+# *tokyo-night
+# *tokyo-night-storm
 
-colors: *DraculaPro
+colors: *tokyo-night
 
 #######################################
 ##       END OF COLOR SCHEMES        ##
@@ -663,8 +720,8 @@ colors: *DraculaPro
 #
 # Window opacity as a floating point number from `0.0` to `1.0`.
 # The value `0.0` is completely transparent and `1.0` is opaque.
-window.opacity: 1.0
-# window.opacity: 0.80
+# window.opacity: 1.0
+window.opacity: 0.80
 
 #selection:
   #semantic_escape_chars: ",│`|:\"' ()[]{}<>\t"

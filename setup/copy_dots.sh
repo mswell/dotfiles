@@ -25,4 +25,4 @@ git clone https://github.com/mswell/myneovim.git ~/.config/nvim
 # tmux
 mkdir $HOME/.local/bin
 cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
-cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin/"
+cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
