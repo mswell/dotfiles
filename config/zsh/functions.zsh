@@ -40,7 +40,7 @@ getfreshresolvers() {
 }
 
 ReconRedbull(){
-  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
+  naabu -l clean.subdomains -top-ports 1000 -silent -sa -o naabuScan
   httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
@@ -54,7 +54,7 @@ newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
+  naabu -l clean.subdomains -top-ports 1000 -silent -sa -o naabuScan
   httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
@@ -138,17 +138,14 @@ secrets () {
 subdomainenum() {
   echo "[+] Recon subdomains..."
   Domain=$(cat domains)
-  subfinder -nW -t 100 -o subfinder.subdomains -dL domains
+  subfinder -nW -t 100 -all -o subfinder.subdomains -dL domains
   cat subfinder.subdomains | anew all.subdomains
   rm -f subfinder.subdomains
   amass enum -v -norecursive -passive -nf all.subdomains -df domains -o amass.subdomains
   cat amass.subdomains | anew all.subdomains
   rm -f amass.subdomains
-  cat domains | assetfinder -subs-only | anew all.subdomains
   curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
-  findomain -t $Domain -q | anew all.subdomains
-  # xargs -a all.subdomains -I@ -P 10 sh -c 'assetfinder @ | anew recondorecon'
-  # cat recondorecon | grep $Domain | anew all.subdomains
+  crobat -s domains | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] subdomain recon completed :)"
 }
