@@ -611,7 +611,7 @@ schemes:
       cyan: "0x99ffee"
       white: "0xffffff"
 
-  tokyo-night: &tokyo-night
+  TokyoNight: &TokyoNight
     # Default colors
     primary:
       background: '0x1a1b26'
@@ -681,10 +681,10 @@ schemes:
 # *SolarizedDark
 # *TomorrowNight
 # *DraculaPro
-# *tokyo-night
+# *TokyoNight
 # *tokyo-night-storm
 
-colors: *tokyo-night
+colors: *TokyoNight
 
 #######################################
 ##       END OF COLOR SCHEMES        ##
