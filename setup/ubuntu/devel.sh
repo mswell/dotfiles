@@ -9,9 +9,9 @@ echo "Install latest Neovim"
 mkdir $HOME/.config/nvim
 bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/rolling/utils/installer/install-neovim-from-release)
 
-sudo nala update
+sudo apt update
 # install base packages
-sudo nala install -y vim-nox tmux git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl npm
+sudo apt install -y vim-nox tmux git exuberant-ctags zsh tree htop ncurses-term silversearcher-ag curl npm
 
 # install Rust
 

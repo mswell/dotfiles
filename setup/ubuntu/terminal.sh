@@ -1,5 +1,5 @@
 #!/bin/sh
-sudo nala install -y autojump tree ttf-ancient-fonts fzf tmux alacritty
+sudo apt install -y autojump tree ttf-ancient-fonts fzf tmux alacritty
 
 # Install tmux TPM
 
