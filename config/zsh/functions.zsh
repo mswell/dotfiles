@@ -55,7 +55,8 @@ newRecon(){
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
   naabu -l clean.subdomains -top-ports 1000 -silent -sa -o naabuScan
-  httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
+  httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
@@ -816,7 +817,7 @@ fufextension() {
 }
 
 feroxdir() {
-  feroxbuster -u $1 -r -e --status-codes 200,301,302
+  feroxbuster -u $1 -r -e --status-codes 200,301,302 -w $HOME/Lists/raft-large-directories-lowercase.txt
 }
 
 fleetScan() {
