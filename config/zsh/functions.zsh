@@ -382,7 +382,10 @@ massHakip2host(){
 
 nucauto() {
   [ -s "cleanHakipResult.txt" ] && cat "cleanHakipResult.txt" | httpx -silent | anew ALLHTTP
-  nuclei -ut
+  rm -rf ~/nuclei-templates
+  cd
+  git clone https://github.com/projectdiscovery/nuclei-templates.git
+  cd -
   cat ALLHTTP | nuclei -c 60 -severity critical,high,medium,low -o resultNuclei 
   [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
 }
