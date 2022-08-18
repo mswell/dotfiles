@@ -40,7 +40,7 @@ getfreshresolvers() {
 }
 
 ReconRedbull(){
-  naabu -l clean.subdomains -top-ports 1000 -silent -sa -o naabuScan
+  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
   httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
@@ -48,13 +48,13 @@ ReconRedbull(){
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   dnsrecords
   nucauto
-  xsshunter
 }
+
 newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  naabu -l clean.subdomains -top-ports 1000 -silent -sa -o naabuScan
+  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
   [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
   httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
@@ -63,7 +63,6 @@ newRecon(){
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   dnsrecords
   nucauto
-  xsshunter
 }
 
 secrets () {
@@ -232,8 +231,7 @@ getaliveAxiom() {
 }
 getdata() {
   echo "[+] Get all responses and save on roots folder"
-  cat 200HTTP | fff -d 50 -S -o 200HttpData
-  cat Without404 | fff -d 40 -S -o Without404data
+  cat ALLHTTP | fff -d 50 -S -o AllHttpData
 }
 
 graphqldetect() {
@@ -820,7 +818,7 @@ fufextension() {
 }
 
 feroxdir() {
-  feroxbuster -u $1 -r -e --status-codes 200,301,302 -w $HOME/Lists/raft-large-directories-lowercase.txt
+  feroxbuster -u $1 -e --status-codes 200,301,302 -w $HOME/Lists/raft-large-directories-lowercase.txt
 }
 
 fleetScan() {
