@@ -420,18 +420,19 @@ faviconEnum(){
 
 getjsurls() {
   echo "[+]Get JS and test live endpoints"
-  cat full_url_extract.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
-  cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | grep $Domain | anew -q jsfile_links.txt
-  cat ALLHTTP | subjs | grep $Domain | anew -q jsfile_links.txt
-  cat ALLHTTP | getJS --complete | grep $Domain | anew -q jsfile_links.txt
-  cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
-  cat js_livelinks.txt | fff -d 1 -S -o JSroots
+  [ -s "crawlerResults.txt" ] && cat crawlerResults.txt | grep $Domain | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | anew -q url_extract_js.txt
+  [ -s "url_extract_js" ] && cat url_extract_js.txt | cut -d '?' -f 1 | grep -Ei "\.(js)" | grep -iEv '(\.jsp|\.json)' | grep $Domain | anew -q jsfile_links.txt
+  [ -s "ALLHTTP" ] && cat ALLHTTP | subjs | grep $Domain | anew -q jsfile_links.txt
+  [ -s "ALLHTTP" ] && cat ALLHTTP | getJS --complete | grep $Domain | anew -q jsfile_links.txt
+  [ -s "jsfile_links.txt" ] && cat jsfile_links.txt | httpx -follow-redirects -random-agent -silent -status-code -retries 2 -no-color | grep 200 | grep -v 301 | cut -d " " -f 1 | anew -q js_livelinks.txt
+  [ -s "jsfile_links.txt" ] && cat js_livelinks.txt | fff -d 1 -S -o JSroots
 }
 
 getjsdata() {
   [ -s "js_livelinks.txt" ] && cat js_livelinks.txt | nuclei -tags exposure,token -o jsinfo
   [ -s "jsinfo" ] && cat jsinfo | notify -silent -id nuclei
 }
+
 getjspaths() {
   cat alive.js.urls | while read line; do
     ruby $HOME/tools/relative-url-extractor/extract.rb $line | tee -a js.extracted.paths
