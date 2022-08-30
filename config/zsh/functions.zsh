@@ -62,6 +62,11 @@ newRecon(){
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   dnsrecords
+  graphqldetect
+  swaggerdetect
+  ssrfdetect
+  XssScan
+  OpenRedirectScan
   nucauto
 }
 
@@ -236,14 +241,35 @@ getdata() {
 
 graphqldetect() {
   echo "[+] Graphql Detect"
-  cat ALLHTTP | nuclei -t /root/nuclei-templates/technologies/graphql-detect.yaml -silent -o graphqldetect
+  cat ALLHTTP | nuclei -tags graphql -o graphqldetect
   [ -s "graphqldetect" ] && echo "Graphql endpoint found :)" | notify -silent -id api
   [ -s "graphqldetect" ] && cat graphqldetect | notify -silent -id api
 }
 
+ssrfdetect() {
+  echo "[+] SSRF Detect"
+  cat ALLHTTP | nuclei -tags ssrf -o ssrfdetect
+  [ -s "ssrfdetect" ] && echo "SSRF vector found :)" | notify -silent -id nuclei
+  [ -s "ssrfdetect" ] && cat ssrfdetect | notify -silent -id nuclei
+}
+
+XssScan() {
+  echo "[+] XSS scan"
+  cat ALLHTTP | nuclei -tags xss -es info -o xssvector
+  [ -s "xssvector" ] && echo "XSS vector found :)" | notify -silent -id xss
+  [ -s "xssvector" ] && cat xssvector | notify -silent -id xss
+}
+
+OpenRedirectScan() {
+  echo "[+] OpenRedirect scan"
+  cat ALLHTTP | nuclei -tags redirect -es info -o openredirectVector
+  [ -s "openredirectVector" ] && echo "OpenRedirect vector found :)" | notify -silent -id nuclei
+  [ -s "openredirectVector" ] && cat openredirectVector | notify -silent -id nuclei
+}
+
 swaggerdetect() {
   echo "[+] Swagger Detect"
-  [ -s "naabuIP.txt" ] && cat naabuIP.txt | nuclei -tags swagger -o swaggerNuclei
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags swagger -o swaggerNuclei
   [ -s "swaggerNuclei" ] && echo "Swagger endpoint found :)" | notify -silent -id api
   [ -s "swaggerNuclei" ] && cat swaggerNuclei | notify -silent -id api
 }
@@ -384,7 +410,7 @@ nucauto() {
   cd
   git clone https://github.com/projectdiscovery/nuclei-templates.git
   cd -
-  cat ALLHTTP | nuclei -c 60 -severity critical,high,medium,low -o resultNuclei 
+  cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
   [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
 }
 faviconEnum(){
