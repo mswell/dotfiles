@@ -295,7 +295,7 @@ OpenRedirectScan() {
 
 swaggerUIdetect() {
   echo "[+] Swagger detect"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -t ~/custom_nuclei_templates/api-recon-workflow.yaml -o swaggerUI
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -t ~/custom_nuclei_templates/swagger-ui.yaml -o swaggerUI
   [ -s "swaggerUI" ] && echo "Swagger endpoint found :)" | notify -silent -id api
   [ -s "swaggerUI" ] && cat swaggerUI | notify -silent -id api
 }
