@@ -26,3 +26,6 @@ git clone https://github.com/mswell/myneovim.git ~/.config/nvim
 mkdir $HOME/.local/bin
 cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
 cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
+
+# Custom nuclei templates
+cp -R "$DOTFILES/custom_nuclei_templates/" "$HOME/"

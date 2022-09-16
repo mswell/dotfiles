@@ -1,0 +1,10 @@
+id: api-recon-workflow
+
+info:
+  name: API recon 
+  author: wellpunk  
+  description: Recon API swagger and openapi files
+
+workflows:
+  - template: exposures/apis/openapi.yaml
+  - template: ~/custom_nuclei_templates/api-recon.yaml
