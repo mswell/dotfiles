@@ -49,7 +49,8 @@ ReconRedbull(){
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   dnsrecords
   graphqldetect
-  swaggerdetect
+  APIRecon
+  swaggerUIdetect
   ssrfdetect
   XssScan
   OpenRedirectScan
@@ -63,7 +64,7 @@ swaggerRecon(){
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
-  swaggerdetect
+  swaggerUIdetect
 }
 
 newRecon(){
@@ -79,7 +80,8 @@ newRecon(){
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
   dnsrecords
   graphqldetect
-  swaggerdetect
+  APIRecon
+  swaggerUIdetect
   ssrfdetect
   XssScan
   OpenRedirectScan
@@ -291,11 +293,18 @@ OpenRedirectScan() {
   [ -s "openredirectVector" ] && cat openredirectVector | notify -silent -id nuclei
 }
 
-swaggerdetect() {
-  echo "[+] Swagger Detect"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags swagger -o swaggerNuclei
-  [ -s "swaggerNuclei" ] && echo "Swagger endpoint found :)" | notify -silent -id api
-  [ -s "swaggerNuclei" ] && cat swaggerNuclei | notify -silent -id api
+swaggerUIdetect() {
+  echo "[+] Swagger detect"
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -t ~/custom_nuclei_templates/api-recon-workflow.yaml -o swaggerUI
+  [ -s "swaggerUI" ] && echo "Swagger endpoint found :)" | notify -silent -id api
+  [ -s "swaggerUI" ] && cat swaggerUI | notify -silent -id api
+}
+
+APIRecon() {
+  echo "[+] api detect"
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -w ~/custom_nuclei_templates/api-recon-workflow.yaml -o nucleiapirecon
+  [ -s "nucleiapirecon" ] && echo "api endpoint found :)" | notify -silent -id api
+  [ -s "nucleiapirecon" ] && cat nucleiapirecon | notify -silent -id api
 }
 
 prototypefuzz() {
