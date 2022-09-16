@@ -1,4 +1,4 @@
-## VARIABLES
+# VARIABLES
 ResultsPath="$HOME/Recon"
 ToolsPath="$HOME/Tools"
 ConfigFolder="$HOME/tools/config"
@@ -40,22 +40,8 @@ getfreshresolvers() {
 }
 
 ReconRedbull(){
-  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
-  httpx -l naabuScan -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
-  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
-  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
-  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
-  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
-  dnsrecords
-  nucauto
-}
-
-newRecon(){
-  subdomainenum
-  [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
-  [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  naabu -l clean.subdomains -top-ports 100 -silent -sa -o naabuScan
-  [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
+  # naabu -l clean.subdomains -top-ports 100 -sa -o naabuScan
+  # [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
   httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
@@ -68,6 +54,44 @@ newRecon(){
   XssScan
   OpenRedirectScan
   nucauto
+}
+
+swaggerRecon(){
+  subdomainenum
+  httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  swaggerdetect
+}
+
+newRecon(){
+  subdomainenum
+  [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
+  [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  naabu -l clean.subdomains -top-ports 100 -sa -o naabuScan
+  [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
+  httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  dnsrecords
+  graphqldetect
+  swaggerdetect
+  ssrfdetect
+  XssScan
+  OpenRedirectScan
+  GitScan
+  nucauto
+}
+
+GitScan () {
+        echo "[+] Git scan"
+        cat ALLHTTP | nuclei -tags git -o gitvector
+        [ -s "gitvector" ] && echo "Git vector found :)" | notify -silent -id nuclei
+        [ -s "gitvector" ] && cat gitvector | notify -silent
 }
 
 secrets () {
@@ -346,6 +370,12 @@ crawler() {
     xargs -a Without404 -P 50 -I % bash -c "echo % | waybackurls" 2> /dev/null | anew -q .tmp/waybackurls.list
     xargs -a Without404 -P 50 -I % bash -c "echo % | gau --blacklist eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt --retries 3 --threads 50" 2> /dev/null | anew -q .tmp/gau.list 2> /dev/null &> /dev/null
     cat .tmp/gospider.list .tmp/gau.list .tmp/waybackurls.list 2> /dev/null | sed '/\[/d' | grep $Domain | sort -u | uro | anew -q crawlerResults.txt
+}
+
+massALLHTTPWebCaching(){
+  find /root/Recon -type f -name ALLHTTP | xargs -I{} -P2 bash -c 'cat {}' | anew allhttpalive
+  cat allhttpalive | nuclei -t /root/cache-poisoning.yaml -o webcachingTest
+  [ -s "webcachingTest" ] && cat webcachingTest | notify -silent -id nuclei
 }
 
 xsshunter() {
