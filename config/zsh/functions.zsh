@@ -1,31 +1,74 @@
+#################
 # VARIABLES
+#################
 ResultsPath="$HOME/Recon"
 ToolsPath="$HOME/Tools"
 ConfigFolder="$HOME/tools/config"
 GITHUB_TOKENS=${ToolsPath}/.github_tokens
-certspotter() {
-  curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1
-}
 
-crtsh() {
-  curl -s https://crt.sh/?q=%.$1 | sed 's/<\/\?[^>]\+>//g' | grep $1
-}
-cert() {
-  curl -s "https://crt.sh/?q=%.$1&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew
-}
-certnmap() {
-  curl https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 | nmap -T5 -Pn -sS -i - -$
-}
+#-------- Cores 
+# by https://github.com/nahamsec/lazyrecon/blob/master/lazyrecon.sh
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+reset=`tput sgr0`
 
-ipinfo() {
-  curl http://ipinfo.io/$1
-}
+
+#################
+# FUNCOES
+#################
+
+# Sequencia inicial sugerida
+# 1. workspaceRecon <dominio> 
+# 2. newRecon
+# 3. getdata
+# 4. screenshot
+
+#-------------------------
+# INICIALIZACAO RECON
+#-------------------------
+# Cria area de repositorios dos arquivos do RECON
 workspaceRecon() {
   name=$(echo $1 | unfurl -u domains)
   wdir=$name/$(date +%F)/
   mkdir -p $wdir
   cd $wdir
   echo $name | anew domains
+}
+
+#-------------------------
+# COLETA DE INFORMACOES
+#-------------------------
+# Enumeracao de subdominios via https://sslmate.com/ct_search_api/
+certspotter() {
+  curl -s https://api.certspotter.com/v1/issuances\?domain\=$1\&expand\=dns_names\&expand\=issuer\&expand\=cert | jq -c '.[].dns_names' | grep -o '"[^"]\+"' | tr -d '"' | sort -fu;
+}
+
+# Enumeracao de subdominios via https://crt.sh/
+crtsh() {
+  curl -s https://crt.sh/?q=%.$1 | sed 's/<\/\?[^>]\+>//g' | grep $1
+}
+
+# Enumeracao de subdominios via https://crt.sh/ ,  com saida em formato JSON
+cert() {
+  curl -s "https://crt.sh/?q=%.$1&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew
+}
+
+# Enumeracao de subdominios e escaneamento de portas via nmap 
+certnmap() {
+  #curl https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 | nmap -T5 -Pn -sS -i - -$
+  curl -s https://api.certspotter.com/v1/issuances\?domain\=$1\&expand\=dns_names | \
+	  jq '.[].dns_names[]' | \
+	  sed 's/\"//g' | \
+	  sed 's/\*\.//g' | \
+	  sort -u | \
+	  grep $1 | \
+	  nmap -T5 -Pn -sS -i - -$
+}
+
+# Exibe informacoes sobre IP consultado
+ipinfo() {
+  curl http://ipinfo.io/$1
 }
 
 # Use the output of this to make .scope files for checkscope
@@ -35,18 +78,37 @@ getscope() {
   rescope --zap --name inscope -u $1 -o scope/zapscope.context
 }
 
+# Valida a lista de resolvedores
 getfreshresolvers() {
   dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/tools/lists/my-lists/resolvers
 }
 
-ReconRedbull(){
-  # naabu -l clean.subdomains -top-ports 100 -sa -o naabuScan
-  # [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
-  httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+# Valida hosts ativos
+getalive() {
+  # sperate http and https compare if http doest have or redirect to https put in seperate file
+  # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
+  echo "${yellow}[+] Check live hosts ${reset}"
+  cat clean.subdomains | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
   cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+}
+
+#
+#------------------------------
+# MAPEAMENTO VULNERABILIDADES
+#------------------------------
+# Coleta + Mapeamento especifica para RedBull
+ReconRedbull(){
+  # naabu -l clean.subdomains -top-ports 100 -sa -o naabuScan
+  # [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
+  #httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  #cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  #cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  #cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  #cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  getalive
   dnsrecords
   graphqldetect
   APIRecon
@@ -57,13 +119,15 @@ ReconRedbull(){
   nucauto
 }
 
+
 swaggerRecon(){
   subdomainenum
-  httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
-  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
-  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
-  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
-  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  #httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  #cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  #cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  #cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  #cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  getalive
   swaggerUIdetect
 }
 
@@ -71,13 +135,15 @@ newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  # Scan ports - https://github.com/projectdiscovery/naabu
   naabu -l clean.subdomains -top-ports 100 -sa -o naabuScan
   [ -s "naabuScan" ] && cat naabuScan | anew clean.subdomains
-  httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
-  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
-  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
-  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
-  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  #httpx -l clean.subdomains -silent -status-code -tech-detect -title -timeout 60 -threads 100 -o HTTPOK
+  #cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
+  #cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
+  #cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
+  #cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
+  getalive
   dnsrecords
   graphqldetect
   APIRecon
@@ -89,12 +155,14 @@ newRecon(){
   nucauto
 }
 
+
 GitScan () {
         echo "[+] Git scan"
         cat ALLHTTP | nuclei -tags git -o gitvector
         [ -s "gitvector" ] && echo "Git vector found :)" | notify -silent -id nuclei
         [ -s "gitvector" ] && cat gitvector | notify -silent
 }
+
 
 secrets () {
 
@@ -165,7 +233,7 @@ secrets () {
 
 }
 
-## findomain
+# Enumeracao de subdominios baseado no dominio informado no arquivo "domains"
 subdomainenum() {
   echo "[+] Recon subdomains..."
   Domain=$(cat domains)
@@ -181,7 +249,10 @@ subdomainenum() {
   echo "[+] subdomain recon completed :)"
 }
 
+
+# pesquisa subdominios no escopo da hackerone
 checkscope() {
+  # https://github.com/michael1026/inscope
   cat sorted.all.subdomains | inscope | tee -a inscope.sorted.all.subdomains
 }
 
@@ -193,16 +264,6 @@ resolving() {
   shuffledns -d domains -list sorted.all.subdomains -r ~/tools/lists/my-lists/resolvers -o resolved.subdomains
 }
 
-getalive() {
-  # sperate http and https compare if http doest have or redirect to https put in seperate file
-  # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
-  echo "[+] Check live hosts"
-  cat clean.subdomains | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
-  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
-  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
-  cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
-  cat HTTPOK | awk -F " " '{print $1}' | anew ALLHTTP
-}
 
 # see this example on https://github.com/pdelteil/BugBountyHuntingScripts/blob/main/bbrf_helper.sh
 # thanks for this
@@ -436,9 +497,12 @@ scanPortsAndNuclei(){
   cat naabuIP.txt | nuclei -silent -o nuclei.txt -severity low,medium,high,critical
   [ -s "nuclei.txt" ] && cat nuclei.txt | notify -silent -id nuclei 
 }
+
 massHakip2host(){
   echo "[+] Mass HakIP2host"
   Domain=$(cat domain)
+  # https://github.com/hakluke/hakip2host
+  # https://github.com/shenwei356/rush
   rush -i mapcidr.txt "prips {} | hakip2host | anew hakip2hostResult.txt"
   [ -s "hakip2hostResult.txt" ] && cat "hakip2hostResult.txt" | grep $Domain | awk '{print $3}'  | anew cleanHakipResult.txt
 }
@@ -926,3 +990,14 @@ discoverLive4faraday() {
   cat largePorts | awk '{print $1}' | cut -d '/' -f 3 | cut -d ':' -f 1 | anew host4faraday
   echo 'end discovery'
 }
+
+#-------------------------
+# INFORMACOES SOBRE FUNCOES
+#-------------------------
+bb_help()
+{
+   echo "certspotter() - Enumeracao de subdominios a partir de um dominio informado via https://sslmate.com/ct_search_api/"
+   echo "-"
+
+}
+## FIM

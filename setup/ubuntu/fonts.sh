@@ -1,11 +1,25 @@
 #!/bin/sh
-echo "Cloning fonts repository..."
+
+#--- Cores
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+reset=`tput sgr0`
+
+#---- script
+
+echo "${yellow}[+] Clonando repositorio de fontes${reset}"
+sleep 1
 git clone https://github.com/powerline/fonts.git
-echo "Installing fonts..."
+
+
+echo "${yellow}[+] Instalando fontes${reset}"
+sleep 1
 ./fonts/install.sh
 sudo rm -r fonts/
 
-echo "Install Nerd Font"
+echo "${yellow}[+] Instalando font Nerd${reset}"
+sleep 1
 mkdir -p ~/.local/share/fonts
 cd ~/.local/share/fonts
 curl -fLo "Droid Sans Mono for Powerline Nerd Font Complete.otf" https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/DroidSansMono/complete/Droid%20Sans%20Mono%20Nerd%20Font%20Complete.otf
@@ -18,3 +32,6 @@ curl -fLo "Mononoki Italic Nerd Font Complete.ttf" https://github.com/ryanoasis/
 cd -
 fc-cache -v
 echo "Now, go to \"terminal preferences\" and change your font."
+sleep 3
+
+echo "${yellow}[*] Feito.${reset}"
