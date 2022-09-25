@@ -12,12 +12,11 @@ My personal dotfiles :)
 </h6>
 
 ## Instalacao
-Executar:
 
 ```sh
 git clone https://github.com/mswell/dotfiles.git
 cd dotfiles
-./install.sh
+./install.sh```
 
 ## Componentes
 - **config**: Diretorio com arquivos de configuracao
