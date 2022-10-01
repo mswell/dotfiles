@@ -5,13 +5,12 @@ set -e
 echo "Installing useful Apps"
 
 # software from 'normal' repositories
-paru -S --noconfirm --needed dconf-editor tmux htop
-paru -S --noconfirm --needed evince evolution evolution-ews pidgin
-paru -S --noconfirm --needed gimp git lsd alacritty
-paru -S --noconfirm --needed gparted shell-color-scripts flameshot
-paru -S --noconfirm --needed git-delta vlc wget unclutter xlayoutdisplay curl
+paru -S --noconfirm --needed tmux htop
+paru -S --noconfirm --needed git lsd alacritty
+paru -S --noconfirm --needed shell-color-scripts
+paru -S --noconfirm --needed git-delta vlc wget unclutter curl
 echo "Install applications"
-paru -S --noconfirm --needed ctags npm lazygit ncurses zsh xclip autojump docker-compose docker tlp 
+paru -S --noconfirm --needed ctags npm lazygit ncurses zsh xclip autojump 
   
 sudo npm install -g neovim tree-sitter-cli --force
 # sudo pip install virtualenvwrapper jedi ipython pylint pydocstyle pipenv
