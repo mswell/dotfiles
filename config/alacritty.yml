@@ -117,6 +117,7 @@ font:
     # family: JetBrains Mono Nerd Font Mono
     # family: UbuntuMono Nerd Font
     family: FantasqueSansMono Nerd Font
+    # family: MesloLGS NF
     # family: Monofur Nerd Font
     # family: TerminessTTF Nerd Font
     # family: Mononoki Nerd Font
@@ -135,6 +136,7 @@ font:
     # family: RobotoMono Nerd Font
     # family: Hack
     # family: JetBrains Mono Nerd Font Mono
+    # family: MesloLGS NF
     family: FantasqueSansMono Nerd Font
     # family: UbuntuMono Nerd Font
     # family: Monofur Nerd Font
@@ -157,6 +159,7 @@ font:
     # family: JetBrains Mono Nerd Font Mono
     family: FantasqueSansMono Nerd Font
     # family: UbuntuMono Nerd Font
+    # family: MesloLGS NF
     # family: Monofuritalic Nerd Font Mono
     # family: TerminessTTF Nerd Font
     # family: Mononoki Nerd Font
@@ -176,6 +179,7 @@ font:
     # family: Hack
     family: FantasqueSansMono Nerd Font
     # family: JetBrains Mono Nerd Font Mono
+    # family: MesloLGS NF
     # family: UbuntuMono Nerd Font
     # family: Monofuritalic Nerd Font Mono
     # family: TerminessTTF Nerd Font
@@ -671,6 +675,46 @@ schemes:
       magenta: '0xbb9af7'
       cyan:    '0x0db9d7'
       white:   '0xacb0d0'
+  
+  Omni: &Omni
+      primary:
+        background: '0x191622'
+        foreground: '0xe1e1e6'
+
+      cursor:
+        text: '0x191622'
+        cursor: '0xf8f8f2'
+
+      normal:
+        black: '0x000000'
+        red: '0xff5555'
+        green: '0x50fa7b'
+        yellow: '0xeffa78'
+        blue: '0xbd93f9'
+        magenta: '0xff79c6'
+        cyan: '0x8d79ba'
+        white: '0xbfbfbf'
+
+      bright:
+        black: '0x4d4d4d'
+        red: '0xff6e67'
+        green: '0x5af78e'
+        yellow: '0xeaf08d'
+        blue: '0xcaa9fa'
+        magenta: '0xff92d0'
+        cyan: '0xaa91e3'
+        white: '0xe6e6e6'
+
+      dim:
+        black: '0x000000'
+        red: '0xa90000'
+        green: '0x049f2b'
+        yellow: '0xa3b106'
+        blue: '0x530aba'
+        magenta: '0xbb006b'
+        cyan: '0x433364'
+        white: '0x5f5f5f'
+
 ######################################################################
 ## SET THEME: Choose ONE color scheme from those in the above list. ##
 ## ###################################################################
@@ -688,8 +732,9 @@ schemes:
 # *DraculaPro
 # *TokyoNight
 # *tokyo-night-storm
+# *Omni
 
-colors: *TokyoNight
+colors: *Omni
 
 #######################################
 ##       END OF COLOR SCHEMES        ##
