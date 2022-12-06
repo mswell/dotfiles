@@ -32,7 +32,8 @@ set $right semicolon
 
 # current displays
 # exec --no-startup-id xrandr --output DP0 --right-of HDMI-0 --auto
-exec --no-startup-id xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP -d 96
+exec --no-startup-id xrandr --output HDMI-0 --mode 1920x1080 --pos 0x0 --dpi 96 --rate 144 --rotate left --output DP-0 --mode 1920x1080  --dpi 96 --rate 144 --pos 1080x0 --rotate normal
+# exec --no-startup-id xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP -d 96
 # setting variables for later use
 # use xrandr and/or arandr to know the names of your monitors
 # use this line to tell which monitor is on the right
@@ -373,8 +374,7 @@ for_window [class="Spotify"] focus
 # Authentication dialog
 exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
-# gnome-keyring-daemon
-exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=secrets
+exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=ssh,secrets,pkcs11
 
 # Updater
 exec --no-startup-id pamac-tray
@@ -412,7 +412,7 @@ exec --no-startup-id nitrogen --restore &
 # exec --no-startup-id feh --bg-fill /usr/share/archlinux-tweak-tool/data/wallpaper/wallpaper.png &
 
 # Polybar
-# exec_always --no-startup-id ~/.config/polybar/launch.sh  --grayblocks &
+# exec_always --no-startup-id ~/.config/polybar/launch.sh &
 
 ################# system applications       
 
@@ -724,7 +724,7 @@ mode "$mode_gaps_outer" {
 ################# picom of i3wm                  
 
 # if you want transparency on non-focused windows, ...
-exec_always --no-startup-id picom --config ~/.config/picom.conf
+exec_always --no-startup-id picom --config ~/.config/i3/picom.conf
 
 bindsym control+mod1+o exec --no-startup-id ~/.config/i3/scripts/picom-toggle.sh
 
@@ -786,7 +786,7 @@ bar {
     # variable border background Text
 
     colors {
-        background #1a1b26
+        background #111111
         statusline #a9b1d6
         separator  #c0caf5
 
