@@ -66,7 +66,7 @@ echo "${yellow}[+] Copiando neovim${reset}"
 sleep 1
 # remove diretorio se existir
 [ -d ~/.config/nvim ] && rm -rf ~/.config/nvim
-git clone https://github.com/mswell/myneovim.git ~/.config/nvim
+git clone https://github.com/mswell/nvim.git ~/.config/nvim
 
 # tmux
 echo "${yellow}[+] Copiando tmux${reset}"
