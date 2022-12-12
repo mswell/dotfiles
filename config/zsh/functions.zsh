@@ -457,7 +457,7 @@ nucauto() {
   cd
   git clone https://github.com/projectdiscovery/nuclei-templates.git
   cd -
-  cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
+  cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -as -severity critical,high,medium,low -o resultNuclei 
   [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
 }
 
