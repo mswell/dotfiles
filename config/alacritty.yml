@@ -114,9 +114,9 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
+    family: JetBrains Mono Nerd Font Mono
     # family: UbuntuMono Nerd Font
-    family: FantasqueSansMono Nerd Font
+    # family: FantasqueSansMono Nerd Font
     # family: MesloLGS NF
     # family: Monofur Nerd Font
     # family: TerminessTTF Nerd Font
@@ -135,9 +135,9 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
+    family: JetBrains Mono Nerd Font Mono
     # family: MesloLGS NF
-    family: FantasqueSansMono Nerd Font
+    # family: FantasqueSansMono Nerd Font
     # family: UbuntuMono Nerd Font
     # family: Monofur Nerd Font
     # family: TerminessTTF Nerd Font
@@ -156,8 +156,8 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    # family: JetBrains Mono Nerd Font Mono
-    family: FantasqueSansMono Nerd Font
+    family: JetBrains Mono Nerd Font Mono
+    # family: FantasqueSansMono Nerd Font
     # family: UbuntuMono Nerd Font
     # family: MesloLGS NF
     # family: Monofuritalic Nerd Font Mono
@@ -177,8 +177,8 @@ font:
     # family: CodeNewRoman Nerd Font
     # family: RobotoMono Nerd Font
     # family: Hack
-    family: FantasqueSansMono Nerd Font
-    # family: JetBrains Mono Nerd Font Mono
+    # family: FantasqueSansMono Nerd Font
+    family: JetBrains Mono Nerd Font Mono
     # family: MesloLGS NF
     # family: UbuntuMono Nerd Font
     # family: Monofuritalic Nerd Font Mono
@@ -189,7 +189,7 @@ font:
     style: Bold Italic
 
   # Point size
-  size: 16.0
+  size: 14.0
 
   # Offset is the extra space around each character. `offset.y` can be thought of
   # as modifying the line spacing, and `offset.x` as modifying the letter spacing.
@@ -230,38 +230,38 @@ schemes:
   ### Doom One ###
   DoomOne: &DoomOne
     primary:
-      background: '#282c34'
-      foreground: '#bbc2cf'
+      background: "#282c34"
+      foreground: "#bbc2cf"
     cursor:
       text: CellBackground
-      cursor: '#528bff'
+      cursor: "#528bff"
     selection:
       text: CellForeground
-      background: '#3e4451'
+      background: "#3e4451"
     normal:
-      black:   '#1c1f24'
-      red:     '#ff6c6b'
-      green:   '#98be65'
-      yellow:  '#da8548'
-      blue:    '#51afef'
-      magenta: '#c678dd'
-      cyan:    '#5699af'
-      white:   '#202328'
+      black: "#1c1f24"
+      red: "#ff6c6b"
+      green: "#98be65"
+      yellow: "#da8548"
+      blue: "#51afef"
+      magenta: "#c678dd"
+      cyan: "#5699af"
+      white: "#202328"
     bright:
-      black:   '#5b6268'
-      red:     '#da8548'
-      green:   '#4db5bd'
-      yellow:  '#ecbe7b'
-      blue:    '#3071db'   # This is 2257a0 in Doom Emacs but I lightened it.
-      magenta: '#a9a1e1'
-      cyan:    '#46d9ff'
-      white:   '#dfdfdf'
+      black: "#5b6268"
+      red: "#da8548"
+      green: "#4db5bd"
+      yellow: "#ecbe7b"
+      blue: "#3071db" # This is 2257a0 in Doom Emacs but I lightened it.
+      magenta: "#a9a1e1"
+      cyan: "#46d9ff"
+      white: "#dfdfdf"
 
   ### Dracula ###
   Dracula: &Dracula
     primary:
-      background: '#282a36'
-      foreground: '#f8f8f2'
+      background: "#282a36"
+      foreground: "#f8f8f2"
     cursor:
       text: CellBackground
       cursor: CellForeground
@@ -270,305 +270,296 @@ schemes:
       cursor: CellForeground
     search:
       matches:
-        foreground: '#44475a'
-        background: '#50fa7b'
+        foreground: "#44475a"
+        background: "#50fa7b"
       focused_match:
-        foreground: '#44475a'
-        background: '#ffb86c'
+        foreground: "#44475a"
+        background: "#ffb86c"
       bar:
-        background: '#282a36'
-        foreground: '#f8f8f2'
+        background: "#282a36"
+        foreground: "#f8f8f2"
     line_indicator:
       foreground: None
       background: None
     selection:
       text: CellForeground
-      background: '#44475a'
+      background: "#44475a"
     normal:
-      black:   '#000000'
-      red:     '#ff5555'
-      green:   '#50fa7b'
-      yellow:  '#f1fa8c'
-      blue:    '#bd93f9'
-      magenta: '#ff79c6'
-      cyan:    '#8be9fd'
-      white:   '#bfbfbf'
+      black: "#000000"
+      red: "#ff5555"
+      green: "#50fa7b"
+      yellow: "#f1fa8c"
+      blue: "#bd93f9"
+      magenta: "#ff79c6"
+      cyan: "#8be9fd"
+      white: "#bfbfbf"
     bright:
-      black:   '#4d4d4d'
-      red:     '#ff6e67'
-      green:   '#5af78e'
-      yellow:  '#f4f99d'
-      blue:    '#caa9fa'
-      magenta: '#ff92d0'
-      cyan:    '#9aedfe'
-      white:   '#e6e6e6'
+      black: "#4d4d4d"
+      red: "#ff6e67"
+      green: "#5af78e"
+      yellow: "#f4f99d"
+      blue: "#caa9fa"
+      magenta: "#ff92d0"
+      cyan: "#9aedfe"
+      white: "#e6e6e6"
     dim:
-      black:   '#14151b'
-      red:     '#ff2222'
-      green:   '#1ef956'
-      yellow:  '#ebf85b'
-      blue:    '#4d5b86'
-      magenta: '#ff46b0'
-      cyan:    '#59dffc'
-      white:   '#e6e6d1'
+      black: "#14151b"
+      red: "#ff2222"
+      green: "#1ef956"
+      yellow: "#ebf85b"
+      blue: "#4d5b86"
+      magenta: "#ff46b0"
+      cyan: "#59dffc"
+      white: "#e6e6d1"
 
   ### Gruvbox dark ###
-  GruvboxDark: &GruvboxDark
-    # Default colors
+  GruvboxDark: &GruvboxDark # Default colors
     primary:
       # hard contrast: background = '0x1d2021'
-      background: '#282828'
+      background: "#282828"
       # soft contrast: background = '0x32302f'
-      foreground: '#ebdbb2'
+      foreground: "#ebdbb2"
 
     # Normal colors
     normal:
-      black:   '#282828'
-      red:     '#cc241d'
-      green:   '#98971a'
-      yellow:  '#d79921'
-      blue:    '#458588'
-      magenta: '#b16286'
-      cyan:    '#689d6a'
-      white:   '#a89984'
+      black: "#282828"
+      red: "#cc241d"
+      green: "#98971a"
+      yellow: "#d79921"
+      blue: "#458588"
+      magenta: "#b16286"
+      cyan: "#689d6a"
+      white: "#a89984"
 
     # Bright colors
     bright:
-      black:   '#928374'
-      red:     '#fb4934'
-      green:   '#b8bb26'
-      yellow:  '#fabd2f'
-      blue:    '#83a598'
-      magenta: '#d3869b'
-      cyan:    '#8ec07c'
-      white:   '#ebdbb2'
+      black: "#928374"
+      red: "#fb4934"
+      green: "#b8bb26"
+      yellow: "#fabd2f"
+      blue: "#83a598"
+      magenta: "#d3869b"
+      cyan: "#8ec07c"
+      white: "#ebdbb2"
 
-### Monokai ###
-  MonokaiPro: &MonokaiPro
-    # Default colors
+  ### Monokai ###
+  MonokaiPro: &MonokaiPro # Default colors
     primary:
-      background: '#2D2A2E'
-      foreground: '#FCFCFA'
+      background: "#2D2A2E"
+      foreground: "#FCFCFA"
 
     # Normal colors
     normal:
-      black:   '#403E41'
-      red:     '#FF6188'
-      green:   '#A9DC76'
-      yellow:  '#FFD866'
-      blue:    '#FC9867'
-      magenta: '#AB9DF2'
-      cyan:    '#78DCE8'
-      white:   '#FCFCFA'
+      black: "#403E41"
+      red: "#FF6188"
+      green: "#A9DC76"
+      yellow: "#FFD866"
+      blue: "#FC9867"
+      magenta: "#AB9DF2"
+      cyan: "#78DCE8"
+      white: "#FCFCFA"
 
     # Bright colors
     bright:
-      black:   '#727072'
-      red:     '#FF6188'
-      green:   '#A9DC76'
-      yellow:  '#FFD866'
-      blue:    '#FC9867'
-      magenta: '#AB9DF2'
-      cyan:    '#78DCE8'
-      white:   '#FCFCFA'
+      black: "#727072"
+      red: "#FF6188"
+      green: "#A9DC76"
+      yellow: "#FFD866"
+      blue: "#FC9867"
+      magenta: "#AB9DF2"
+      cyan: "#78DCE8"
+      white: "#FCFCFA"
 
   ### Nord ###
-  Nord: &Nord
-    # Default colors
+  Nord: &Nord # Default colors
     primary:
-      background: '#2E3440'
-      foreground: '#D8DEE9'
+      background: "#2E3440"
+      foreground: "#D8DEE9"
 
     # Normal colors
     normal:
-      black:   '#3B4252'
-      red:     '#BF616A'
-      green:   '#A3BE8C'
-      yellow:  '#EBCB8B'
-      blue:    '#81A1C1'
-      magenta: '#B48EAD'
-      cyan:    '#88C0D0'
-      white:   '#E5E9F0'
+      black: "#3B4252"
+      red: "#BF616A"
+      green: "#A3BE8C"
+      yellow: "#EBCB8B"
+      blue: "#81A1C1"
+      magenta: "#B48EAD"
+      cyan: "#88C0D0"
+      white: "#E5E9F0"
 
     # Bright colors
     bright:
-      black:   '#4C566A'
-      red:     '#BF616A'
-      green:   '#A3BE8C'
-      yellow:  '#EBCB8B'
-      blue:    '#81A1C1'
-      magenta: '#B48EAD'
-      cyan:    '#8FBCBB'
-      white:   '#ECEFF4'
+      black: "#4C566A"
+      red: "#BF616A"
+      green: "#A3BE8C"
+      yellow: "#EBCB8B"
+      blue: "#81A1C1"
+      magenta: "#B48EAD"
+      cyan: "#8FBCBB"
+      white: "#ECEFF4"
 
   ### Oceanic Next ###
-  OceanicNext: &OceanicNext
-    # Default colors
+  OceanicNext: &OceanicNext # Default colors
     primary:
-      background: '#1b2b34'
-      foreground: '#d8dee9'
+      background: "#1b2b34"
+      foreground: "#d8dee9"
 
     # Colors the cursor will use if `custom_cursor_colors` is true
     cursor:
-      text: '#1b2b34'
-      cursor: '#ffffff'
+      text: "#1b2b34"
+      cursor: "#ffffff"
 
     # Normal colors
     normal:
-      black:   '#343d46'
-      red:     '#EC5f67'
-      green:   '#99C794'
-      yellow:  '#FAC863'
-      blue:    '#6699cc'
-      magenta: '#c594c5'
-      cyan:    '#5fb3b3'
-      white:   '#d8dee9'
+      black: "#343d46"
+      red: "#EC5f67"
+      green: "#99C794"
+      yellow: "#FAC863"
+      blue: "#6699cc"
+      magenta: "#c594c5"
+      cyan: "#5fb3b3"
+      white: "#d8dee9"
 
     # Bright colors
     bright:
-      black:   '#343d46'
-      red:     '#EC5f67'
-      green:   '#99C794'
-      yellow:  '#FAC863'
-      blue:    '#6699cc'
-      magenta: '#c594c5'
-      cyan:    '#5fb3b3'
-      white:   '#d8dee9'
+      black: "#343d46"
+      red: "#EC5f67"
+      green: "#99C794"
+      yellow: "#FAC863"
+      blue: "#6699cc"
+      magenta: "#c594c5"
+      cyan: "#5fb3b3"
+      white: "#d8dee9"
 
   ### Palenight ###
-  Palenight: &Palenight
-    # Default colors
+  Palenight: &Palenight # Default colors
     primary:
-      background: '#292d3e'
-      foreground: '#d0d0d0'
+      background: "#292d3e"
+      foreground: "#d0d0d0"
 
     # Normal colors
     normal:
-      black:   '#292d3e'
-      red:     '#f07178'
-      green:   '#c3e88d'
-      yellow:  '#ffcb6b'
-      blue:    '#82aaff'
-      magenta: '#c792ea'
-      cyan:    '#89ddff'
-      white:   '#d0d0d0'
+      black: "#292d3e"
+      red: "#f07178"
+      green: "#c3e88d"
+      yellow: "#ffcb6b"
+      blue: "#82aaff"
+      magenta: "#c792ea"
+      cyan: "#89ddff"
+      white: "#d0d0d0"
 
     # Bright colors
     bright:
-      black:   '#434758'
-      red:     '#ff8b92'
-      green:   '#ddffa7'
-      yellow:  '#ffe585'
-      blue:    '#9cc4ff'
-      magenta: '#e1acff'
-      cyan:    '#a3f7ff'
-      white:   '#ffffff'
+      black: "#434758"
+      red: "#ff8b92"
+      green: "#ddffa7"
+      yellow: "#ffe585"
+      blue: "#9cc4ff"
+      magenta: "#e1acff"
+      cyan: "#a3f7ff"
+      white: "#ffffff"
 
   ### Solarized Dark ###
-  SolarizedDark: &SolarizedDark
-    # Default colors
+  SolarizedDark: &SolarizedDark # Default colors
     primary:
-      background: '#002b36' # base03
-      foreground: '#839496' # base0
+      background: "#002b36" # base03
+      foreground: "#839496" # base0
 
     # Cursor colors
     cursor:
-      text:   '#002b36' # base03
-      cursor: '#839496' # base0
+      text: "#002b36" # base03
+      cursor: "#839496" # base0
 
     # Normal colors
     normal:
-      black:   '#073642' # base02
-      red:     '#dc322f' # red
-      green:   '#859900' # green
-      yellow:  '#b58900' # yellow
-      blue:    '#268bd2' # blue
-      magenta: '#d33682' # magenta
-      cyan:    '#2aa198' # cyan
-      white:   '#eee8d5' # base2
+      black: "#073642" # base02
+      red: "#dc322f" # red
+      green: "#859900" # green
+      yellow: "#b58900" # yellow
+      blue: "#268bd2" # blue
+      magenta: "#d33682" # magenta
+      cyan: "#2aa198" # cyan
+      white: "#eee8d5" # base2
 
     # Bright colors
     bright:
-      black:   '#002b36' # base03
-      red:     '#cb4b16' # orange
-      green:   '#586e75' # base01
-      yellow:  '#657b83' # base00
-      blue:    '#839496' # base0
-      magenta: '#6c71c4' # violet
-      cyan:    '#93a1a1' # base1
-      white:   '#fdf6e3' # base3
+      black: "#002b36" # base03
+      red: "#cb4b16" # orange
+      green: "#586e75" # base01
+      yellow: "#657b83" # base00
+      blue: "#839496" # base0
+      magenta: "#6c71c4" # violet
+      cyan: "#93a1a1" # base1
+      white: "#fdf6e3" # base3
 
   ### Solarized Light ###
-  SolarizedLight: &SolarizedLight
-    # Default colors
+  SolarizedLight: &SolarizedLight # Default colors
     primary:
-      background: '#fdf6e3' # base3
-      foreground: '#657b83' # base00
+      background: "#fdf6e3" # base3
+      foreground: "#657b83" # base00
 
     # Cursor colors
     cursor:
-      text:   '#fdf6e3' # base3
-      cursor: '#657b83' # base00
+      text: "#fdf6e3" # base3
+      cursor: "#657b83" # base00
 
     # Normal colors
     normal:
-      black:   '#073642' # base02
-      red:     '#dc322f' # red
-      green:   '#859900' # green
-      yellow:  '#b58900' # yellow
-      blue:    '#268bd2' # blue
-      magenta: '#d33682' # magenta
-      cyan:    '#2aa198' # cyan
-      white:   '#eee8d5' # base2
+      black: "#073642" # base02
+      red: "#dc322f" # red
+      green: "#859900" # green
+      yellow: "#b58900" # yellow
+      blue: "#268bd2" # blue
+      magenta: "#d33682" # magenta
+      cyan: "#2aa198" # cyan
+      white: "#eee8d5" # base2
 
     # Bright colors
     bright:
-      black:   '#002b36' # base03
-      red:     '#cb4b16' # orange
-      green:   '#586e75' # base01
-      yellow:  '#657b83' # base00
-      blue:    '#839496' # base0
-      magenta: '#6c71c4' # violet
-      cyan:    '#93a1a1' # base1
-      white:   '#fdf6e3' # base3
+      black: "#002b36" # base03
+      red: "#cb4b16" # orange
+      green: "#586e75" # base01
+      yellow: "#657b83" # base00
+      blue: "#839496" # base0
+      magenta: "#6c71c4" # violet
+      cyan: "#93a1a1" # base1
+      white: "#fdf6e3" # base3
 
   ### Tomorrow Night ###
-  TomorrowNight: &TomorrowNight
-     # Default colors
+  TomorrowNight: &TomorrowNight # Default colors
     primary:
-      background: '#1d1f21'
-      foreground: '#c5c8c6'
+      background: "#1d1f21"
+      foreground: "#c5c8c6"
 
     # Colors the cursor will use if `custom_cursor_colors` is true
     cursor:
-      text: '#1d1f21'
-      cursor: '#ffffff'
+      text: "#1d1f21"
+      cursor: "#ffffff"
 
     # Normal colors
     normal:
-      black:   '#1d1f21'
-      red:     '#cc6666'
-      green:   '#b5bd68'
-      yellow:  '#e6c547'
-      blue:    '#81a2be'
-      magenta: '#b294bb'
-      cyan:    '#70c0ba'
-      white:   '#373b41'
+      black: "#1d1f21"
+      red: "#cc6666"
+      green: "#b5bd68"
+      yellow: "#e6c547"
+      blue: "#81a2be"
+      magenta: "#b294bb"
+      cyan: "#70c0ba"
+      white: "#373b41"
 
     # Bright colors
     bright:
-      black:   '#666666'
-      red:     '#ff3334'
-      green:   '#9ec400'
-      yellow:  '#f0c674'
-      blue:    '#81a2be'
-      magenta: '#b77ee0'
-      cyan:    '#54ced6'
-      white:   '#282a2e'
+      black: "#666666"
+      red: "#ff3334"
+      green: "#9ec400"
+      yellow: "#f0c674"
+      blue: "#81a2be"
+      magenta: "#b77ee0"
+      cyan: "#54ced6"
+      white: "#282a2e"
 
   # Colors (Dracula PRO)
-  DraculaPro: &DraculaPro
-    # Default colors
+  DraculaPro: &DraculaPro # Default colors
     primary:
       background: "0x22212c"
       foreground: "0xf8f8f2"
@@ -620,101 +611,177 @@ schemes:
       cyan: "0x99ffee"
       white: "0xffffff"
 
-  TokyoNight: &TokyoNight
-    # Default colors
+  TokyoNight: &TokyoNight # Default colors
     primary:
-      background: '0x1a1b26'
-      foreground: '0xa9b1d6'
+      background: "0x1a1b26"
+      foreground: "0xa9b1d6"
 
     # Normal colors
     normal:
-      black:   '0x32344a'
-      red:     '0xf7768e'
-      green:   '0x9ece6a'
-      yellow:  '0xe0af68'
-      blue:    '0x7aa2f7'
-      magenta: '0xad8ee6'
-      cyan:    '0x449dab'
-      white:   '0x787c99'
+      black: "0x32344a"
+      red: "0xf7768e"
+      green: "0x9ece6a"
+      yellow: "0xe0af68"
+      blue: "0x7aa2f7"
+      magenta: "0xad8ee6"
+      cyan: "0x449dab"
+      white: "0x787c99"
 
     # Bright colors
     bright:
-      black:   '0x444b6a'
-      red:     '0xff7a93'
-      green:   '0xb9f27c'
-      yellow:  '0xff9e64'
-      blue:    '0x7da6ff'
-      magenta: '0xbb9af7'
-      cyan:    '0x0db9d7'
-      white:   '0xacb0d0'
+      black: "0x444b6a"
+      red: "0xff7a93"
+      green: "0xb9f27c"
+      yellow: "0xff9e64"
+      blue: "0x7da6ff"
+      magenta: "0xbb9af7"
+      cyan: "0x0db9d7"
+      white: "0xacb0d0"
 
-  tokyo-night-storm: &tokyo-night-storm
-    # Default colors
+  tokyo-night-storm: &tokyo-night-storm # Default colors
     primary:
-      background: '0x24283b'
-      foreground: '0xa9b1d6'
+      background: "0x24283b"
+      foreground: "0xa9b1d6"
 
     # Normal colors
     normal:
-      black:   '0x32344a'
-      red:     '0xf7768e'
-      green:   '0x9ece6a'
-      yellow:  '0xe0af68'
-      blue:    '0x7aa2f7'
-      magenta: '0xad8ee6'
-      cyan:    '0x449dab'
-      white:   '0x9699a8'
+      black: "0x32344a"
+      red: "0xf7768e"
+      green: "0x9ece6a"
+      yellow: "0xe0af68"
+      blue: "0x7aa2f7"
+      magenta: "0xad8ee6"
+      cyan: "0x449dab"
+      white: "0x9699a8"
 
     # Bright colors
     bright:
-      black:   '0x444b6a'
-      red:     '0xff7a93'
-      green:   '0xb9f27c'
-      yellow:  '0xff9e64'
-      blue:    '0x7da6ff'
-      magenta: '0xbb9af7'
-      cyan:    '0x0db9d7'
-      white:   '0xacb0d0'
-  
+      black: "0x444b6a"
+      red: "0xff7a93"
+      green: "0xb9f27c"
+      yellow: "0xff9e64"
+      blue: "0x7da6ff"
+      magenta: "0xbb9af7"
+      cyan: "0x0db9d7"
+      white: "0xacb0d0"
+
   Omni: &Omni
-      primary:
-        background: '0x191622'
-        foreground: '0xe1e1e6'
+    primary:
+      background: "0x191622"
+      foreground: "0xe1e1e6"
 
-      cursor:
-        text: '0x191622'
-        cursor: '0xf8f8f2'
+    cursor:
+      text: "0x191622"
+      cursor: "0xf8f8f2"
 
-      normal:
-        black: '0x000000'
-        red: '0xff5555'
-        green: '0x50fa7b'
-        yellow: '0xeffa78'
-        blue: '0xbd93f9'
-        magenta: '0xff79c6'
-        cyan: '0x8d79ba'
-        white: '0xbfbfbf'
+    normal:
+      black: "0x000000"
+      red: "0xff5555"
+      green: "0x50fa7b"
+      yellow: "0xeffa78"
+      blue: "0xbd93f9"
+      magenta: "0xff79c6"
+      cyan: "0x8d79ba"
+      white: "0xbfbfbf"
 
-      bright:
-        black: '0x4d4d4d'
-        red: '0xff6e67'
-        green: '0x5af78e'
-        yellow: '0xeaf08d'
-        blue: '0xcaa9fa'
-        magenta: '0xff92d0'
-        cyan: '0xaa91e3'
-        white: '0xe6e6e6'
+    bright:
+      black: "0x4d4d4d"
+      red: "0xff6e67"
+      green: "0x5af78e"
+      yellow: "0xeaf08d"
+      blue: "0xcaa9fa"
+      magenta: "0xff92d0"
+      cyan: "0xaa91e3"
+      white: "0xe6e6e6"
 
-      dim:
-        black: '0x000000'
-        red: '0xa90000'
-        green: '0x049f2b'
-        yellow: '0xa3b106'
-        blue: '0x530aba'
-        magenta: '0xbb006b'
-        cyan: '0x433364'
-        white: '0x5f5f5f'
+    dim:
+      black: "0x000000"
+      red: "0xa90000"
+      green: "0x049f2b"
+      yellow: "0xa3b106"
+      blue: "0x530aba"
+      magenta: "0xbb006b"
+      cyan: "0x433364"
+      white: "0x5f5f5f"
 
+  Catppucin-mocha: &Catppucin-mocha
+    primary:
+      background: "#1E1E2E" # base
+      foreground: "#CDD6F4" # text
+      # Bright and dim foreground colors
+      dim_foreground: "#CDD6F4" # text
+      bright_foreground: "#CDD6F4" # text
+
+    # Cursor colors
+    cursor:
+      text: "#1E1E2E" # base
+      cursor: "#F5E0DC" # rosewater
+    vi_mode_cursor:
+      text: "#1E1E2E" # base
+      cursor: "#B4BEFE" # lavender
+
+    # Search colors
+    search:
+      matches:
+        foreground: "#1E1E2E" # base
+        background: "#A6ADC8" # subtext0
+      focused_match:
+        foreground: "#1E1E2E" # base
+        background: "#A6E3A1" # green
+      footer_bar:
+        foreground: "#1E1E2E" # base
+        background: "#A6ADC8" # subtext0
+
+    # Keyboard regex hints
+    hints:
+      start:
+        foreground: "#1E1E2E" # base
+        background: "#F9E2AF" # yellow
+      end:
+        foreground: "#1E1E2E" # base
+        background: "#A6ADC8" # subtext0
+
+    # Selection colors
+    selection:
+      text: "#1E1E2E" # base
+      background: "#F5E0DC" # rosewater
+
+    # Normal colors
+    normal:
+      black: "#45475A" # surface1
+      red: "#F38BA8" # red
+      green: "#A6E3A1" # green
+      yellow: "#F9E2AF" # yellow
+      blue: "#89B4FA" # blue
+      magenta: "#F5C2E7" # pink
+      cyan: "#94E2D5" # teal
+      white: "#BAC2DE" # subtext1
+
+    # Bright colors
+    bright:
+      black: "#585B70" # surface2
+      red: "#F38BA8" # red
+      green: "#A6E3A1" # green
+      yellow: "#F9E2AF" # yellow
+      blue: "#89B4FA" # blue
+      magenta: "#F5C2E7" # pink
+      cyan: "#94E2D5" # teal
+      white: "#A6ADC8" # subtext0
+
+    # Dim colors
+    dim:
+      black: "#45475A" # surface1
+      red: "#F38BA8" # red
+      green: "#A6E3A1" # green
+      yellow: "#F9E2AF" # yellow
+      blue: "#89B4FA" # blue
+      magenta: "#F5C2E7" # pink
+      cyan: "#94E2D5" # teal
+      white: "#BAC2DE" # subtext1
+
+    indexed_colors:
+      - { index: 16, color: "#FAB387" }
+      - { index: 17, color: "#F5E0DC" }
 ######################################################################
 ## SET THEME: Choose ONE color scheme from those in the above list. ##
 ## ###################################################################
@@ -733,8 +800,9 @@ schemes:
 # *TokyoNight
 # *tokyo-night-storm
 # *Omni
+# *Catppucin-mocha
 
-colors: *Omni
+colors: *Catppucin-mocha
 
 #######################################
 ##       END OF COLOR SCHEMES        ##
@@ -774,26 +842,26 @@ colors: *Omni
 window.opacity: 0.80
 
 #selection:
-  #semantic_escape_chars: ",│`|:\"' ()[]{}<>\t"
+#semantic_escape_chars: ",│`|:\"' ()[]{}<>\t"
 
-  # When set to `true`, selected text will be copied to the primary clipboard.
-  #save_to_clipboard: false
+# When set to `true`, selected text will be copied to the primary clipboard.
+#save_to_clipboard: false
 
 # Allow terminal applications to change Alacritty's window title.
 #dynamic_title: true
 
 #cursor:
-  # Cursor style
-  #
-  # Values for `style`:
-  #   - ▇ Block
-  #   - _ Underline
-  #   - | Beam
-  #style: Block
+# Cursor style
+#
+# Values for `style`:
+#   - ▇ Block
+#   - _ Underline
+#   - | Beam
+#style: Block
 
-  # If this is `true`, the cursor will be rendered as a hollow box when the
-  # window is not focused.
-  #unfocused_hollow: true
+# If this is `true`, the cursor will be rendered as a hollow box when the
+# window is not focused.
+#unfocused_hollow: true
 
 # Live config reload (changes require restart)
 #live_config_reload: true
@@ -832,62 +900,62 @@ window.opacity: 0.80
 #alt_send_esc: true
 
 #debug:
-  # Display the time it takes to redraw each frame.
-  #render_timer: false
+# Display the time it takes to redraw each frame.
+#render_timer: false
 
-  # Keep the log file after quitting Alacritty.
-  #persistent_logging: false
+# Keep the log file after quitting Alacritty.
+#persistent_logging: false
 
-  # Log level
-  #
-  # Values for `log_level`:
-  #   - None
-  #   - Error
-  #   - Warn
-  #   - Info
-  #   - Debug
-  #   - Trace
-  #log_level: Warn
+# Log level
+#
+# Values for `log_level`:
+#   - None
+#   - Error
+#   - Warn
+#   - Info
+#   - Debug
+#   - Trace
+#log_level: Warn
 
-  # Print all received window events.
-  #print_events: false
+# Print all received window events.
+#print_events: false
 
-  # Record all characters and escape sequences as test data.
-  #ref_test: false
+# Record all characters and escape sequences as test data.
+#ref_test: false
 
 #mouse:
-  # Click settings
-  #
-  # The `double_click` and `triple_click` settings control the time
-  # alacritty should wait for accepting multiple clicks as one double
-  # or triple click.
-  #double_click: { threshold: 300 }
-  #triple_click: { threshold: 300 }
+# Click settings
+#
+# The `double_click` and `triple_click` settings control the time
+# alacritty should wait for accepting multiple clicks as one double
+# or triple click.
+#double_click: { threshold: 300 }
+#triple_click: { threshold: 300 }
 
-  # If this is `true`, the cursor is temporarily hidden when typing.
-  #hide_when_typing: false
+# If this is `true`, the cursor is temporarily hidden when typing.
+#hide_when_typing: false
 
-  #url:
-    # URL launcher
-    #
-    # This program is executed when clicking on a text which is recognized as a URL.
-    # The URL is always added to the command as the last parameter.
-    #
-    # When set to `None`, URL launching will be disabled completely.
-    #
-    # Default:
-    #   - (macOS) open
-    #   - (Linux/BSD) xdg-open
-    #   - (Windows) explorer
-    #launcher:
-    #  program: xdg-open
-    #  args: []
+#url:
+# URL launcher
+#
+# This program is executed when clicking on a text which is recognized as a URL.
+# The URL is always added to the command as the last parameter.
+#
+# When set to `None`, URL launching will be disabled completely.
+#
+# Default:
+#   - (macOS) open
+#   - (Linux/BSD) xdg-open
+#   - (Windows) explorer
+#launcher:
+#  program: xdg-open
+#  args: []
 
-    # URL modifiers
-    #
-    # These are the modifiers that need to be held down for opening URLs when clicking
-    # on them. The available modifiers are documented in the key binding section.
-    #modifiers: None
+# URL modifiers
+#
+# These are the modifiers that need to be held down for opening URLs when clicking
+# on them. The available modifiers are documented in the key binding section.
+#modifiers: None
 
 # Mouse bindings
 #
@@ -1012,20 +1080,20 @@ window.opacity: 0.80
 # be mapped to the `ReceiveChar` action. Alternatively, you can use `None` for
 # a no-op if you do not wish to receive input characters for that binding.
 key_bindings:
-    # (Windows, Linux, and BSD only)
-  - { key: V,         mods: Control|Shift, action: Paste                       }
-  - { key: C,         mods: Control|Shift, action: Copy                        }
-  - { key: Insert,    mods: Shift,         action: PasteSelection              }
-  - { key: Key0,      mods: Control,       action: ResetFontSize               }
-  - { key: Equals,    mods: Control,       action: IncreaseFontSize            }
-  - { key: Plus,      mods: Control,       action: IncreaseFontSize            }
-  - { key: Minus,     mods: Control,       action: DecreaseFontSize            }
-  - { key: F11,       mods: None,          action: ToggleFullscreen            }
-  - { key: Paste,     mods: None,          action: Paste                       }
-  - { key: Copy,      mods: None,          action: Copy                        }
-  - { key: L,         mods: Control,       action: ClearLogNotice              }
-  - { key: L,         mods: Control,       chars: "\x0c"                       }
-  - { key: PageUp,    mods: None,          action: ScrollPageUp,   mode: ~Alt  }
-  - { key: PageDown,  mods: None,          action: ScrollPageDown, mode: ~Alt  }
-  - { key: Home,      mods: Shift,         action: ScrollToTop,    mode: ~Alt  }
-  - { key: End,       mods: Shift,         action: ScrollToBottom, mode: ~Alt  }
+  # (Windows, Linux, and BSD only)
+  - { key: V, mods: Control|Shift, action: Paste }
+  - { key: C, mods: Control|Shift, action: Copy }
+  - { key: Insert, mods: Shift, action: PasteSelection }
+  - { key: Key0, mods: Control, action: ResetFontSize }
+  - { key: Equals, mods: Control, action: IncreaseFontSize }
+  - { key: Plus, mods: Control, action: IncreaseFontSize }
+  - { key: Minus, mods: Control, action: DecreaseFontSize }
+  - { key: F11, mods: None, action: ToggleFullscreen }
+  - { key: Paste, mods: None, action: Paste }
+  - { key: Copy, mods: None, action: Copy }
+  - { key: L, mods: Control, action: ClearLogNotice }
+  - { key: L, mods: Control, chars: "\x0c" }
+  - { key: PageUp, mods: None, action: ScrollPageUp, mode: ~Alt }
+  - { key: PageDown, mods: None, action: ScrollPageDown, mode: ~Alt }
+  - { key: Home, mods: Shift, action: ScrollToTop, mode: ~Alt }
+  - { key: End, mods: Shift, action: ScrollToBottom, mode: ~Alt }

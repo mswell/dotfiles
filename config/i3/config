@@ -489,7 +489,7 @@ bindsym $mod+F1 exec --no-startup-id exo-open --launch webbrowser;focus
 bindsym $mod+w exec --no-startup-id exo-open --launch webbrowser;focus
 bindsym control+mod1+f exec --no-startup-id firefox;focus
 bindsym control+mod1+v exec --no-startup-id vivaldi-stable;focus
-bindsym control+mod1+g exec --no-startup-id chromium;focus
+bindsym control+mod1+g exec --no-startup-id google-chrome-stable;focus
 
 # Text Editor
 # bindsym $mod+F2 exec --no-startup-id geany;focus
@@ -786,15 +786,15 @@ bar {
     # variable border background Text
 
     colors {
-        background #111111
+        background #11111b
         statusline #a9b1d6
         separator  #c0caf5
 
         # colorclass           border  backgr. text
-        focused_workspace     #2ac3de #2ac3de #1a1b26
-        active_workspace      #2ac3de #2ac3de #1a1b26
-        inactive_workspace    #2ac3de #1a1b26 #2ac3de
-        urgent_workspace      #2ac3de #f7768e #FFFFFF
+        focused_workspace     #cba6f7 #cba6f7 #1a1b26
+        active_workspace      #cba6f7 #cba6f7 #1a1b26
+        inactive_workspace    #cba6f7 #1a1b26 #cba6f7
+        urgent_workspace      #cba6f7 #f7768e #FFFFFF
         }
 
     }
@@ -805,7 +805,7 @@ bar {
 
     # Window color settings
     # class                 border  backgr. text    indicator
-    client.focused          #6790EB #6790EB #e5e5e5 #6790EB
+    client.focused          #89b4fa #89b4fa #e5e5e5 #89b4fa
     client.unfocused        #222222 #222222 #aaaaaa #222222
     client.focused_inactive #222222 #222222 #a9a9a9 #222222
     client.placeholder      #222222 #222222 #aaaaaa #222222
