@@ -61,6 +61,14 @@ sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/alacritty.yml => $HOME/.config/alacritty/${reset}"
 cp "$DOTFILES/config/alacritty.yml" "$HOME/.config/alacritty/"
 
+# wezterm
+echo "${yellow}[+] Copiando dotfiles wezterm${reset}"
+sleep 1
+# cria diretorio se nao existir
+[ ! -d "$HOME/.config/wezterm" ] && mkdir -p "$HOME/.config/wezterm"
+echo "${green}[+] Copiando $DOTFILES/config/wezterm.lua => $HOME/.config/wezterm/${reset}"
+cp "$DOTFILES/config/wezterm.lua" "$HOME/.config/wezterm/"
+
 # neovim 
 echo "${yellow}[+] Copiando neovim${reset}"
 sleep 1

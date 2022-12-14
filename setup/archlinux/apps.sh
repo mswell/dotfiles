@@ -6,7 +6,7 @@ echo "Installing useful Apps"
 
 # software from 'normal' repositories
 paru -S --noconfirm --needed tmux htop
-paru -S --noconfirm --needed git lsd alacritty
+paru -S --noconfirm --needed git lsd alacritty wezterm
 paru -S --noconfirm --needed shell-color-scripts
 paru -S --noconfirm --needed git-delta vlc wget unclutter curl
 echo "Install applications"
