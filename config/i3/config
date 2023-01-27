@@ -60,8 +60,8 @@ exec --no-startup-id xrandr --output HDMI-0 --mode 1920x1080 --pos 0x0 --dpi 96 
 
 # current setup
 
-set $firstMonitor HDMI-1
-set $secondMonitor HDMI-2
+set $firstMonitor DP-0
+set $secondMonitor HDMI-0
 
 # Other Examples
 
@@ -303,8 +303,7 @@ font pango:Noto Mono Regular 13
 # you can find the class with the program xprop
 
 # Example - make browser start on workspace 3
-# assign [class="Firefox|Vivaldi-stable|Vivaldi-snapshot|Opera"]                      → 3
-# assign [class="Chromium|Google-chrome"]                    → 3
+assign [class="Chromium|Google-chrome"]                    → 1
 
 # Workspace 2 text editor related
 # assign [class="sublime-text|sublime_text|Sublime_text|subl|Subl|subl3|Subl3"]       → 2
@@ -324,6 +323,7 @@ font pango:Noto Mono Regular 13
 # Workspace 6 all video related software
 # assign [class="Vlc|vlc"]                                                            → 6
 
+assign [class="Firefox|Vivaldi-stable|Vivaldi-snapshot|Opera"]                      → 6
 # Workspace 7 virtual machines and settings
 # assign [class="Vmplayer|VirtualBox"]						    → 7
 
@@ -336,7 +336,7 @@ font pango:Noto Mono Regular 13
 # Workspace 10 music related
 # assign [class="Spotify|spotify"]                                                    → 10
 # fix for spotify not moving to workspace 10
-# for_window [class="Spotify"] move to workspace 10
+for_window [class="Spotify"] move to workspace 10
 
 ################# autostart - execute applications at boot time
 
@@ -532,7 +532,7 @@ bindsym control+mod1+s exec --no-startup-id spotify;focus
 bindsym Print exec --no-startup-id scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'
 bindsym Control+Print exec --no-startup-id xfce4-screenshooter
 bindsym Control+Shift+Print exec --no-startup-id gnome-screenshot -i
-bindsym $mod+Control+Print exec --no-startup-id flameshot gui
+bindsym $mod+Shift+s exec --no-startup-id flameshot gui
 # bindsym shift+Print exec --no-startup-id shutter
 
 ################# floating or tiled rules         

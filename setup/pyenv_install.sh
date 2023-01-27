@@ -2,7 +2,7 @@
 # Author: Henrique Bastos <henrique@bastos.net>
 # Modified by Wellington Moraes <wellpunk@gmail.com>
 
-PY3=3.11
+PY3=3.11.1
 PY2=2.7.18
 PY3TOOLS="poetry youtube-dl pytest bbrf nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
 PY2TOOLS="rename"
@@ -97,7 +97,7 @@ chmod -R -w ~/.pyenv/versions/$PY2/lib/
 chmod -R -w ~/.pyenv/versions/$PY3/lib/
 
 # Setup path order
-pyenv global $PY3 $PY2 jupyter39 ipython27 tools39 tools27
+pyenv global $PY3 $PY2 tools39 jupyter39 ipython27 tools27
 
 # Check everything
 pyenv which python     | grep -q "$PY3" && echo "✓ $PY3"
