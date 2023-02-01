@@ -72,7 +72,7 @@ ipinfo() {
 
 # Valida a lista de resolvedores
 getfreshresolvers() {
-  dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/tools/lists/my-lists/resolvers
+  dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/Lists/resolvers.txt
 }
 
 # Valida hosts ativos
@@ -115,6 +115,7 @@ newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  subPermutation
   naabuRecon
   getalive
   dnsrecords
@@ -138,12 +139,34 @@ GitScan () {
 
 naabuRecon () {
   # Scan ports - https://github.com/projectdiscovery/naabu
-  naabu -l clean.subdomains -p 80,443,81,300,591,593,832,981,1010,1311,1099,2082,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,4993,5000,5104,5108,5280,5281,5601,5800,6543,7000,7001,7396,7474,8000,8001,8008,8014,8042,8060,8069,8080,8081,8083,8088,8090,8091,8095,8118,8123,8172,8181,8222,8243,8280,8281,8333,8337,8443,8500,8834,8880,8888,8983,9000,9001,9043,9060,9080,9090,9091,9200,9443,9502,9800,9981,10000,10250,11371,12443,15672,16080,17778,18091,18092,20720,32000,55440,55672 -sa -o naabuScan
+  naabu -l clean.subdomains -ec -p 80,443,81,300,591,593,832,981,1010,1311,1099,2082,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,4993,5000,5104,5108,5280,5281,5601,5800,6543,7000,7001,7396,7474,8000,8001,8008,8014,8042,8060,8069,8080,8081,8083,8088,8090,8091,8095,8118,8123,8172,8181,8222,8243,8280,8281,8333,8337,8443,8500,8834,8880,8888,8983,9000,9001,9043,9060,9080,9090,9091,9200,9443,9502,9800,9981,10000,10250,11371,12443,15672,16080,17778,18091,18092,20720,32000,55440,55672 -sa -o naabuScanFull
+  [ -s "naabuScanFull" ] && cat naabuScanFull | grep -v '\[' | anew naabuScan
 }
 
 naabuFullPorts () {
   naabu -p - -l clean.subdomains -exclude-ports 80,443,8443,21,25,22 -o full_ports.txt
 }
+
+subPermutation () {
+  echo "[+] Permutation"
+  cat clean.subdomains | tr "." "\n" | anew words
+  altdns -i clean.subdomains -o alt-output.txt -w words
+  shuffledns -l alt-output.txt -r $HOME/Lists/resolvers.txt -o final.txt
+  cp clean.subdomains oldsubs
+  cat final.txt | anew clean.subdomains
+}
+
+brutesub () {
+  echo "[+] BruteSub"
+  shuffledns -l domains -r $HOME/Lists/resolvers.txt -w $HOME/Lists/subdomains-top1million-110000.txt -o brutesubs_out.txt
+  cp clean.subdomains sub_without_brute_sub
+  cat brutesubs_out.txt | anew clean.subdomains
+}
+
+vhostEnum () {
+  ffuf -w $HOME/Lists/namelist.txt -u http://example.com -H "HOST: example.com" -fs 100
+}
+
 
 secrets () {
 
@@ -380,10 +403,11 @@ crawler() {
   echo 'Crawler in action :)'
   Domain=$(cat domains)
   mdkir -p .tmp
-  gospider -S Without404 -d 10 -c 20 -t 50 -K 3 --no-redirect --js -a -w --blacklist ".(eot|jpg|jpeg|gif|css|tif|tiff|png|ttf|otf|woff|woff2|ico|svg|txt)" --include-subs -q -o .tmp/gospider 2> /dev/null | anew -q .tmp/gospider.list
-    xargs -a Without404 -P 50 -I % bash -c "echo % | waybackurls" 2> /dev/null | anew -q .tmp/waybackurls.list
-    xargs -a Without404 -P 50 -I % bash -c "echo % | gau --blacklist eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt --retries 3 --threads 50" 2> /dev/null | anew -q .tmp/gau.list 2> /dev/null &> /dev/null
-    cat .tmp/gospider.list .tmp/gau.list .tmp/waybackurls.list 2> /dev/null | sed '/\[/d' | grep $Domain | sort -u | uro | anew -q crawlerResults.txt
+  gospider -S Without404 -d 10 -c 20 -t 50 -K 3 --no-redirect --js -a -w --blacklist ".(eot|jpg|jpeg|gif|css|tif|tiff|png|ttf|otf|woff|woff2|ico|svg|txt)" --include-subs -q -o .tmp/gospider 2> /dev/null | anew -q gospider_out
+  xargs -a Without404 -P 50 -I % bash -c "echo % | waybackurls" 2> /dev/null | anew -q waybackurls_out
+  xargs -a Without404 -P 50 -I % bash -c "echo % | gau --blacklist eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt --retries 3 --threads 50" 2> /dev/null | anew -q gau_out 2> /dev/null &> /dev/null
+  katana -list Without404 -d 2 -ef eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt -output katana_output.txt
+  cat gospider_out gau_out waybackurls_out katana_output.txt 2> /dev/null | sed '/\[/d' | grep $Domain | sort -u | uro | anew -q crawlerResults.txt
 }
 
 massALLHTTPWebCaching(){
@@ -396,20 +420,18 @@ xsshunter() {
   
   echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
-  # python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domains -o urldump.txt
-  for domain in $(cat domains)
-  do
-    python3 $HOME/Tools/Waymore/waymore.py -i $domain -mode U
-    cat $HOME/Tools/Waymore/results/$domain/waymore.txt | anew urldump.txt
-  done
-  [ -s "urldump.txt" ] && cat urldump.txt | uro | kxss | awk '{print $9}' | anew filtered_urls.txt
-  [ -s "urldump.txt" ] && cat urldump.txt | uro | gf xss | httpx -silent | anew filtered_urls.txt
-  # [ -s "filtered_urls.txt" ] && dalfox file filtered_urls.txt --skip-bav -o XSSresult
-  # [ -s "XSSresult" ] && cat XSSresult | notify -id xss
-    echo '[+] Freq xss'
-  [ -s "filtered_urls.txt" ] && cat filtered_urls.txt | qsreplace '"><img src=x onerror=alert(document.domain);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
+  [ -s "ALLHTTP" ] && cat ALLHTTP | gauplus | uro | anew waybackdata
+  [ -s "ALLHTTP" ] && cat ALLHTTP | waybackurls | uro | anew waybackdata 
+  [ -s "waybackdata" ] && cat waybackdata | uro | gf xss | httpx -silent | anew xssvector
+  [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew xssvector
+  echo '[+] Airixss xss'
+  [ -s "xssvector" ] && cat xssvector | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
+  [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
+  echo '[+] Freq xss'
+  [ -s "xssvector" ] && cat xssvector | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
   [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
 }
+
 
 bypass4xx() {
   [ -s "403HTTP" ] && cat 403HTTP | dirdar -only-ok | anew dirdarResult.txt
@@ -459,7 +481,7 @@ nucauto() {
   cd
   git clone https://github.com/projectdiscovery/nuclei-templates.git
   cd -
-  cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -as -severity critical,high,medium,low -o resultNuclei 
+  cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
   [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
 }
 
@@ -706,7 +728,7 @@ fufextension() {
 }
 
 feroxdir() {
-  feroxbuster -u $1 -e --status-codes 200,301,302 -w $HOME/Lists/raft-large-directories-lowercase.txt
+  feroxbuster -u $1 -e --status-codes 200,204,301,307,401,405,400,302 -k -w $HOME/Lists/raft-large-directories-lowercase.txt
 }
 
 fleetScan() {

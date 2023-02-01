@@ -79,8 +79,6 @@ echo "Install Gxss"
 go install github.com/KathanP19/Gxss@latest
 echo "Install gospider"
 go install github.com/jaeles-project/gospider@latest
-echo "Install crobat"
-go install github.com/cgboal/sonarsearch/crobat@latest
 echo "Install crlfuzz"
 go install github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest
 echo "Install dalfox"
@@ -139,6 +137,7 @@ repos["Knoxnl"]="xnl-h4ck3r/knoxnl"
 repos["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
 repos["MSwellDOTS"]="mswell/dotfiles"
 repos["Waymore"]="xnl-h4ck3r/waymore"
+repos["altdns"]="infosec-au/altdns"
 
 dir="$HOME/Tools"
 
@@ -155,10 +154,21 @@ pip3 install bhedak
 eval wget -nc -O ~/Lists/XSS-OFJAAAH.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/XSS/XSS-OFJAAAH.txt
 eval wget -nc -O ~/Lists/params.txt https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
 eval wget -nc -O ~/Lists/raft-large-directories-lowercase.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
-eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json $DEBUG_STD
+eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
 eval wget -nc -O ~/Lists/httparchive_apiroutes_2022_03_28.txt https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
 eval wget -nc -O ~/Lists/raft-large-files.txt https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-files.txt
 eval wget -nc -O ~/Lists/raft-large-words-lowercase.txt https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-words-lowercase.txt
+eval wget -nc -O $HOME/Lists/namelist.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt
+eval wget -nc -O $HOME/Lists/directory-list-2.3-small.txt ehttps://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-small.txt
+eval wget -nc -O $HOME/Lists/web-extensions.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
+eval wget -nc -O $HOME/Lists/subdomains-top1million-5000.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt
+eval wget -nc -O $HOME/Lists/burp-parameter-names.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/burp-parameter-names.txt
+eval wget -nc -O $HOME/Lists/xato-net-10-million-usernames.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Usernames/xato-net-10-million-usernames.txt
+eval wget -nc -O $HOME/Lists/subdomains-top1million-110000.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt
+eval wget -nc -O $HOME/Lists/raft-large-words.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt
+eval wget -nc -O $HOME/Lists/all.txt https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
+
+
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
 
 cd "$dir" || {
