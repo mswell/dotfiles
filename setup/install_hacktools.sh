@@ -138,6 +138,7 @@ repos["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
 repos["MSwellDOTS"]="mswell/dotfiles"
 repos["Waymore"]="xnl-h4ck3r/waymore"
 repos["altdns"]="infosec-au/altdns"
+repos["XSStrike-Reborn"]="ItsIgnacioPortal/XSStrike-Reborn"
 
 dir="$HOME/Tools"
 

