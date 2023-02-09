@@ -439,7 +439,7 @@ xsshunter() {
   [ -s "airixss.txt" ] notify -silent -bulk -data airixss.txt -id xss
   echo '[+] Freq xss'
   [ -s "xssvector" ] && cat xssvector | qsreplace '"><img src=x onerror=alert(1);>' | freq | egrep -v 'Not' | anew FreqXSS.txt
-  [ -s "FreqXSS.txt" ] && notify -silent -buld -data FreqXSS.txt -id xss
+  [ -s "FreqXSS.txt" ] && notify -silent -bulk -data FreqXSS.txt -id xss
   [ -s "xssvector" ] && python3 $HOME/Tools/XSStrike-Reborn/xsstrike.py -ul xssvector -d 2 --file-log-level WARNING --log-file XSStrike_output.log
   [ -s "XSStrike_output.log"] && notify -silent -data XSStrike_output.lo -bulk -id xss
 }
