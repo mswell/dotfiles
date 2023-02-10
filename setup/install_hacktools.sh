@@ -115,6 +115,10 @@ echo "Install haip2host"
 go install github.com/hakluke/hakip2host@latest
 echo "Install scopein"
 go install -v github.com/ferreiraklet/scopein@latest
+echo "Install metabigor"
+go install github.com/j3ssie/metabigor@latest
+echo "Install hakrevdns"
+go install github.com/hakluke/hakrevdns@latest
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"

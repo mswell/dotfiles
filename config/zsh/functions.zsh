@@ -72,7 +72,7 @@ ipinfo() {
 
 # Valida a lista de resolvedores
 getfreshresolvers() {
-  dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 20 -o ~/Lists/resolvers.txt
+  wget -nv -O $HOME/Lists/resolvers.txt https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt
 }
 
 # Valida hosts ativos
@@ -80,7 +80,7 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "${yellow}[+] Check live hosts ${reset}"
-  cat clean.subdomains | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
+  cat naabuScan | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
@@ -110,12 +110,33 @@ swaggerRecon(){
   swaggerUIdetect
 }
 
+wellRecon(){
+  subdomainenum
+  [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
+  [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  getfreshresolvers
+  bruteSub
+  naabuRecon
+  getalive
+  dnsrecords
+  updateTemplatesNuc
+  nucTakeover
+  graphqldetect
+  swaggerUIdetect
+  GitScan
+  panelNuc
+  rceNuc
+  exposureNuc
+}
+
 newRecon(){
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  naabuRecon
   getalive
   dnsrecords
+  updateTemplatesNuc
   nucTakeover
   graphqldetect
   APIRecon
@@ -125,7 +146,6 @@ newRecon(){
   OpenRedirectScan
   GitScan
   nucauto
-  xsshunter
 }
 
 
@@ -136,10 +156,35 @@ GitScan () {
         [ -s "gitvector" ] && notify -silent -bulk -data gitvector -id nuclei
 }
 
+panelNuc () {
+  echo "[+] Panel scan"
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags panel -o nucPanel
+  [ -s "nucPanel"] && echo "Panel found :)" | notify -silent -id nuclei
+  [ -s "nucPanel"] && notify -silent -bulk -data nucPanel -id nuclei
+ }
+
+rceNuc () {
+  echo "[+] RCE scan"
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags rce -o rcevector
+  [ -s "rcevector" ] && echo "RCE vector found :)" | notify -silent -id nuclei
+  [ -s "rcevector" ] && notify -silent -bulk -data rcevector -id nuclei
+}
+
+exposureNuc () {
+  echo "[+] Exposure scan"
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags exposure -o exposurevector
+  [ -s "exposurevector" ] && echo "Exposure vector found :)" | notify -silent -id nuclei
+  [ -s "exposurevector" ] && notify -silent -bulk -data exposurevector -id nuclei
+}
+
 naabuRecon () {
-  # Scan ports - https://github.com/projectdiscovery/naabu
   naabu -l clean.subdomains -r $HOME/Lists/resolvers.txt -ec -p 80,443,81,300,591,593,832,981,1010,1311,1099,2082,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,4993,5000,5104,5108,5280,5281,5601,5800,6543,7000,7001,7396,7474,8000,8001,8008,8014,8042,8060,8069,8080,8081,8083,8088,8090,8091,8095,8118,8123,8172,8181,8222,8243,8280,8281,8333,8337,8443,8500,8834,8880,8888,8983,9000,9001,9043,9060,9080,9090,9091,9200,9443,9502,9800,9981,10000,10250,11371,12443,15672,16080,17778,18091,18092,20720,32000,55440,55672 -sa -o naabuScanFull
   [ -s "naabuScanFull" ] && cat naabuScanFull | grep -v '\[' | anew naabuScan
+}
+
+updateTemplatesNuc () {
+  rm -rf ~/nuclei-templates
+  git clone --branch main --depth 1 https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-templates
 }
 
 naabuFullPorts () {
@@ -147,8 +192,10 @@ naabuFullPorts () {
 }
 
 nucTakeover () {
-  cat ALLHTTP | nuclei -t $HOME/custom_nuclei_templates/m4cddr-takeovers.yaml -o nucleiTakeover
-  [ -s "nucleiTakeover" ] && cat nucleiTakeover | nuclei -silent -id nuclei
+  echo "[+] Takeover scan"
+  cat ALLHTTP | nuclei -tags takeover -o nucleiTakeover
+  [ -s "nucleiTakeover" ] && echo "Takeover found :)" | notify -silent -id nuclei
+  [ -s "nucleiTakeover" ] && notify -silent -bulk -data nucleiTakeover -id nuclei
 }
 
 subPermutation () {
@@ -162,9 +209,12 @@ subPermutation () {
 
 brutesub () {
   echo "[+] BruteSub"
-  shuffledns -l domains -r $HOME/Lists/resolvers.txt -w $HOME/Lists/subdomains-top1million-110000.txt -o brutesubs_out.txt
-  cp clean.subdomains sub_without_brute_sub
-  cat brutesubs_out.txt | anew clean.subdomains
+  for domain in $(cat domains)
+  do
+    shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/subdomains-top1million-110000.txt -o brutesubs_out.txt
+    cp clean.subdomains sub_without_brute_sub
+    cat brutesubs_out.txt | anew clean.subdomains
+  done
 }
 
 vhostEnum () {
@@ -356,9 +406,9 @@ OpenRedirectScan() {
 
 swaggerUIdetect() {
   echo "[+] Swagger detect"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -t ~/custom_nuclei_templates/swagger-ui.yaml -o swaggerUI
+  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags swagger -o swaggerUI
   [ -s "swaggerUI" ] && echo "Swagger endpoint found :)" | notify -silent -id api
-  [ -s "swaggerUI" ] && cat swaggerUI | notify -silent -id api
+  [ -s "swaggerUI" ] && notify -silent -bulk -data swaggerUI -id api
 }
 
 APIRecon() {
@@ -489,10 +539,6 @@ massHakip2host(){
 
 nucauto() {
   [ -s "cleanHakipResult.txt" ] && cat "cleanHakipResult.txt" | httpx -silent | anew ALLHTTP
-  rm -rf ~/nuclei-templates
-  cd
-  git clone https://github.com/projectdiscovery/nuclei-templates.git
-  cd -
   cat ALLHTTP | nuclei -eid expired-ssl,mismatched-ssl,deprecated-tls,weak-cipher-suites,self-signed-ssl -etags redirect,xss,ssrf,graphql,swagger -severity critical,high,medium,low -o resultNuclei 
   [ -s "resultNuclei" ] && notify -silent -bulk -data resultNuclei -id nuclei
 }
