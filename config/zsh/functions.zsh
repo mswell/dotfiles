@@ -115,7 +115,8 @@ wellRecon(){
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
   getfreshresolvers
-  bruteSub
+  brutesub
+  subPermutation
   naabuRecon
   getalive
   dnsrecords
@@ -148,6 +149,12 @@ newRecon(){
   nucauto
 }
 
+nstakeover(){
+  for domain in $(cat $1); do
+    dig $domain +trace | grep NS | awk '{print $5}' | anew | egrep -Ev "root-servers|NS|NSEC3|NSEC" | sed 's/\.$//' | xargs -I{} bash -c "dig @{} $domain | grep -E 'SERVFAIL|REFUSED' && echo '$domain - {} Is vulnerable'"
+  done
+}
+
 
 GitScan () {
         echo "[+] Git scan"
@@ -159,8 +166,8 @@ GitScan () {
 panelNuc () {
   echo "[+] Panel scan"
   [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags panel -o nucPanel
-  [ -s "nucPanel"] && echo "Panel found :)" | notify -silent -id nuclei
-  [ -s "nucPanel"] && notify -silent -bulk -data nucPanel -id nuclei
+  [ -s "nucPanel" ] && echo "Panel found :)" | notify -silent -id nuclei
+  [ -s "nucPanel" ] && notify -silent -bulk -data nucPanel -id nuclei
  }
 
 rceNuc () {
@@ -168,6 +175,12 @@ rceNuc () {
   [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags rce -o rcevector
   [ -s "rcevector" ] && echo "RCE vector found :)" | notify -silent -id nuclei
   [ -s "rcevector" ] && notify -silent -bulk -data rcevector -id nuclei
+}
+
+massALLHTTPtemplate () {
+        find /root/Projects -type f -name ALLHTTP | xargs -I{} -P2 bash -c 'cat {}' | anew allhttpalive
+        cat allhttpalive | nuclei -t $1 -o massALLTEST.txt
+        [ -s "massALLTEST.txt" ] && cat massALLTEST.txt | notify -silent
 }
 
 exposureNuc () {
@@ -196,6 +209,9 @@ nucTakeover () {
   cat ALLHTTP | nuclei -tags takeover -o nucleiTakeover
   [ -s "nucleiTakeover" ] && echo "Takeover found :)" | notify -silent -id nuclei
   [ -s "nucleiTakeover" ] && notify -silent -bulk -data nucleiTakeover -id nuclei
+  cat ALLHTTP | nuclei -t $HOME/custom_nuclei_templates/m4cddr-takeovers.yaml -o takeovers_m4c
+  [ -s "takeovers_m4c" ] && echo "Takeover m4c found :)" | notify -silent -id nuclei
+  [ -s "takeovers_m4c" ] && notify -silent -bulk -data takeovers_m4c -id nuclei
 }
 
 subPermutation () {
