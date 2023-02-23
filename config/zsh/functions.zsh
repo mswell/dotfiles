@@ -122,7 +122,7 @@ wellRecon(){
   dnsrecords
   updateTemplatesNuc
   nucTakeover
-  ssrfdetect
+  lfiScan
   graphqldetect
   swaggerUIdetect
   GitScan
@@ -162,6 +162,13 @@ GitScan () {
         cat ALLHTTP | nuclei -tags git -o gitvector
         [ -s "gitvector" ] && echo "Git vector found :)" | notify -silent -id nuclei
         [ -s "gitvector" ] && notify -silent -bulk -data gitvector -id nuclei
+}
+
+lfiScan () {
+  echo "[+] LFI scan"
+  cat ALLHTTP | nuclei -tags lfi -o lfivector
+  [ -s "lfivector" ] && echo "LFI vector found :)" | notify -silent -id nuclei
+  [ -s "lfivector" ] && notify -silent -bulk -data lfivector -id nuclei
 }
 
 panelNuc () {
