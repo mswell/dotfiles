@@ -116,7 +116,7 @@ wellRecon(){
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
   getfreshresolvers
   brutesub
-  subPermutation
+  # subPermutation
   naabuRecon
   getalive
   dnsrecords
