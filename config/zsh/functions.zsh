@@ -122,6 +122,7 @@ wellRecon(){
   dnsrecords
   updateTemplatesNuc
   nucTakeover
+  ssrfdetect
   graphqldetect
   swaggerUIdetect
   GitScan
@@ -220,6 +221,7 @@ subPermutation () {
   altdns -i clean.subdomains -o alt-output.txt -w words
   shuffledns -l alt-output.txt -r $HOME/Lists/resolvers.txt -o final.txt
   cp clean.subdomains oldsubs
+  [ -s 'alt-output.txt' ] && rm -rf alt-output.txt
   cat final.txt | anew clean.subdomains
 }
 
