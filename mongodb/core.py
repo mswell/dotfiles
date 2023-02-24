@@ -28,12 +28,14 @@ def setup_parser(target, line):
 
 
 def subdomain_parser(target, subs_files):
-    filepath = Path(domain_list)
+    filepath = Path(subs_files)
     with open(f"{filepath}", mode="r") as file:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for line in file:
-                futures.append(executor.submit(setup_parser, line=line.rstrip("\n")))
+                futures.append(
+                    executor.submit(setup_parser, target, line=line.rstrip("\n"))
+                )
 
 
 def list_all_target():
