@@ -53,7 +53,8 @@ def list_subdomains(target):
 
 
 def delete_target(target):
-    query = collection.distinct("target")
+    query = {"target": target}
 
     for result in query:
-        collection.delete_one({"target": result})
+        collection.delete_one(query)
+        print("Document deleted")
