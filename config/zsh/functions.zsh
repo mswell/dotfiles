@@ -75,6 +75,10 @@ getfreshresolvers() {
   wget -nv -O $HOME/Lists/resolvers.txt https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt
 }
 
+getalltxt() {
+  wget -nv -O $HOME/Lists/all.txt https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
+}
+
 # Valida hosts ativos
 getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
@@ -111,18 +115,22 @@ swaggerRecon(){
 }
 
 wellRecon(){
+  wellSubRecon
+  wellNuclei
+}
+
+wellSubRecon() {
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  getfreshresolvers
-  brutesub
-  # subPermutation
   naabuRecon
   getalive
   dnsrecords
+}
+
+wellNuclei() {
   updateTemplatesNuc
   nucTakeover
-  lfiScan
   graphqldetect
   swaggerUIdetect
   GitScan
@@ -233,13 +241,30 @@ subPermutation () {
 }
 
 brutesub () {
-  echo "[+] BruteSub"
+  echo "[+] Brute subdomains"
+  getfreshresolvers
+  getalltxt
+  bruteTop1million
+  bruteAlltxt
+  echo "[+] Brute subdomains complete"
+}
+
+bruteTop1million () {
   for domain in $(cat domains)
   do
     shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/subdomains-top1million-110000.txt -o brutesubs_out.txt
-    cp clean.subdomains sub_without_brute_sub
     cat brutesubs_out.txt | anew clean.subdomains
   done
+  rm -rf brutesubs_out.txt
+}
+
+bruteAlltxt () {
+  for domain in $(cat domains)
+  do
+    shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/all.txt -o brutesubs_out.txt
+    cat brutesubs_out.txt | anew clean.subdomains
+  done
+  rm -rf brutesubs_out.txt
 }
 
 vhostEnum () {
@@ -328,7 +353,8 @@ subdomainenum() {
   curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
   crobat -s domains | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
-  echo "[+] subdomain recon completed :)"
+  echo "[+] Passive subdomain recon completed :)"
+  brutesub
 }
 
 
