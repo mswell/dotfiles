@@ -5,6 +5,7 @@ from core import (
     subdomain_parser,
     list_all_target,
     list_subdomains,
+    delete_target,
 )
 
 app = typer.Typer()
@@ -37,6 +38,16 @@ def list_subdomains(
     List subdomains of target
     """
     list_subdomains(target)
+
+
+@app.command()
+def delete_target(
+    target: str = typer.Option(..., "--target", "-t", help="Name of target")
+):
+    """
+    Delete target
+    """
+    delete_target(target)
 
 
 if __name__ == "__main__":

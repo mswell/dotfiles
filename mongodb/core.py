@@ -50,3 +50,10 @@ def list_subdomains(target):
 
     for result in query:
         print(result["subdomain"])
+
+
+def delete_target():
+    query = collection.distinct("target")
+
+    for result in query:
+        collection.delete_one({"target": result})
