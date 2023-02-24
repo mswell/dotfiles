@@ -52,7 +52,7 @@ def list_subdomains(target):
         print(result["subdomain"])
 
 
-def delete_target():
+def delete_target(target):
     query = collection.distinct("target")
 
     for result in query:
