@@ -55,6 +55,5 @@ def list_subdomains(target):
 def delete_target(target):
     query = {"target": target}
 
-    for result in query:
-        collection.delete_one(query)
-        print("Document deleted")
+    x = collection.delete_many(query)
+    print(x.deleted_count, " documents deleted")
