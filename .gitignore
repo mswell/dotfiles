@@ -1,4 +1,8 @@
 db
-mongo/db
-mongo/docker-compose.yml
+mongodb/db
+mongodb/docker-compose.yml
 docker-compose.yml
+.secrets.toml
+mongodb/.secrets.toml
+settings.toml
+mongodb/settings.toml
