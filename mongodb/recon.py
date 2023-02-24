@@ -37,3 +37,7 @@ def list_subdomains(
     List subdomains of target
     """
     list_subdomains(target)
+
+
+if __name__ == "__main__":
+    app()
