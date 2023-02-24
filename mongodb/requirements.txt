@@ -1,2 +1,3 @@
 pymongo
 dynaconf
+typer

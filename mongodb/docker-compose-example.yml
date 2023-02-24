@@ -1,25 +1,6 @@
 version: '3.1'
 
 services:
-  app:
-    container_name: recon_app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
-    stdin_open: true
-    tty: true
-    depends_on:
-      - mongo
-    environment:
-      # CHANGE PASSWORD !!!
-      DYNACONF_MONGO_INITDB_ROOT_USERNAME: 'root'
-      DYNACONF_MONGO_INITDB_ROOT_PASSWORD: 'toor'
-      DYNACONF_MONGO_DB_ADDRESS: 'mongo'
-    volumes:
-      - "./mongodb:/root"
-    networks:
-      - backend
   mongo:
     container_name: recon_mongo
     image: mongo
