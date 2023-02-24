@@ -5,10 +5,6 @@ from database import connect_db
 from pathlib import Path
 
 
-mongo_pass = input("Enter mongo password: ")
-mongo_addr = input("Enter mongo address: ")
-uri = f'mongodb://root:{mongo_pass}@{mongo_addr}:27017/default_db?authSource=admin'
-client = MongoClient(uri)
 db = connect_db()
 collection = db['subdomains']
 
