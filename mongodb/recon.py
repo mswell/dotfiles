@@ -41,7 +41,7 @@ def list_subdomains(
 
 
 @app.command()
-def delete_target(
+def del_target(
     target: str = typer.Option(..., "--target", "-t", help="Name of target")
 ):
     """
