@@ -31,9 +31,7 @@ def list_all_targets() -> None:
 
 
 @app.command()
-def list_subdomains(
-    target: str = typer.Option(..., "--target", "-t", help="Name of target")
-):
+def list_subs(target: str = typer.Option(..., "--target", "-t", help="Name of target")):
     """
     List subdomains of target
     """
