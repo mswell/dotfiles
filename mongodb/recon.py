@@ -12,8 +12,8 @@ app = typer.Typer()
 
 @app.command()
 def add_subdomains(
-    target: str = typer.Argument(..., "--target", "-t", help="Name of target"),
-    subdomains: str = typer.Argument(..., "--file", "-f", help="File with subdomains"),
+    target: str = typer.Option(..., "--target", "-t", help="Name of target"),
+    subdomains: str = typer.Option(..., "--file", "-f", help="File with subdomains"),
 ):
     """
     Add subdomains to target
@@ -31,7 +31,7 @@ def list_all_targets() -> None:
 
 @app.command()
 def list_subdomains(
-    target: str = typer.Argument(..., "--target", "-t", help="Name of target")
+    target: str = typer.Option(..., "--target", "-t", help="Name of target")
 ):
     """
     List subdomains of target
