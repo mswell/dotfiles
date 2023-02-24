@@ -1,0 +1,20 @@
+version: '3.1'
+
+services:
+  mongo:
+    container_name: recon_mongo
+    image: mongo
+    restart: always
+    
+    environment:
+      # CHANGE PASSWORD !!!
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: toor
+    ports:
+      - 27017:27017
+    volumes:
+      - ./db:/data/db
+    networks:
+      - backend
+networks:
+  backend:
