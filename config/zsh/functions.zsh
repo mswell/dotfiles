@@ -84,7 +84,7 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "${yellow}[+] Check live hosts ${reset}"
-  cat naabuScan | httpx -silent -status-code -tech-detect -timeout 10 -threads 10 -o HTTPOK
+  cat naabuScan | httpx -silent -status-code -tech-detect -title -timeout 10 -threads 10 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
@@ -116,6 +116,9 @@ swaggerRecon(){
 
 wellRecon(){
   wellSubRecon
+  naabuRecon
+  getalive
+  dnsrecords
   wellNuclei
 }
 
@@ -123,9 +126,6 @@ wellSubRecon() {
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  naabuRecon
-  getalive
-  dnsrecords
 }
 
 wellNuclei() {
@@ -135,7 +135,6 @@ wellNuclei() {
   swaggerUIdetect
   GitScan
   panelNuc
-  rceNuc
   exposureNuc
 }
 
