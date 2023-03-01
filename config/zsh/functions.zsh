@@ -84,7 +84,7 @@ getalive() {
   # sperate http and https compare if http doest have or redirect to https put in seperate file
   # compare if you go to https if it automaticly redirects to https if not when does it in the page if never
   echo "${yellow}[+] Check live hosts ${reset}"
-  cat naabuScan | httpx -silent -status-code -tech-detect -title -timeout 10 -threads 10 -o HTTPOK
+  cat naabuScan | httpx -silent -status-code -tech-detect -title -cl -timeout 10 -threads 10 -o HTTPOK
   cat HTTPOK | grep 200 | awk -F " " '{print $1}' | anew 200HTTP
   cat HTTPOK | grep -E '40[0-4]' | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
   cat HTTPOK | grep -v 404 | awk '{print $1}' | anew Without404
@@ -97,15 +97,15 @@ getalive() {
 #------------------------------
 # Coleta + Mapeamento especifica para RedBull
 ReconRedbull(){
+  naabuRecon
   getalive
   dnsrecords
   graphqldetect
-  APIRecon
-  swaggerUIdetect
   nucTakeover
+  nucPanel
   XssScan
   OpenRedirectScan
-  nucauto
+  exposureNuc
 }
 
 swaggerRecon(){
@@ -126,6 +126,7 @@ wellSubRecon() {
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
+  brutesub
 }
 
 wellNuclei() {
@@ -353,7 +354,6 @@ subdomainenum() {
   crobat -s domains | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] Passive subdomain recon completed :)"
-  brutesub
 }
 
 
