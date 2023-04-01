@@ -6,3 +6,5 @@ docker-compose.yml
 mongodb/.secrets.toml
 settings.toml
 mongodb/settings.toml
+mongodb/__pycache__/
+mongodb/resume.cfg
