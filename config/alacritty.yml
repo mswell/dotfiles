@@ -20,7 +20,7 @@ window:
   #dimensions:
   #  columns: 0
   #  lines: 0
-  opacity: 0.90
+  opacity: 0.98
 
   # Window position (changes require restart)
   #
@@ -802,7 +802,7 @@ schemes:
 # *Omni
 # *Catppucin-mocha
 
-colors: *Catppucin-mocha
+colors: *GruvboxDark
 
 #######################################
 ##       END OF COLOR SCHEMES        ##
