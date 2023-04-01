@@ -8,12 +8,7 @@ reset=`tput sgr0`
 
 #---- script
 
-sudo apt install -y autojump \
-	            tree \
-		    ttf-ancient-fonts \
-		    fzf \
-		    tmux \
-		    alacritty
+sudo apt install -y autojump tree ttf-ancient-fonts fzf tmux alacritty
 
 # Install tmux TPM
 echo "${yellow}[+] Instalando tmux TPM${reset}"

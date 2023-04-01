@@ -7,10 +7,10 @@ set -e
 export DOTFILES=$PWD
 
 #--- Cores
-red=`tput setaf 1`
-green=`tput setaf 2`
-yellow=`tput setaf 3`
-reset=`tput sgr0`
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+yellow=$(tput setaf 3)
+reset=$(tput sgr0)
 
 #---- inicio script
 # zsh
@@ -21,26 +21,14 @@ sleep 1
 # install oh-my-zsh and overwrite zsh file
 echo "${yellow}[+] Copiando dotfiles zsh${reset}"
 sleep 1
-if [ ! -z "$HOME/.zshrc" ]; then
-   # arquivo ja existe
-   echo -n "${yellow}[?] Arquivo .zshrc já existe, quer sobrescre-lo ? (Sim/Nao) ${reset}"
-   read option
-   case $option in
-        Sim) 
-           echo "${green}[+] Sobrescrevendo $DOTFILES/config/zsh/.zshrc => $HOME/.zshrc${reset}"
-           cp -f "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
-           sleep 2
-	   ;;
-        *) 
-           echo "${green}[*] Mantendo o arquivo atual...${reset}"
-	   sleep 2
-	   ;;
-    esac
-else
-   # arquivo nao existe
-   echo "${green}[+] Copiando $DOTFILES/config/zsh/.zshrc => $HOME/.zshrc${reset}"
-   cp "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
-fi
+
+cp -f "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
+sleep 2
+echo "${green}[+] Copiando $DOTFILES/config/zsh/custom.zsh => $HOME/.config/zsh/${reset}"
+cp "$DOTFILES/config/zsh/custom.zsh" "$HOME/.config/zsh/"
+
+echo "${green}[+] Copiando $DOTFILES/config/zsh/alias.zsh => $HOME/.config/zsh/${reset}"
+cp "$DOTFILES/config/zsh/alias.zsh" "$HOME/.config/zsh/"
 
 echo "${green}[+] Copiando $DOTFILES/config/zsh/functions.zsh => $HOME/.config/zsh/${reset}"
 cp "$DOTFILES/config/zsh/functions.zsh" "$HOME/.config/zsh/"
@@ -61,15 +49,7 @@ sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/alacritty.yml => $HOME/.config/alacritty/${reset}"
 cp "$DOTFILES/config/alacritty.yml" "$HOME/.config/alacritty/"
 
-# wezterm
-echo "${yellow}[+] Copiando dotfiles wezterm${reset}"
-sleep 1
-# cria diretorio se nao existir
-[ ! -d "$HOME/.config/wezterm" ] && mkdir -p "$HOME/.config/wezterm"
-echo "${green}[+] Copiando $DOTFILES/config/wezterm.lua => $HOME/.config/wezterm/${reset}"
-cp "$DOTFILES/config/wezterm.lua" "$HOME/.config/wezterm/"
-
-# neovim 
+# neovim
 echo "${yellow}[+] Copiando neovim${reset}"
 sleep 1
 # remove diretorio se existir
