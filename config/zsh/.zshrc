@@ -18,6 +18,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/g
 
 source $ZSH/oh-my-zsh.sh
 export EDITOR='vim'
+unalias gf
 
 # go
 export GOROOT=/usr/local/go
