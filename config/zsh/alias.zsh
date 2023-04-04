@@ -24,7 +24,6 @@ alias zshconfig='nvim $HOME/.zshrc'
 alias zshreload='source $HOME/.zshrc'
 alias v='nvim'
 alias vim='nvim'
-unalias gf
 
 # alias for gron
 alias norg="gron --ungron"
