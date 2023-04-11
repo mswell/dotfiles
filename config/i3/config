@@ -786,15 +786,15 @@ bar {
     # variable border background Text
 
     colors {
-        background #282828
-        statusline #ebdbb2
-        separator  #ebdbb2
+        background #11111b
+        statusline #a9b1d6
+        separator  #c0caf5
 
         # colorclass           border  backgr. text
-        focused_workspace     #ebdbb2 #ebdbb2 #1d2021
-        active_workspace      #ebdbb2 #ebdbb2 #1d2021
-        inactive_workspace    #ebdbb2 #1d2021 #ebdbb2
-        urgent_workspace      #ebdbb2 #f7768e #FFFFFF
+        focused_workspace     #cba6f7 #cba6f7 #1a1b26
+        active_workspace      #cba6f7 #cba6f7 #1a1b26
+        inactive_workspace    #cba6f7 #1a1b26 #cba6f7
+        urgent_workspace      #cba6f7 #f7768e #FFFFFF
         }
 
     }
@@ -805,10 +805,10 @@ bar {
 
     # Window color settings
     # class                 border  backgr. text    indicator
-    client.focused          #ebdbb2 #ebdbb2 #282828 #ebdbb2
-    client.unfocused        #282828 #282828 #aaaaaa #282828
-    client.focused_inactive #282828 #282828 #a9a9a9 #282828
-    client.placeholder      #282828 #282828 #aaaaaa #282828
+    client.focused          #89b4fa #89b4fa #e5e5e5 #89b4fa
+    client.unfocused        #222222 #222222 #aaaaaa #222222
+    client.focused_inactive #222222 #222222 #a9a9a9 #222222
+    client.placeholder      #222222 #222222 #aaaaaa #222222
     client.urgent           #d42121 #d42121 #f7f7f7 #d42121
 
     client.background       #242424

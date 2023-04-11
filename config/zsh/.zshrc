@@ -31,9 +31,8 @@ export PATH=$PATH:$HOME/Projects/desec
 source $HOME/Tools/gf/gf-completion.zsh
 export PATH="$PATH:/home/mswell/.axiom/interact"
 bindkey -s ^f "tmux-sessionizer\n"
-export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
- --color=fg:#ebdbb2,bg:#1d2021,hl:#83a598
- --color=fg+:#fbf1c7,bg+:#282828,hl+:#458488
- --color=info:#afaf87,prompt:#cc241d,pointer:#b16286
- --color=marker:#8ec07c,spinner:#b16286,header:#b8bb26'
+export FZF_DEFAULT_OPTS=" \
+--color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
+--color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
+--color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
 
