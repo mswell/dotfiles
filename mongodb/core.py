@@ -45,6 +45,13 @@ def list_all_target():
         print(result)
 
 
+def get_all_subdomains():
+    query = collection.distinct("subdomain")
+
+    for result in query:
+        print(result)
+
+
 def list_subdomains(target):
     query = collection.find({"target": target})
 

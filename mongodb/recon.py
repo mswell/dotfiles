@@ -6,6 +6,7 @@ from core import (
     list_all_target,
     list_subdomains,
     delete_target,
+    get_all_subdomains,
 )
 
 app = typer.Typer()
@@ -28,6 +29,14 @@ def list_all_targets() -> None:
     List all targets
     """
     list_all_target()
+
+
+@app.command()
+def list_all_subdomains() -> None:
+    """
+    List all subdomains of all targets
+    """
+    get_all_subdomains()
 
 
 @app.command()
