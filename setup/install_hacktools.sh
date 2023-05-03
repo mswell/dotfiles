@@ -40,7 +40,7 @@ go install github.com/tomnomnom/gf@latest
 echo "Install qsreplace"
 go install github.com/tomnomnom/qsreplace@latest
 echo "Install Amass"
-go install github.com/OWASP/Amass/v3/...@latest
+go install github.com/owasp-amass/amass/v3/...@latest
 echo "Install ffuf"
 go install github.com/ffuf/ffuf@latest
 echo "Install assetfinder"
