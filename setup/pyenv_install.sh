@@ -2,9 +2,9 @@
 # Author: Henrique Bastos <henrique@bastos.net>
 # Modified by Wellington Moraes <wellpunk@gmail.com>
 
-PY3=3.11.2
+PY3=3.11.3
 PY2=2.7.18
-PY3TOOLS="poetry youtube-dl pytest bbrf nornir stormssh flake8 pylint requests colorama git-dumper wfuzz virtualenvwrapper"
+PY3TOOLS="poetry youtube-dl pytest black flake8 pylint requests colorama virtualenvwrapper"
 PY2TOOLS="rename"
 
 VENVS=~/.ve
