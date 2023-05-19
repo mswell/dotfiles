@@ -5,120 +5,73 @@ DEBUG_ERROR="2>/dev/null"
 
 # TERM COLORS
 bblue='\033[1;34m'
+reset='\033[0m'
 
-printf "${bblue} Running: Installing Golang tools (${#gotools[@]})${reset}\n\n"
+dir="$HOME/Tools"
+
+printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
 go env -w GO111MODULE=auto
 
-# TODO: install feroxbuster and katana
-echo "Install fff"
-go install github.com/tomnomnom/fff@latest
-echo "Install hakrawler"
-go install github.com/hakluke/hakrawler@latest
-echo "Install tojson"
-go install github.com/tomnomnom/hacks/tojson@latest
-echo "Install gowitness"
-go install github.com/sensepost/gowitness@latest
-echo "Install rush"
-go install github.com/shenwei356/rush@latest
-echo "Install naabu"
-go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
-echo "Install hakcheckurl"
-go install github.com/hakluke/hakcheckurl@latest
-echo "Install shuffledns"
-go install github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest
-echo "Install rescope"
-go install github.com/root4loot/rescope@latest
-echo "Install gron"
-go install github.com/tomnomnom/gron@latest
-echo "Install html-tool"
-go install github.com/tomnomnom/hacks/html-tool@latest
-echo "Install Chaos"
-go install github.com/projectdiscovery/chaos-client/cmd/chaos@latest
-echo "Install gf"
-go install github.com/tomnomnom/gf@latest
-echo "Install qsreplace"
-go install github.com/tomnomnom/qsreplace@latest
-echo "Install Amass"
-go install github.com/owasp-amass/amass/v3/...@latest
-echo "Install ffuf"
-go install github.com/ffuf/ffuf@latest
-echo "Install assetfinder"
-go install github.com/tomnomnom/assetfinder@latest
-echo "Install github-subdomains"
-go install github.com/gwen001/github-subdomains@latest
-echo "Install cf-check"
-go install github.com/dwisiswant0/cf-check@latest
-echo "Install waybackurls"
-go install github.com/tomnomnom/hacks/waybackurls@latest
-echo "Install nuclei"
-go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-echo "Install anew"
-go install github.com/tomnomnom/anew@latest
-echo "Install notify"
-go install github.com/projectdiscovery/notify/cmd/notify@latest
-echo "Install mildew"
-go install github.com/daehee/mildew/cmd/mildew@latest
-echo "Install dirdar"
-go install github.com/m4dm0e/dirdar@latest
-echo "Install unfurl"
-go install github.com/tomnomnom/unfurl@latest
-echo "Install httpx"
-go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-echo "Install github-endpoints"
-go install github.com/gwen001/github-endpoints@latest
-echo "Install dnsx"
-go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest
-echo "Install subfinder"
-go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-echo "Install gauplus"
-go install github.com/bp0lr/gauplus@latest
-echo "Install subjs"
-go install github.com/lc/subjs@latest
-echo "Install Gxss"
-go install github.com/KathanP19/Gxss@latest
-echo "Install gospider"
-go install github.com/jaeles-project/gospider@latest
-echo "Install crlfuzz"
-go install github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest
-echo "Install dalfox"
-go install github.com/hahwul/dalfox/v2@latest
-echo "Install puredns"
-go install github.com/d3mondev/puredns/v2@latest
-echo "Install resolveDomains"
-go install github.com/Josue87/resolveDomains@latest
-echo "Install interactsh-client"
-go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest
-echo "Install gotator"
-go install github.com/Josue87/gotator@latest
-echo "Install kxss"
-go install github.com/tomnomnom/hacks/kxss@latest
-echo "Install GetJs"
-go install github.com/003random/getJS@latest
-echo "Install Goop"
-go install github.com/deletescape/goop@latest
-echo "Install Meg"
-go install github.com/tomnomnom/meg@latest
-echo "Install Freq"
-go install github.com/takshal/freq@latest
-echo "Install Sdlookup"
-go install github.com/j3ssie/sdlookup@latest
-echo "Install Sigurlfinder"
-go install -v github.com/signedsecurity/sigurlfind3r/cmd/sigurlfind3r@latest
-echo "Install Chromedp"
-go install github.com/chromedp/chromedp@latest
-echo "Install Airixss"
-go install github.com/ferreiraklet/airixss@latest
-echo "Install Nilo"
-go install github.com/ferreiraklet/nilo@latest
-echo "Install haip2host"
-go install github.com/hakluke/hakip2host@latest
-echo "Install scopein"
-go install -v github.com/ferreiraklet/scopein@latest
-echo "Install metabigor"
-go install github.com/j3ssie/metabigor@latest
-echo "Install hakrevdns"
-go install github.com/hakluke/hakrevdns@latest
+
+install_tool() {
+  local tool="$1"
+  local repo="$2"
+  echo "Installing $tool"
+  go install $repo@latest
+}
+
+install_tools "fff" "github.com/tomnomnom/fff"
+install_tools "hakrawler" "github.com/hakluke/hakrawler"
+install_tools "tojson" "github.com/tomnomnom/hacks/tojson"
+install_tools "gowitness" "github.com/sensepost/gowitness"
+install_tools "Rush" "github.com/shenwei356/rush"
+install_tools "Gf-Patterns" "1ndianl33t/Gf-Patterns"
+install_tools "LinkFinder" "dark-warlord14/LinkFinder"
+install_tools "Naabu" "github.com/projectdiscovery/naabu/v2/cmd/naabu"
+install_tools "hakcheckurl" "github.com/hakluke/hakcheckurl"
+install_tools "shuffledns" "github.com/projectdiscovery/shuffledns/cmd/shuffledns"
+install_tools "gron" "github.com/tomnomnom/gron"
+install_tools "html-tool" "github.com/tomnomnom/hacks/html-tool"
+install_tools "Chaos" "github.com/projectdiscovery/chaos-client/cmd/chaos"
+install_tools "gf" "github.com/tomnomnom/gf"
+install_tools "qsreplace" "github.com/tomnomnom/qsreplace"
+install_tools "Amass" "github.com/owasp-amass/amass/v3/...@"
+install_tools "ffuf" "github.com/ffuf/ffuf"
+install_tools "assetfinder" "github.com/tomnomnom/assetfinder"
+install_tools "github-subdomains" "github.com/gwen001/github-subdomains"
+install_tools "waybackurls" "github.com/tomnomnom/hacks/waybackurls"
+install_tools "nuclei" "github.com/projectdiscovery/nuclei/v2/cmd/nuclei"
+install_tools "anew" "github.com/tomnomnom/anew"
+install_tools "notify" "github.com/projectdiscovery/notify/cmd/notify"
+install_tools "mildew" "github.com/daehee/mildew/cmd/mildew"
+install_tools "dirdar" "github.com/m4dm0e/dirdar"
+install_tools "unfurl" "github.com/tomnomnom/unfurl"
+install_tools "httpx" "github.com/projectdiscovery/httpx/cmd/httpx"
+install_tools "dnsx" "github.com/projectdiscovery/dnsx/cmd/dnsx"
+install_tools "subfinder" "github.com/projectdiscovery/subfinder/v2/cmd/subfinder"
+install_tools "gauplus" "github.com/bp0lr/gauplus"
+install_tools "subjs" "github.com/lc/subjs"
+install_tools "Gxss" "github.com/KathanP19/Gxss"
+install_tools "gospider" "github.com/jaeles-project/gospider"
+install_tools "dalfox" "github.com/hahwul/dalfox/v2"
+install_tools "puredns" "github.com/d3mondev/puredns/v2"
+install_tools "interactsh-client" "github.com/projectdiscovery/interactsh/cmd/interactsh-client"
+install_tools "gotator" "github.com/Josue87/gotator"
+install_tools "kxss" "github.com/tomnomnom/hacks/kxss"
+install_tools "GetJs" "github.com/003random/getJS"
+install_tools "Goop" "github.com/deletescape/goop"
+install_tools "Meg" "github.com/tomnomnom/meg"
+install_tools "Freq" "github.com/takshal/freq"
+install_tools "Sdlookup" "github.com/j3ssie/sdlookup"
+install_tools "Airixss" "github.com/ferreiraklet/airixss"
+install_tools "Nilo" "github.com/ferreiraklet/nilo"
+install_tools "haip2host" "github.com/hakluke/haip2host"
+install_tools "scopein" "github.com/ferreiraklet/scopein"
+install_tools "metabigor" "github.com/j3ssie/metabigor"
+install_tools "hakrevdns" "github.com/hakluke/hakrevdns"
+install_tools "alterx" "github.com/projectdiscovery/alterx/cmd/alterx"
+install_tools "katana" "github.com/projectdiscovery/katana/cmd/katana"
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"
@@ -144,7 +97,6 @@ repos["Waymore"]="xnl-h4ck3r/waymore"
 repos["altdns"]="infosec-au/altdns"
 repos["XSStrike-Reborn"]="ItsIgnacioPortal/XSStrike-Reborn"
 
-dir="$HOME/Tools"
 
 mkdir -p ~/.gf
 mkdir -p ~/Tools/
