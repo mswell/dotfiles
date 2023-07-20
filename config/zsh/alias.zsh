@@ -59,3 +59,6 @@ alias update='sudo pacman -Syyu'
 alias dualhome="xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP"
 
 
+#pacman unlock
+alias unlock="sudo rm /var/lib/pacman/db.lck"
+alias rmpacmanlock="sudo rm /var/lib/pacman/db.lck"
