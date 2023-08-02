@@ -62,3 +62,19 @@ alias dualhome="xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP"
 #pacman unlock
 alias unlock="sudo rm /var/lib/pacman/db.lck"
 alias rmpacmanlock="sudo rm /var/lib/pacman/db.lck"
+
+# Tmux aliases 
+alias ta='tmux attach -t'
+alias tad='tmux attach -d -t'
+alias ts='tmux new-session -s'
+alias tl='tmux list-sessions'
+alias tksv='tmux kill-server'
+alias tkss='tmux kill-session -t'
+
+# Youtube downloader
+alias yta-aac="yt-dlp --extract-audio --audio-format aac "
+alias yta-best="yt-dlp --extract-audio --audio-format best "
+alias yta-flac="yt-dlp --extract-audio --audio-format flac "
+alias yta-mp3="yt-dlp --extract-audio --audio-format mp3 "
+alias ytv-best="yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio' --merge-output-format mp4 "
+
