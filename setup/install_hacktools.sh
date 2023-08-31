@@ -72,6 +72,7 @@ install_tool "metabigor" "github.com/j3ssie/metabigor"
 install_tool "hakrevdns" "github.com/hakluke/hakrevdns"
 install_tool "alterx" "github.com/projectdiscovery/alterx/cmd/alterx"
 install_tool "katana" "github.com/projectdiscovery/katana/cmd/katana"
+install_tool "sourcemapper" "https://github.com/denandz/sourcemapper"
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"
