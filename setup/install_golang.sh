@@ -14,8 +14,8 @@ echo "${yellow}[+] Instalando ambiente de desenvolvimento em Go${reset}"
 # by https://github.com/nahamsec/bbht/blob/master/install.sh
  echo "${yellow}[+] Instalando Go${reset}"
  sleep 1
- GOversion=$(curl -L -s https://golang.org/VERSION?m=text)
- wget https://dl.google.com/go/${GOversion}.linux-amd64.tar.gz $DEBUG_STD
+ GOversion=$(curl -L -s "https://golang.org/VERSION?m=text" | head -n 1)
+ wget  https://go.dev/dl/${GOversion}.linux-amd64.tar.gz $DEBUG_STD
  sudo tar -C /usr/local -xzf ${GOversion}.linux-amd64.tar.gz $DEBUG_STD
  rm -rf $GOversion*
 
