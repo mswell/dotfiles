@@ -11,12 +11,12 @@ reset=$(tput sgr0)
 sudo apt install -y autojump tree ttf-ancient-fonts fzf tmux alacritty
 
 # Install tmux TPM
-echo "${yellow}[+] Instalando tmux TPM${reset}"
+echo "${yellow}[+] Install tmux TPM${reset}"
 sleep 1
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Install Colorscripts
-echo "${yellow}[+] Instalando colorscripts${reset}"
+echo "${yellow}[+] Install colorscripts${reset}"
 sleep 1
 git clone https://gitlab.com/dwt1/shell-color-scripts.git
 cd shell-color-scripts
@@ -25,16 +25,16 @@ cd -
 rm -rf shell-color-scripts
 
 # Install Starship
-echo "${yellow}[+] Instalando starship${reset}"
+echo "${yellow}[+] Install starship${reset}"
 sleep 1
 sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 
 # zsh
-echo "${yellow}[+] Instalando oh-my-zsh${reset}"
+echo "${yellow}[+] Install oh-my-zsh${reset}"
 sleep 1
 sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 
-echo "${yellow}[+] Instalando syntax highlighting e autosuggestions , para o zsh${reset}"
+echo "${yellow}[+] Install syntax highlighting and autosuggestions, for zsh${reset}"
 sleep 1
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions

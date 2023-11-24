@@ -5,10 +5,10 @@ URL_NEOVIM=" https://raw.githubusercontent.com/LunarVim/LunarVim/rolling/utils/i
 URL_RUST="https://sh.rustup.rs"
 
 #--- Cores
-red=`tput setaf 1`
-green=`tput setaf 2`
-yellow=`tput setaf 3`
-reset=`tput sgr0`
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+yellow=$(tput setaf 3)
+reset=$(tput sgr0)
 
 #---- script
 echo "${yellow}[+] Instalando tools for developers${reset}"
@@ -20,7 +20,7 @@ sudo -H pip3 install --upgrade pynvim virtualenvwrapper
 # neovim
 echo "${yellow}[+] Instalando Neovim${reset}"
 # cria diretorio se ele nao existe
-[ ! -d "$HOME/.config/nvim" ] && mkdir $HOME/.config/nvim
+[ ! -d "$HOME/.config/nvim" ] && mkdir -p $HOME/.config/nvim
 #bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/rolling/utils/installer/install-neovim-from-release)
 # Faz o download e instala
 wget -q -O - --no-check-certificate $URL_NEOVIM | bash
