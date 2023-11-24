@@ -342,6 +342,12 @@ getdata() {
   cat ALLHTTP | fff -d 50 -S -o AllHttpData
 }
 
+getdatawithcrawl() {
+  echo "[+] Get all responses and save on roots folder"
+  katana -jc -d 3 -rd 5 -u 200HTTP -o crawldata
+  cat crawldata | fff -d 50 -S -o 200HttpData 
+}
+
 graphqldetect() {
   echo "[+] Graphql Detect"
   cat ALLHTTP | nuclei -id graphql-detect -H $UserAgent -o graphqldetect
