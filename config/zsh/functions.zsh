@@ -339,13 +339,14 @@ textinjection() {
 }
 getdata() {
   echo "[+] Get all responses and save on roots folder"
-  cat ALLHTTP | fff -d 50 -S -o AllHttpData
+  [ -s "ALLHTTP" ] && subfinder -l ALLHTTP -srd "AllHttpData" 
 }
 
 getdatawithcrawl() {
   echo "[+] Get all responses and save on roots folder"
-  katana -jc -d 3 -rd 5 -u 200HTTP -o crawldata
-  cat crawldata | fff -d 50 -S -o 200HttpData 
+  [ -s "200HTTP" ] && katana -jc -d 3 -rd 5 -u 200HTTP -o crawldata
+  [ -s "crawldata" ] && subfinder -l crawldata -srd "200HttpData" 
+
 }
 
 graphqldetect() {
