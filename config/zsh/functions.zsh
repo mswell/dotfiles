@@ -339,13 +339,13 @@ textinjection() {
 }
 getdata() {
   echo "[+] Get all responses and save on roots folder"
-  [ -s "ALLHTTP" ] && subfinder -l ALLHTTP -srd "AllHttpData" 
+  [ -s "ALLHTTP" ] && httpx -l ALLHTTP -srd "AllHttpData" 
 }
 
 getdatawithcrawl() {
   echo "[+] Get all responses and save on roots folder"
   [ -s "200HTTP" ] && katana -jc -d 3 -rd 5 -u 200HTTP -o crawldata
-  [ -s "crawldata" ] && subfinder -l crawldata -srd "200HttpData" 
+  [ -s "crawldata" ] && httpx -l crawldata -srd "200HttpData" 
 
 }
 
