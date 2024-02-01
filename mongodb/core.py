@@ -1,4 +1,3 @@
-import sys
 import datetime
 import concurrent.futures
 from database import connect_db
@@ -34,7 +33,8 @@ def subdomain_parser(target, subs_files):
             futures = []
             for line in file:
                 futures.append(
-                    executor.submit(setup_parser, target, line=line.rstrip("\n"))
+                    executor.submit(
+                        setup_parser, target, line=line.rstrip("\n"))
                 )
 
 
