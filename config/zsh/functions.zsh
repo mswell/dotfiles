@@ -106,13 +106,6 @@ panelNuc() {
   [ -s "nucPanel" ] && notify -silent -bulk -data nucPanel -id nuclei
 }
 
-rceNuc() {
-  echo "[+] RCE scan"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags rce -H $UserAgent -o rcevector
-  [ -s "rcevector" ] && echo "RCE vector found :)" | notify -silent -id nuclei
-  [ -s "rcevector" ] && notify -silent -bulk -data rcevector -id nuclei
-}
-
 massALLHTTPtemplate() {
   find /root/Projects -type f -name ALLHTTP | xargs -I{} -P2 bash -c 'cat {}' | anew allhttpalive
   cat allhttpalive | nuclei -t $1 -o massALLTEST.txt
@@ -127,7 +120,7 @@ exposureNuc() {
 }
 
 naabuRecon() {
-  naabu -l clean.subdomains -r $HOME/Lists/resolvers.txt -ec -p 80,443,81,300,591,593,832,981,1010,1311,1099,2082,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,4993,5000,5104,5108,5280,5281,5601,5800,6543,7000,7001,7396,7474,8000,8001,8008,8014,8042,8060,8069,8080,8081,8083,8088,8090,8091,8095,8118,8123,8172,8181,8222,8243,8280,8281,8333,8337,8443,8500,8834,8880,8888,8983,9000,9001,9043,9060,9080,9090,9091,9200,9443,9502,9800,9981,10000,10250,11371,12443,15672,16080,17778,18091,18092,20720,32000,55440,55672 -sa -o naabuScanFull
+  naabu -l clean.subdomains -r $HOME/Lists/resolvers.txt -ec -tp 100 -sa -o naabuScanFull
   [ -s "naabuScanFull" ] && cat naabuScanFull | grep -v '\[' | anew naabuScan
 }
 
@@ -270,7 +263,6 @@ subdomainenum() {
   cat amass.subdomains | anew all.subdomains
   rm -f amass.subdomains
   curl -s "https://crt.sh/?q=%25.$Domain&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | anew all.subdomains
-  crobat -s domains | anew all.subdomains
   cat all.subdomains | dnsx -silent | anew clean.subdomains
   echo "[+] Passive subdomain recon completed :)"
 }
@@ -281,10 +273,6 @@ checkscope() {
   cat sorted.all.subdomains | inscope | tee -a inscope.sorted.all.subdomains
 }
 
-###################################
-# Learn how amass gets both ipv4&6
-# use massdns instead
-####################################
 resolving() {
   shuffledns -d domains -list sorted.all.subdomains -r ~/tools/lists/my-lists/resolvers -o resolved.subdomains
 }
@@ -314,29 +302,7 @@ bbrfresolvedomains() {
       >(awk '{print $2":"$1}' | bbrf ip update - -p $p -s dnsx)
   done
 }
-# TODO: alterar para usar o match do httpx
-nginxpath() {
-  echo "Test nginx path traversal" | notify -silent
-  ffuf -c -w ALLHTTP -u FUZZ////////../../../../../etc/passwd -mr "root:x" -or -o nginxpath.txt
-  [ -s "nginxpath.txt" ] && echo 'nginx traversal found' | notify -silent
-  [ -s "nginxpath.txt" ] && notify -silent -bulk -data nginxpath.txt -id nuclei
-}
 
-# TODO: alterar para usar o match do httpx
-geojson() {
-  echo "Test geojson redirect" | notify -silent
-  ffuf -c -w ALLHTTP -u FUZZ/api/geojson?url=file:///etc/passwd -mr "root:x" -or -o geojson.txt
-  [ -s "geojson.txt" ] && echo "geojson redirect found" | notify -silent
-  [ -s "geojson.txt" ] && cat geojson.txt | notify -silent
-}
-
-# TODO: alterar para usar o match do httpx
-textinjection() {
-  echo "Test text injection" | notify -silent
-  ffuf -c -w ALLHTTP -u FUZZ///example.com -mr 'Cannot GET' -or -o textinjection.txt
-  [ -s "textinjection.txt" ] && echo "text injection found" | notify -silent
-  [ -s "textinjection.txt" ] && cat textinjection.txt | notify -silent
-}
 getdata() {
   echo "[+] Get all responses and save on roots folder"
   [ -s "ALLHTTP" ] && httpx -l ALLHTTP -srd "AllHttpData" 
@@ -403,10 +369,6 @@ subtakeover() {
   [ -s "subtakeover.txt" ] && cat subtakeover.txt | notify -silent -id subs
 }
 
-##########################################################
-# use massdns
-# use dns history to check for possible domain takeover
-##########################################################
 dnsrecords() {
   echo "[+] Get dnshistory data"
   mkdir dnshistory
