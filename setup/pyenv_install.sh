@@ -2,7 +2,7 @@
 # Author: Henrique Bastos <henrique@bastos.net>
 # Modified by Wellington Moraes <wellpunk@gmail.com>
 
-PY3=3.12.0
+PY3=3.12.2
 PY2=2.7.18
 PY3TOOLS="poetry youtube-dl pytest black flake8 pylint requests colorama virtualenvwrapper"
 PY2TOOLS="rename"
@@ -12,7 +12,7 @@ PROJS=~/Projects
 
 # Install Pyenv
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
-cat <<"EOT" >> $HOME/.zshrc
+cat <<"EOT" >>$HOME/.zshrc
 
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
@@ -30,14 +30,14 @@ mkdir -p $VENVS
 mkdir -p $PROJS
 
 # Setup .zshrc
-cat <<"EOT" >> $HOME/.zshrc
+cat <<"EOT" >>$HOME/.zshrc
 
 # Virtualenv-wrapper directories
 export WORKON_HOME=~/.ve
 export PROJECT_HOME=~/Projects
 EOT
 
-cat <<"EOT" >> $HOME/.zshrc
+cat <<"EOT" >>$HOME/.zshrc
 
 # Pyenv initialization
 eval "$(pyenv init -)"
@@ -47,7 +47,7 @@ EOT
 
 # Initialize pyenv
 eval "$(pyenv init -)"
-if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
+if which pyenv-virtualenv-init >/dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 
 # Install Python versions
 pyenv install $PY3
@@ -82,7 +82,7 @@ pyenv virtualenv $PY2 tools27
 # Install virtualenvwrapper
 ~/.pyenv/versions/tools39/bin/pip install virtualenvwrapper
 
-cat <<"EOT" >> $HOME/.zshrc
+cat <<"EOT" >>$HOME/.zshrc
 
 # Virtualenv Wrapper initialization
 export VIRTUALENVWRAPPER_PYTHON=$(which python3)
@@ -100,12 +100,12 @@ chmod -R -w ~/.pyenv/versions/$PY3/lib/
 pyenv global $PY3 $PY2 tools39 jupyter39 ipython27 tools27
 
 # Check everything
-pyenv which python     | grep -q "$PY3" && echo "✓ $PY3"
-pyenv which python2    | grep -q "$PY2" && echo "✓ $PY2"
-pyenv which jupyter    | grep -q "jupyter39" && echo "✓ jupyter39" 
-pyenv which ipython    | grep -q "jupyter39" && echo "✓ ipython" 
-pyenv which ipython2   | grep -q "ipython27" && echo "✓ ipython27" 
-pyenv which youtube-dl | grep -q "tools39" && echo "✓ tools39" 
-pyenv which rename     | grep -q "tools27" && echo "✓ tools27"
+pyenv which python | grep -q "$PY3" && echo "✓ $PY3"
+pyenv which python2 | grep -q "$PY2" && echo "✓ $PY2"
+pyenv which jupyter | grep -q "jupyter39" && echo "✓ jupyter39"
+pyenv which ipython | grep -q "jupyter39" && echo "✓ ipython"
+pyenv which ipython2 | grep -q "ipython27" && echo "✓ ipython27"
+pyenv which youtube-dl | grep -q "tools39" && echo "✓ tools39"
+pyenv which rename | grep -q "tools27" && echo "✓ tools27"
 
 echo "Done! Restart the terminal."
