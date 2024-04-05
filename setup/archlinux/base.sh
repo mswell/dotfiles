@@ -1,12 +1,12 @@
 #!/bin/sh
 
 sudo pacman -S --needed base-devel
-#git clone https://aur.archlinux.org/paru.git
-#cd paru
+#git clone https://aur.archlinux.org/yay.git
+#cd yay
 #makepkg -si
 #cd -
-#rm -rf paru
+#rm -rf yay
 
 echo "Installing base-dev libs"
-paru -Syu --noconfirm git vim python-pip
-paru -Syu --noconfirm base devel
+yay -Syu --noconfirm git vim python-pip
+yay -Syu --noconfirm base devel
