@@ -46,8 +46,8 @@ echo "${yellow}[+] Copiando dotfiles alacritty${reset}"
 sleep 1
 # cria diretorio se nao existir
 [ ! -d "$HOME/.config/alacritty" ] && mkdir -p "$HOME/.config/alacritty"
-echo "${green}[+] Copiando $DOTFILES/config/alacritty.yml => $HOME/.config/alacritty/${reset}"
-cp "$DOTFILES/config/alacritty.yml" "$HOME/.config/alacritty/"
+echo "${green}[+] Copiando $DOTFILES/config/alacritty.toml => $HOME/.config/alacritty/${reset}"
+cp "$DOTFILES/config/alacritty.toml" "$HOME/.config/alacritty/"
 
 # wezterm
 echo "${yellow}[+] Copiando dotfiles alacritty${reset}"
