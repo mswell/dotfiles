@@ -9,3 +9,4 @@ mongodb/settings.toml
 mongodb/__pycache__/
 mongodb/resume.cfg
 .vscode
+*.pyc
