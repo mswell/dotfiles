@@ -13,7 +13,6 @@ echo "Install applications"
 yay -S --noconfirm --needed ctags npm lazygit ncurses zsh xclip autojump 
   
 sudo npm install -g neovim tree-sitter-cli --force
-# sudo pip install virtualenvwrapper jedi ipython pylint pydocstyle pipenv
 
 # installation of zippers and unzippers
 yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract file-roller

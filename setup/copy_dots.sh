@@ -4,10 +4,9 @@
 set -e
 
 #--- Constantes
-export DOTFILES=$PWD
+export DOTFILES="$PWD"
 
 #--- Cores
-red=$(tput setaf 1)
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 reset=$(tput sgr0)
@@ -50,7 +49,7 @@ echo "${green}[+] Copiando $DOTFILES/config/alacritty.toml => $HOME/.config/alac
 cp "$DOTFILES/config/alacritty.toml" "$HOME/.config/alacritty/"
 
 # wezterm
-echo "${yellow}[+] Copiando dotfiles alacritty${reset}"
+echo "${yellow}[+] Copiando dotfiles Wezterm${reset}"
 sleep 1
 # cria diretorio se nao existir
 [ ! -d "$HOME/.config/wezterm" ] && mkdir -p "$HOME/.config/wezterm"
@@ -68,7 +67,7 @@ git clone https://github.com/mswell/nvim.git ~/.config/nvim
 echo "${yellow}[+] Copiando tmux${reset}"
 sleep 1
 # cria diretorio se nao existir
-[ ! -d "$HOME/.local/bin" ] && mkdir $HOME/.local/bin
+[ ! -d "$HOME/.local/bin" ] && mkdir "$HOME/.local/bin"
 cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
 cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
 

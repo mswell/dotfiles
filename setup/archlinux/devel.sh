@@ -8,5 +8,5 @@ mkdir "$HOME/.config/nvim"
 
 # install base packages
 
-yay -S --noconfirm --noedit ctags ripgrep fzf ncurses curl unzip neovim docker docker-compose tmux zsh htop fzf xsel silver-searcher-git tree exa dconf
+yay -S --noconfirm --noedit ctags ripgrep fzf ncurses curl unzip neovim docker docker-compose tmux zsh htop xsel silver-searcher-git tree exa dconf
 
