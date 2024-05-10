@@ -23,6 +23,7 @@ font pango:Noto Mono Regular 13
 # https://wiki.archlinux.org/index.php/XDG_Autostart
 exec --no-startup-id dex --autostart --environment i3
 
+exec --no-startup-id xrandr --output DP-0 --mode 1920x1080 --pos 1920x0 --dpi 96 --rate 144 --rotate left --output DP-2 --mode 1920x1080  --dpi 96 --rate 144 --pos 0x0 --rotate normal
 # The combination of xss-lock, nm-applet and pactl is a popular choice, so
 # they are included here as an example. Modify as you see fit.
 
@@ -133,6 +134,23 @@ bindsym $mod+a focus parent
 # focus the child container
 #bindsym $mod+d focus child
 
+
+# current setup
+
+set $firstMonitor DP-2
+set $secondMonitor DP-0
+
+workspace 1 output $firstMonitor
+workspace 2 output $firstMonitor
+workspace 3 output $firstMonitor
+workspace 4 output $firstMonitor
+workspace 5 output $firstMonitor
+workspace 6 output $secondMonitor
+workspace 7 output $secondMonitor
+workspace 8 output $secondMonitor
+workspace 9 output $secondMonitor
+workspace 10 output $secondMonitor
+
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
 set $ws1 "1"
@@ -204,6 +222,21 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
+################# moving around workspaces         
+
+# next/previous workspace
+
+bindsym Mod1+Tab workspace next
+bindsym Mod1+Shift+Tab workspace prev
+bindsym $mod+Tab workspace back_and_forth
+
+# navigate workspaces next / previous
+bindsym Mod1+Ctrl+Right workspace next
+bindsym Mod1+Ctrl+Left workspace prev
+
+# switch to workspace with urgent window automatically
+for_window [urgent=latest] focus
+
 # Autotiling
 exec_always --no-startup-id autotiling
 
@@ -260,6 +293,69 @@ new_window normal
 # new_float pixel 1
 new_float normal
 # new_float none
+
+################# assign applications to workspaces 
+
+# Assign application to start on a specific workspace
+# you can find the class with the program xprop
+
+# Example - make browser start on workspace 3
+# assign [class="Firefox|Vivaldi-stable|Vivaldi-snapshot|Opera"]                      → 3
+# assign [class="Chromium|Google-chrome"]                    → 3
+
+# Workspace 2 text editor related
+# assign [class="sublime-text|sublime_text|Sublime_text|subl|Subl|subl3|Subl3"]       → 2
+# assign [class="Xed|xed|Brackets|Atom|Code|Geany"]                                   → 2
+
+# Workspace 3 Inkscape
+# assign [class="Inkscape"]                                                           → 3
+
+# Workspace 4 Gimp
+# assign [class="Gimp"]                                                               → 4
+
+# Workspace 5 Images and meld
+# assign [class="ristretto|Ristretto|shotwell|Shotwell|Xviewer|Nitrogen"]             → 5
+# assign [class="feh|gthumb|Gthumb|eog|Eog|Pinta|pixeluvo|Pixeluvo"]                  → 5
+# assign [class="Meld"]                                                               → 5
+
+# Workspace 6 all video related software
+# assign [class="Vlc|vlc"]                                                            → 6
+
+# Workspace 7 virtual machines and settings
+# assign [class="Vmplayer|VirtualBox"]						    → 7
+
+# Workspace 8 file managers
+# assign [class="Nemo|Thunar|Caja|nautilus|Nautilus"]                                 → 8
+
+# Workspace 9 email clients
+# assign [class="Geary|Evolution"]                                                    → 9
+
+# Workspace 10 music related
+assign [class="Spotify|spotify"]                                                    → 10
+# fix for spotify not moving to workspace 10
+# for_window [class="Spotify"] move to workspace 10
+
+################# applications keyboard shortcuts
+
+# file management
+for_window [class="Thunar"] focus
+bindsym $mod+Shift+Return exec --no-startup-id thunar;focus
+
+# System monitor
+bindsym control+Shift+Escape exec --no-startup-id xfce4-taskmanager;focus
+
+# settings
+bindsym control+mod1+m exec --no-startup-id xfce4-settings-manager
+
+# music
+bindsym $mod+F10 exec --no-startup-id spotify;focus
+bindsym control+mod1+s exec --no-startup-id spotify;focus
+
+################# screenshots                      
+
+bindsym Print exec --no-startup-id scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'
+bindsym $mod+Shift+s exec --no-startup-id flameshot gui
+# bindsym shift+Print exec --no-startup-id shutter
 
 ################# Popups  control                  
 
@@ -330,13 +426,13 @@ bindsym control+mod1+o exec --no-startup-id ~/.config/i3/scripts/picom-toggle.sh
 bar {
     height 25
     workspace_buttons yes
-	font pango:Noto Sans 12
+    font pango:Noto Sans 12
 	# position top
     position bottom
 
 	# system icons
     # tray_output none
-    # tray_output $firstMonitor
+    tray_output $firstMonitor
     # tray_output $secondMonitor
 
     # OPTION 1 : i3status
@@ -347,40 +443,6 @@ bar {
 
 	# status_command i3status
     status_command i3status -c ~/.config/i3/i3status.conf
-
-    # OPTION 2 : i3blocks
-
-    # https://github.com/vivien/i3blocks
-    # another way to provide text in the statusbar
-    # put hastag in front if not installed
-
-    # status_command i3blocks
-    # status_command i3blocks -c ~/.config/i3/i3blocks.conf
-    # status_command i3blocks -c ~/.config/i3/i3blocks-rainbow.conf
-    # status_command i3blocks -c ~/.config/i3/i3blocks-original.conf
-    # status_command i3blocks -c ~/.config/i3/i3blocks-awesome.conf
-
-
-    # OPTION 3 : conky
-
-    # You can also replace the istatus bar with a conky
-    # start-conky-i3statusbar.sh is started and conky will follow
-    # documentation : https://i3wm.org/docs/user-contributed/conky-i3bar.html
-    # conky configuration is in conky-i3statusbar
-
-	# status_command ~/.config/i3/start-conky-i3statusbar.sh
-
-    # OPTION 4 : polybar
-
-    # polybar is launched elsewhere - search for the word
-    # from the opening of the "bar {...}" till the end has to go or hashtagged out
-    # in order for the system trayicons to show up in polybar
-
-    ##START THEMING BAR
-    # Theme name : ArcoLinux Default
-
-    # i3 bar colors
-    # variable border background Text
 
     colors {
         background #11111b
@@ -395,10 +457,6 @@ bar {
         }
 
     }
-    ##STOP THEMING BAR
-
-    ##START THEMING WM
-    # Theme name : ArcoLinux Default
 
     # Window color settings
     # class                 border  backgr. text    indicator
@@ -409,7 +467,5 @@ bar {
     client.urgent           #d42121 #d42121 #f7f7f7 #d42121
 
     client.background       #242424
-
-    ##STOP THEMING WM
 
 ######################################## THE END 
