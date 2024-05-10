@@ -73,7 +73,7 @@ mode "$mode_system" {
 }
 
 # auto lock the screen
-exec "xautolock -detectsleep -time 3 -locker \"i3lock -c 000000\""
+# exec "xautolock -detectsleep -time 3 -locker \"i3lock -c 000000\""
 
 # start dmenu (a program launcher)
 bindsym $mod+d exec --no-startup-id dmenu_run
