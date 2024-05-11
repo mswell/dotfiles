@@ -87,12 +87,12 @@ config.use_fancy_tab_bar = true
 config.tab_bar_at_bottom = false
 -- config.window_decorations = "RESIZE|TITLE"
 -- config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
-config.window_padding = {
-	left = 30,
-	right = 30,
-	top = 30,
-	bottom = 30,
-}
+-- config.window_padding = {
+-- 	left = 10,
+-- 	right = 10,
+-- 	top = 10,
+-- 	bottom = 10,
+-- }
 config.window_frame = {
 	font = wezterm.font({ family = "SF Mono" }),
 	-- font = wezterm.font({ family = "Geist Mono" }),
@@ -101,6 +101,7 @@ config.window_frame = {
 	font_size = 15.0,
 }
 
+config.window_background_opacity = 0.99
 config.color_scheme = "OneDark (base16)"
 config.color_scheme = "OneDark"
 config.color_schemes = {
