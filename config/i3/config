@@ -15,6 +15,36 @@ set $mod Mod4
 # is used in the bar {} block below.
 font pango:Noto Mono Regular 13
 
+
+# TOKYO SKYLINE THEME
+
+# set color variables
+# optional theme colorscheme
+set $grey                #212121
+set $valencia            #ea6962
+set $magenta             #d3869b
+set $blue                #0d3138
+set $cyan                #7daea3
+set $black               #141617
+set $white               #f9f5d7
+set $yellow              #d8a657
+set $red                 #ea6962
+set $green               #89b482
+
+# theme colors
+set $bg-color 	         #212121
+set $inactive-bg-color   #212121
+set $text-color          #ffffff
+set $inactive-text-color #1dcc9f
+set $urgent-bg-color     #e64a19
+
+# set window colors
+# class                 border              background         text                 indicator
+client.focused          $bg-color           $green          $black               $bg-color
+client.unfocused        $inactive-bg-color  $inactive-bg-color $inactive-text-color $bg-color
+client.focused_inactive $inactive-bg-color  $inactive-bg-color $inactive-text-color $bg-color
+client.urgent           $urgent-bg-color    $urgent-bg-color   $text-color          $bg-color
+client.background       $bg-color
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
 #font pango:DejaVu Sans Mono 8
@@ -50,7 +80,7 @@ floating_modifier $mod
 tiling_drag modifier titlebar
 
 # start a terminal
-bindsym $mod+Return exec alacritty
+bindsym $mod+Return exec wezterm
 
 # kill focused window
 bindsym $mod+Shift+q kill
@@ -77,7 +107,12 @@ mode "$mode_system" {
 # exec "xautolock -detectsleep -time 3 -locker \"i3lock -c 000000\""
 
 # start dmenu (a program launcher)
-bindsym $mod+d exec --no-startup-id dmenu_run
+bindsym $mod+d exec --no-startup-id dmenu_run -i -nb '#141617' -nf '#e78a4e' -sb '#e78a4e' -sf '#141617' -fn 'NotoMonoRegular:bold:pixelsize=14'
+bindsym $mod+shift+d exec --no-startup-id rofi -show drun
+
+# Emoji picker
+
+bindsym mod1+shift+d exec --no-startup-id rofi -show emoji -modi emoji
 # A more modern dmenu replacement is rofi:
 # bindcode $mod+40 exec "rofi -modi drun,run -show drun"
 # There also is i3-dmenu-desktop which only displays applications shipping a
@@ -424,11 +459,12 @@ bindsym control+mod1+o exec --no-startup-id ~/.config/i3/scripts/picom-toggle.sh
 ################# bar appearance                   
 
 bar {
-    height 25
     workspace_buttons yes
-    font pango:Noto Sans 12
-	# position top
-    position bottom
+    font pango:Noto Sans 9
+    tray_padding 3
+	  position top
+    height 25
+    # position bottom
 
 	# system icons
     # tray_output none
@@ -441,31 +477,21 @@ bar {
     # you will get the standard i3status bar
     # Second one is the standard statusbar with my personal settings
 
-	# status_command i3status
+	  # status_command i3status
     status_command i3status -c ~/.config/i3/i3status.conf
+    # APPEARANCE SETTINGS
+
 
     colors {
-        background #11111b
-        statusline #a9b1d6
-        separator  #c0caf5
+      # whole color settings
+      background   $black
+      statusline   $white
+      separator    $grey
 
-        # colorclass           border  backgr. text
-        focused_workspace     #cba6f7 #cba6f7 #1a1b26
-        active_workspace      #cba6f7 #cba6f7 #1a1b26
-        inactive_workspace    #cba6f7 #1a1b26 #cba6f7
-        urgent_workspace      #cba6f7 #f7768e #FFFFFF
-        }
-
+      # type             border      backgr.     font
+      focused_workspace  $grey       $white      $black
+      active_workspace   $grey       $white      $black
+      inactive_workspace $grey       $black      $white
+      urgent_workspace   $valencia   $valencia   $black
     }
-
-    # Window color settings
-    # class                 border  backgr. text    indicator
-    client.focused          #89b4fa #89b4fa #e5e5e5 #89b4fa
-    client.unfocused        #222222 #222222 #aaaaaa #222222
-    client.focused_inactive #222222 #222222 #a9a9a9 #222222
-    client.placeholder      #222222 #222222 #aaaaaa #222222
-    client.urgent           #d42121 #d42121 #f7f7f7 #d42121
-
-    client.background       #242424
-
-######################################## THE END 
+}
