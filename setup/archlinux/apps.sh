@@ -15,4 +15,4 @@ yay -S --noconfirm --needed ctags npm lazygit ncurses zsh xclip autojump
 sudo npm install -g neovim tree-sitter-cli --force
 
 # installation of zippers and unzippers
-yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract file-roller
+yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract
