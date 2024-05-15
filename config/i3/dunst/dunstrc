@@ -1,21 +1,20 @@
-[frame]
-    width = 0
-    color = "#212121"
+[global]
 
 [urgency_low]
-    background = "#000000"
-    foreground = "#ffffff"
-    timeout = 10
+background = "#1e1e2e"
+foreground = "#cdd6f4"
 
 [urgency_normal]
-    background = "#212121"
-    foreground = "#ffffff"
-    timeout = 10
+background = "#1e1e2e"
+foreground = "#cdd6f4"
 
 [urgency_critical]
-    background = "#fbc02d"
-    foreground = "#000000"
-    timeout = 0
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+frame_color = "#fab387"
+
+
+
 
 [global]
     # The format of the message.  Possible variables:
@@ -35,6 +34,7 @@
     # Positive y value is measured from the top of the screen
     geometry = "300x5-50+75"
 
+    frame_color = "#89b4fa"
     font = Roboto 10
     allow_markup = yes
     plain_text = no             # Treat message as plain text
