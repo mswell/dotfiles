@@ -16,35 +16,41 @@ set $mod Mod4
 font pango:Noto Mono Regular 13
 
 
-# TOKYO SKYLINE THEME
+set $rosewater #f5e0dc
+set $flamingo #f2cdcd
+set $pink #f5c2e7
+set $mauve #cba6f7
+set $red #f38ba8
+set $maroon #eba0ac
+set $peach #fab387
+set $yellow #f9e2af
+set $green #a6e3a1
+set $teal #94e2d5
+set $sky #89dceb
+set $sapphire #74c7ec
+set $blue #89b4fa
+set $lavender #b4befe
+set $text #cdd6f4
+set $subtext1 #bac2de
+set $subtext0 #a6adc8
+set $overlay2 #9399b2
+set $overlay1 #7f849c
+set $overlay0 #6c7086
+set $surface2 #585b70
+set $surface1 #45475a
+set $surface0 #313244
+set $base #1e1e2e
+set $mantle #181825
+set $crust #11111b
 
-# set color variables
-# optional theme colorscheme
-set $grey                #212121
-set $valencia            #ea6962
-set $magenta             #d3869b
-set $blue                #0d3138
-set $cyan                #7daea3
-set $black               #141617
-set $white               #f9f5d7
-set $yellow              #d8a657
-set $red                 #ea6962
-set $green               #89b482
+# target                 title     bg    text   indicator  border
+client.focused           $lavender $base $text  $rosewater $lavender
+client.focused_inactive  $overlay0 $base $text  $rosewater $overlay0
+client.unfocused         $overlay0 $base $text  $rosewater $overlay0
+client.urgent            $peach    $base $peach $overlay0  $peach
+client.placeholder       $overlay0 $base $text  $overlay0  $overlay0
+client.background        $base
 
-# theme colors
-set $bg-color 	         #212121
-set $inactive-bg-color   #212121
-set $text-color          #ffffff
-set $inactive-text-color #1dcc9f
-set $urgent-bg-color     #e64a19
-
-# set window colors
-# class                 border              background         text                 indicator
-client.focused          $bg-color           $green          $black               $bg-color
-client.unfocused        $inactive-bg-color  $inactive-bg-color $inactive-text-color $bg-color
-client.focused_inactive $inactive-bg-color  $inactive-bg-color $inactive-text-color $bg-color
-client.urgent           $urgent-bg-color    $urgent-bg-color   $text-color          $bg-color
-client.background       $bg-color
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
 #font pango:DejaVu Sans Mono 8
@@ -56,6 +62,9 @@ exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id xrandr --output DP-0 --mode 1920x1080 --pos 1920x0 --dpi 96 --rate 144 --rotate left --output DP-2 --mode 1920x1080  --dpi 96 --rate 144 --pos 0x0 --rotate normal
 # The combination of xss-lock, nm-applet and pactl is a popular choice, so
 # they are included here as an example. Modify as you see fit.
+
+# Authentication dialog
+exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
@@ -471,27 +480,20 @@ bar {
     tray_output $firstMonitor
     # tray_output $secondMonitor
 
-    # OPTION 1 : i3status
-
-    # type status_command i3status without the config file and
-    # you will get the standard i3status bar
-    # Second one is the standard statusbar with my personal settings
-
 	  # status_command i3status
     status_command i3status -c ~/.config/i3/i3status.conf
     # APPEARANCE SETTINGS
 
 
-    colors {
-      # whole color settings
-      background   $black
-      statusline   $white
-      separator    $grey
-
-      # type             border      backgr.     font
-      focused_workspace  $grey       $white      $black
-      active_workspace   $grey       $white      $black
-      inactive_workspace $grey       $black      $white
-      urgent_workspace   $valencia   $valencia   $black
-    }
+  colors {
+    background         $crust
+    statusline         $text
+    focused_statusline $text
+    focused_separator  $lavender
+    focused_workspace  $mauve $mauve $base
+    active_workspace   $base $base $mauve
+    inactive_workspace $base $base $mauve
+    urgent_workspace   $sky $sky $base
+    binding_mode       $base $base $mauve
+  }
 }
