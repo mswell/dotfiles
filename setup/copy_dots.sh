@@ -56,6 +56,12 @@ sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/wezterm.lua => $HOME/.config/wezterm/${reset}"
 cp "$DOTFILES/config/wezterm.lua" "$HOME/.config/wezterm/"
 
+# alacritty
+echo "${yellow}[+] Copy starship config${reset}"
+sleep 1
+echo "${green}[+] Copiando $DOTFILES/config/starship.toml => $HOME/.config/${reset}"
+cp "$DOTFILES/config/starship.toml" "$HOME/.config/"
+
 # neovim
 echo "${yellow}[+] Copiando neovim${reset}"
 sleep 1
