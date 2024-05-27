@@ -5,7 +5,7 @@ set -e
 echo "Installing useful Apps"
 
 # software from 'normal' repositories
-yay -S --noconfirm --needed tmux htop
+yay -S --noconfirm --needed tmux htop redshift
 yay -S --noconfirm --needed git lsd alacritty wezterm
 yay -S --noconfirm --needed shell-color-scripts
 yay -S --noconfirm --needed git-delta vlc wget unclutter curl

@@ -63,6 +63,11 @@ sleep 1
 [ -d ~/.config/nvim ] && rm -rf ~/.config/nvim
 git clone https://github.com/mswell/nvim.git ~/.config/nvim
 
+echo "${yellow}[+] Copy Redshift config ${reset}"
+[ ! -d "$HOME/.config/redshift" ] && mkdir -p "$HOME/.config/redshift"
+echo "${green}[+] Copiando $DOTFILES/config/redshift/redshift.conf => $HOME/.config/redshift/${reset}"
+cp "$DOTFILES/config/redshift/redshift.conf" "$HOME/.config/redshift/"
+
 # tmux
 echo "${yellow}[+] Copiando tmux${reset}"
 sleep 1

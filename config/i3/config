@@ -63,13 +63,12 @@ exec --no-startup-id xrandr --output DP-0 --mode 1920x1080 --pos 1920x0 --dpi 96
 # The combination of xss-lock, nm-applet and pactl is a popular choice, so
 # they are included here as an example. Modify as you see fit.
 
-# Authentication dialog
-exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
-
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 
+# Redshift
+exec --no-startup-id redshift-gtk
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
@@ -477,8 +476,14 @@ bar {
 
 	# system icons
     # tray_output none
-    tray_output $firstMonitor
+    # tray_output $firstMonitor
     # tray_output $secondMonitor
+
+    # OPTION 1 : i3status
+
+    # type status_command i3status without the config file and
+    # you will get the standard i3status bar
+    # Second one is the standard statusbar with my personal settings
 
 	  # status_command i3status
     status_command i3status -c ~/.config/i3/i3status.conf
