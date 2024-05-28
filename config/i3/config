@@ -468,7 +468,7 @@ bindsym control+mod1+o exec --no-startup-id ~/.config/i3/scripts/picom-toggle.sh
 
 bar {
     workspace_buttons yes
-    font pango:Noto Sans 9
+    font pango:JetBrainsMono NF 10
     tray_padding 3
 	  position top
     height 25
