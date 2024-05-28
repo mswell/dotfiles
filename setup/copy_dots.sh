@@ -39,6 +39,8 @@ echo "${yellow}[+] Copiando dotfiles git${reset}"
 sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/git/.gitconfig => $HOME/.gitconfig${reset}"
 cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
+cp "$DOTFILES/config/git/.catppuccin.gitconfig" "$HOME/.catppuccin.gitconfig"
+cp "$DOTFILES/config/bat/config" "$HOME/.config/bat/config"
 
 # alacritty
 echo "${yellow}[+] Copiando dotfiles alacritty${reset}"
@@ -80,7 +82,10 @@ sleep 1
 # cria diretorio se nao existir
 [ ! -d "$HOME/.local/bin" ] && mkdir "$HOME/.local/bin"
 cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
+cp "$DOTFILES/config/tmux/.tmux-cht-command" "$HOME/.tmux-cht-command"
+cp "$DOTFILES/config/tmux/.tmux.cht-languages" "$HOME/.tmux-cht-languages"
 cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
+cp "$DOTFILES/config/tmux/tmux-cht.sh" "$HOME/.local/bin"
 
 # Custom nuclei templates
 echo "${yellow}[+] Copiando nuclei templates${reset}"
