@@ -63,6 +63,9 @@ exec --no-startup-id xrandr --output DP-0 --mode 1920x1080 --pos 1920x0 --dpi 96
 # The combination of xss-lock, nm-applet and pactl is a popular choice, so
 # they are included here as an example. Modify as you see fit.
 
+# Authentication dialog
+exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
