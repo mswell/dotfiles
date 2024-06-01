@@ -11,6 +11,8 @@ yay -S --noconfirm --needed shell-color-scripts
 yay -S --noconfirm --needed git-delta vlc wget unclutter curl
 echo "Install applications"
 yay -S --noconfirm --needed ctags npm lazygit ncurses zsh xclip autojump 
+yay -S --noconfirm --needed catppuccin-gtk-theme-mocha catppuccin-cursors-mocha 
+yay -S --noconfirm --needed meld discord flameshot volumeicon ticktick openfortivpn polkit-gnome fzf rofi dunst
   
 sudo npm install -g neovim tree-sitter-cli --force
 
