@@ -1,11 +1,10 @@
-
 local wezterm = require 'wezterm'
 return {
 	-- color_scheme = 'termnial.sexy',
 	color_scheme = 'Catppuccin Mocha',
 	enable_tab_bar = false,
 	font_size = 16.0,
-	font = wezterm.font('JetBrains Mono'),
+	font = wezterm.font('Geist Mono'),
 	-- macos_window_background_blur = 40,
 	macos_window_background_blur = 30,
 	
@@ -15,12 +14,11 @@ return {
 	-- 	hue = 1.0,
 	-- 	saturation = 0.5,
 	-- },
-	window_background_opacity = 0.95,
+	window_background_opacity = 0.97,
 	-- window_background_opacity = 1.0,
 	-- window_background_opacity = 0.78,
 	-- window_background_opacity = 0.20,
 	window_decorations = 'RESIZE',
-  audible_bell = 'Disabled',
 	mouse_bindings = {
 	  -- Ctrl-click will open the link under the mouse cursor
 	  {
@@ -30,4 +28,3 @@ return {
 	  },
 	},
 }
-
