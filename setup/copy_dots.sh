@@ -83,7 +83,7 @@ sleep 1
 [ ! -d "$HOME/.local/bin" ] && mkdir "$HOME/.local/bin"
 cp "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
 cp "$DOTFILES/config/tmux/.tmux-cht-command" "$HOME/.tmux-cht-command"
-cp "$DOTFILES/config/tmux/.tmux.cht-languages" "$HOME/.tmux-cht-languages"
+cp "$DOTFILES/config/tmux/.tmux-cht-languages" "$HOME/.tmux-cht-languages"
 cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
 cp "$DOTFILES/config/tmux/tmux-cht.sh" "$HOME/.local/bin"
 
