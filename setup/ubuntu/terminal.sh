@@ -15,15 +15,8 @@ echo "${yellow}[+] Install tmux TPM${reset}"
 sleep 1
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
-# Install Starship
-echo "${yellow}[+] Install starship${reset}"
-sleep 1
-sh -c "$(curl -fsSL https://starship.rs/install.sh)"
-
-echo "${yellow}[+] Instalando syntax highlighting e autosuggestions , para o zsh${reset}"
-sleep 1
-git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/z sh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting
+# Install ZAP ZSH
+zsh <(curl -s https://raw.githubusercontent.com/zap-zsh/zap/master/install.zsh) --branch release-v1
 
 echo "Now type \`chsh -s $(which zsh)\` to zsh becomes default."
 echo "${red}Logout and login to effective your changes.${reset}"
