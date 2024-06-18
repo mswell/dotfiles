@@ -40,6 +40,11 @@ bindkey '^[[B' history-substring-search-down
 bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 
+# go
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 source $HOME/Tools/gf/gf-completion.zsh
