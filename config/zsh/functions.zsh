@@ -164,7 +164,7 @@ brutesub() {
 
 bruteTop1million() {
   for domain in $(cat domains); do
-    shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/subdomains-top1million-110000.txt -o brutesubs_out.txt
+    shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/subdomains-top1million-110000.txt -mode bruteforce -o brutesubs_out.txt
     cat brutesubs_out.txt | anew clean.subdomains
   done
   rm -rf brutesubs_out.txt
@@ -172,7 +172,7 @@ bruteTop1million() {
 
 bruteAlltxt() {
   for domain in $(cat domains); do
-    shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/all.txt -o brutesubs_out.txt
+    shuffledns -d $domain -r $HOME/Lists/resolvers.txt -w $HOME/Lists/all.txt -mode bruteforce -o brutesubs_out.txt
     cat brutesubs_out.txt | anew clean.subdomains
   done
   rm -rf brutesubs_out.txt
