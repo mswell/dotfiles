@@ -4,7 +4,7 @@
 
 PY3=3.12.3
 PY2=2.7.18
-PY3TOOLS="poetry youtube-dl pytest black flake8 pylint requests colorama virtualenvwrapper"
+PY3TOOLS="poetry ipython youtube-dl pytest black flake8 pylint requests colorama virtualenvwrapper"
 PY2TOOLS="rename"
 
 VENVS=~/.ve
@@ -54,27 +54,13 @@ pyenv install $PY3
 pyenv install $PY2
 
 # Prepare virtual environments
-pyenv virtualenv $PY3 jupyter39
 pyenv virtualenv $PY3 tools39
-pyenv virtualenv $PY2 ipython27
 pyenv virtualenv $PY2 tools27
 
 ~/.pyenv/versions/$PY3/bin/pip install --upgrade pip
 ~/.pyenv/versions/$PY2/bin/pip install --upgrade pip
-~/.pyenv/versions/jupyter39/bin/pip install --upgrade pip
 ~/.pyenv/versions/tools39/bin/pip install --upgrade pip
-~/.pyenv/versions/ipython27/bin/pip install --upgrade pip
 ~/.pyenv/versions/tools27/bin/pip install --upgrade pip
-
-# Install Jupyter
-~/.pyenv/versions/jupyter39/bin/pip install jupyter
-~/.pyenv/versions/jupyter39/bin/python -m ipykernel install --user
-~/.pyenv/versions/jupyter39/bin/pip install jupyter_nbextensions_configurator rise
-~/.pyenv/versions/jupyter39/bin/jupyter nbextensions_configurator enable --user
-
-# Install Python2 kernel
-~/.pyenv/versions/ipython27/bin/pip install ipykernel
-~/.pyenv/versions/ipython27/bin/python -m ipykernel install --user
 
 # Install Python3 Tools
 ~/.pyenv/versions/tools39/bin/pip install $PY3TOOLS
@@ -97,14 +83,11 @@ chmod -R -w ~/.pyenv/versions/$PY2/lib/
 chmod -R -w ~/.pyenv/versions/$PY3/lib/
 
 # Setup path order
-pyenv global $PY3 $PY2 tools39 jupyter39 ipython27 tools27
+pyenv global $PY3 $PY2 tools39 tools27
 
 # Check everything
 pyenv which python | grep -q "$PY3" && echo "✓ $PY3"
 pyenv which python2 | grep -q "$PY2" && echo "✓ $PY2"
-pyenv which jupyter | grep -q "jupyter39" && echo "✓ jupyter39"
-pyenv which ipython | grep -q "jupyter39" && echo "✓ ipython"
-pyenv which ipython2 | grep -q "ipython27" && echo "✓ ipython27"
 pyenv which youtube-dl | grep -q "tools39" && echo "✓ tools39"
 pyenv which rename | grep -q "tools27" && echo "✓ tools27"
 
