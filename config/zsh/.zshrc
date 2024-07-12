@@ -40,6 +40,11 @@ bindkey '^[[B' history-substring-search-down
 bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+
+bindkey -r "^[^?"
+
 # go
 export GOROOT=/usr/local/go
 export GOPATH=$HOME/go
