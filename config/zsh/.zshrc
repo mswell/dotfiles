@@ -56,10 +56,13 @@ source $HOME/Tools/gf/gf-completion.zsh
 
 bindkey -s '^f' "tmux-sessionizer\n"
 
-export FZF_DEFAULT_OPTS=" \
---color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
---color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
---color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
+export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
+  --color=fg:#ffffff,fg+:#d0d0d0,bg:#16181a,bg+:#262626
+  --color=hl:#5ea1ff,hl+:#5ef1ff,info:#ffbd5e,marker:#5eff6c
+  --color=prompt:#ff5ea0,spinner:#bd5eff,pointer:#bd5eff,header:#ff5ef1
+  --color=border:#262626,label:#aeaeae,query:#d9d9d9
+  --border="rounded" --border-label="" --preview-window="border-rounded" --prompt="> "
+  --marker=">" --pointer="◆" --separator="─" --scrollbar="│"'
 
 # Load and initialise completion system
 autoload -Uz compinit

@@ -1,6 +1,4 @@
 # copy to ~/
-[include]
-  path = ~/.catppuccin.gitconfig
 [user]
 	name = Wellington Moraes
 	email = wellpunk@gmail.com
@@ -18,11 +16,15 @@
   diffFilter = delta --color-only --features=interactive
 
 [delta]
-  features = catppuccin-mocha
+  features = decorations
   side-by-side = true
   line-numbers = true
+
 [delta "interactive"]
   keep-plus-minus-markers = false
+
+[delta "decorations"]
+  syntax-theme = cyberdream
 
 [merge]
 	tool = vimdiff

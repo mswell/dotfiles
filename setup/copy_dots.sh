@@ -57,7 +57,8 @@ sleep 1
 # cria diretorio se nao existir
 [ ! -d "$HOME/.config/wezterm" ] && mkdir -p "$HOME/.config/wezterm"
 echo "${green}[+] Copiando $DOTFILES/config/wezterm.lua => $HOME/.config/wezterm/${reset}"
-cp "$DOTFILES/config/wezterm.lua" "$HOME/.config/wezterm/"
+cp "$DOTFILES/config/wezterm/wezterm.lua" "$HOME/.config/wezterm/"
+cp "$DOTFILES/config/wezterm/cyberdream.lua" "$HOME/.config/wezterm/"
 
 # alacritty
 echo "${yellow}[+] Copy starship config${reset}"

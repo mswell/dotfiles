@@ -21,5 +21,5 @@ yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextr
 
 # Bat config
 mkdir -p "$(bat --config-dir)/themes"
-wget -P "$(bat --config-dir)/themes" https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Mocha.tmTheme
+wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/scottmckendry/cyberdream.nvim/main/extras/textmate/cyberdream.tmTheme
 bat cache --build
