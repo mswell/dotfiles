@@ -40,6 +40,7 @@ sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/git/.gitconfig => $HOME/.gitconfig${reset}"
 cp "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
 cp "$DOTFILES/config/git/.catppuccin.gitconfig" "$HOME/.catppuccin.gitconfig"
+[ ! -d "$HOME/.config/bat" ] && mkdir -p "$HOME/.config/bat"
 cp "$DOTFILES/config/bat/config" "$HOME/.config/bat/config"
 
 # alacritty
