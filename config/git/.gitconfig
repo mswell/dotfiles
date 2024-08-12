@@ -24,7 +24,7 @@
   keep-plus-minus-markers = false
 
 [delta "decorations"]
-  syntax-theme = cyberdream
+  syntax-theme = tokyonight_night
 
 [merge]
 	tool = vimdiff
