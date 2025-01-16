@@ -6,7 +6,7 @@ export TERM="xterm-256color"
 eval "$(starship init zsh)"
 
 
-export PATH="/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin"
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:/usr/local/bin:$HOME/.cargo/bin"
 
 # ATTENTION !! if you use WSL, please change windows user on PATH export
 
