@@ -66,7 +66,6 @@ sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/starship.toml => $HOME/.config/${reset}"
 cp "$DOTFILES/config/starship.toml" "$HOME/.config/"
 
-neovim
 echo "${yellow}[+] Copiando neovim${reset}"
 sleep 1
 # remove diretorio se existir
