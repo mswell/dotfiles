@@ -10,10 +10,8 @@ yay -S --noconfirm --needed git bat lsd wezterm
 yay -S --noconfirm --needed git-delta vlc wget unclutter curl
 echo "Install applications"
 yay -S --noconfirm --needed ctags lazygit ncurses zsh xclip autojump 
-yay -S --noconfirm --needed meld discord flameshot volumeicon openfortivpn polkit-gnome fzf rofi dunst
+yay -S --noconfirm --needed meld discord openfortivpn fzf dunst
   
-sudo npm install -g neovim tree-sitter-cli --force
-
 # installation of zippers and unzippers
 yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract
 

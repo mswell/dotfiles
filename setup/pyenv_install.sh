@@ -2,7 +2,7 @@
 # Author: Henrique Bastos <henrique@bastos.net>
 # Modified by Wellington Moraes <wellpunk@gmail.com>
 
-PY3=3.13.1
+PY3=3.13.2
 PY2=2.7.18
 PY3TOOLS="poetry ipython youtube-dl pytest black flake8 pylint requests colorama virtualenvwrapper"
 PY2TOOLS="rename"

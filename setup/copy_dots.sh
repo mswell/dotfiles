@@ -60,17 +60,11 @@ echo "${green}[+] Copiando $DOTFILES/config/wezterm.lua => $HOME/.config/wezterm
 cp "$DOTFILES/config/wezterm/wezterm.lua" "$HOME/.config/wezterm/"
 cp "$DOTFILES/config/wezterm/cyberdream.lua" "$HOME/.config/wezterm/"
 
-# alacritty
+# Startship
 echo "${yellow}[+] Copy starship config${reset}"
 sleep 1
 echo "${green}[+] Copiando $DOTFILES/config/starship.toml => $HOME/.config/${reset}"
 cp "$DOTFILES/config/starship.toml" "$HOME/.config/"
-
-echo "${yellow}[+] Copiando neovim${reset}"
-sleep 1
-# remove diretorio se existir
-[ -d ~/.config/nvim ] && rm -rf ~/.config/nvim
-git clone https://github.com/mswell/nvim.git ~/.config/nvim
 
 echo "${yellow}[+] Copy Redshift config ${reset}"
 [ ! -d "$HOME/.config/redshift" ] && mkdir -p "$HOME/.config/redshift"
@@ -87,10 +81,5 @@ cp "$DOTFILES/config/tmux/.tmux-cht-command" "$HOME/.tmux-cht-command"
 cp "$DOTFILES/config/tmux/.tmux-cht-languages" "$HOME/.tmux-cht-languages"
 cp "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
 cp "$DOTFILES/config/tmux/tmux-cht.sh" "$HOME/.local/bin"
-
-# Custom nuclei templates
-echo "${yellow}[+] Copiando nuclei templates${reset}"
-sleep 1
-cp -R "$DOTFILES/custom_nuclei_templates/" "$HOME/"
 
 echo "${yellow}[+] Done.${reset}"

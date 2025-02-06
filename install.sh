@@ -42,6 +42,7 @@ Menu(){
     echo "[2] - ArchLinux like"
     echo "[3] - OSX"
     echo "[4] - Archlinux WSL"
+    echo "[5] - Archlinux with Hyprland"
     echo "[0] - Exit"
     echo
     echo -n "Choose your distro: "
@@ -51,6 +52,7 @@ Menu(){
         2) Archlinux ;;
         3) OSX ;;
         4) ArchWSL ;;
+        5) ArchHypr ;;
         0) exit ;;
         *) "Unknown option" ; echo ; Menu ;;
     esac
@@ -69,6 +71,11 @@ Archlinux(){
 ArchWSL(){
     echo "Initializing setup :)"
     source setup/archWSL/setup.sh
+}
+
+ArchHypr(){
+    echo "Initializing setup :)"
+    source setup/ArchHypr/setup.sh
 }
 
 OSX(){
