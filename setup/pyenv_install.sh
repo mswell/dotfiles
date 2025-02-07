@@ -4,91 +4,124 @@
 
 PY3=3.13.2
 PY2=2.7.18
-PY3TOOLS="poetry ipython youtube-dl pytest black flake8 pylint requests colorama virtualenvwrapper"
+PY3TOOLS="poetry ipython youtube-dl waypaper pytest black flake8 pylint requests colorama virtualenvwrapper"
 PY2TOOLS="rename"
 
 VENVS=~/.ve
 PROJS=~/Projects
 
-# Install Pyenv
-git clone https://github.com/pyenv/pyenv.git ~/.pyenv
-cat <<"EOT" >>$HOME/.zshrc
+# Função para verificar se um comando existe
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
 
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-EOT
+# Função para adicionar ao .zshrc se não existir
+add_to_zshrc() {
+  grep -qxF "$1" "$HOME/.zshrc" || echo "$1" >>"$HOME/.zshrc"
+}
 
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+# Instala Pyenv
+install_pyenv() {
+  git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+  export PYENV_ROOT="$HOME/.pyenv"
+  export PATH="$PYENV_ROOT/bin:$PATH"
+  add_to_zshrc 'export PYENV_ROOT="$HOME/.pyenv"'
+  add_to_zshrc 'export PATH="$PYENV_ROOT/bin:$PATH"'
+}
 
-git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
-git clone https://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
-# All my virtualenvs are here...
-mkdir -p $VENVS
+# Instala plugins do Pyenv
+install_pyenv_plugins() {
+  git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
+  git clone https://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
+}
 
-# All my projects are here...
-mkdir -p $PROJS
+# Configura diretórios de projetos e virtualenvs
+setup_directories() {
+  mkdir -p $VENVS
+  mkdir -p $PROJS
+  add_to_zshrc 'export WORKON_HOME=~/.ve'
+  add_to_zshrc 'export PROJECT_HOME=~/Projects'
+}
 
-# Setup .zshrc
-cat <<"EOT" >>$HOME/.zshrc
+# Configura inicialização do Pyenv no .zshrc
+setup_pyenv_init() {
+  add_to_zshrc 'eval "$(pyenv init -)"'
+  add_to_zshrc 'eval "$(pyenv init --path)"'
+  add_to_zshrc 'if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi'
+}
 
-# Virtualenv-wrapper directories
-export WORKON_HOME=~/.ve
-export PROJECT_HOME=~/Projects
-EOT
+# Inicializa Pyenv
+initialize_pyenv() {
+  eval "$(pyenv init -)"
+  eval "$(pyenv init --path)"
+  if command_exists pyenv-virtualenv-init; then
+    eval "$(pyenv virtualenv-init -)"
+  fi
+}
 
-cat <<"EOT" >>$HOME/.zshrc
+# Instala versões do Python
+install_python_versions() {
+  pyenv install $PY3
+  pyenv install $PY2
+}
 
-# Pyenv initialization
-eval "$(pyenv init -)"
-eval "$(pyenv init --path)"
-if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
-EOT
+# Prepara ambientes virtuais
+prepare_virtualenvs() {
+  pyenv virtualenv $PY3 tools39
+  pyenv virtualenv $PY2 tools27
+  ~/.pyenv/versions/$PY3/bin/pip install --upgrade pip
+  ~/.pyenv/versions/$PY2/bin/pip install --upgrade pip
+  ~/.pyenv/versions/tools39/bin/pip install --upgrade pip
+  ~/.pyenv/versions/tools27/bin/pip install --upgrade pip
+}
 
-# Initialize pyenv
-eval "$(pyenv init -)"
-if which pyenv-virtualenv-init >/dev/null; then eval "$(pyenv virtualenv-init -)"; fi
+# Instala ferramentas Python3
+install_python3_tools() {
+  ~/.pyenv/versions/tools39/bin/pip install $PY3TOOLS
+  ~/.pyenv/versions/tools39/bin/pip install virtualenvwrapper
+  add_to_zshrc 'export VIRTUALENVWRAPPER_PYTHON=$(which python3)'
+  add_to_zshrc 'source ~/.pyenv/versions/tools39/bin/virtualenvwrapper.sh'
+}
 
-# Install Python versions
-pyenv install $PY3
-pyenv install $PY2
+# Instala ferramentas Python2
+install_python2_tools() {
+  ~/.pyenv/versions/tools27/bin/pip install $PY2TOOLS
+}
 
-# Prepare virtual environments
-pyenv virtualenv $PY3 tools39
-pyenv virtualenv $PY2 tools27
+# Protege diretórios lib dos interpretadores globais
+protect_lib_dirs() {
+  chmod -R -w ~/.pyenv/versions/$PY2/lib/
+  chmod -R -w ~/.pyenv/versions/$PY3/lib/
+}
 
-~/.pyenv/versions/$PY3/bin/pip install --upgrade pip
-~/.pyenv/versions/$PY2/bin/pip install --upgrade pip
-~/.pyenv/versions/tools39/bin/pip install --upgrade pip
-~/.pyenv/versions/tools27/bin/pip install --upgrade pip
+# Configura ordem do PATH
+setup_path_order() {
+  pyenv global $PY3 $PY2 tools39 tools27
+}
 
-# Install Python3 Tools
-~/.pyenv/versions/tools39/bin/pip install $PY3TOOLS
+# Verifica se tudo está instalado corretamente
+check_installation() {
+  pyenv which python | grep -q "$PY3" && echo "✓ $PY3"
+  pyenv which python2 | grep -q "$PY2" && echo "✓ $PY2"
+  pyenv which youtube-dl | grep -q "tools39" && echo "✓ tools39"
+  pyenv which rename | grep -q "tools27" && echo "✓ tools27"
+}
 
-# Install virtualenvwrapper
-~/.pyenv/versions/tools39/bin/pip install virtualenvwrapper
+# Executa todas as funções
+main() {
+  install_pyenv
+  install_pyenv_plugins
+  setup_directories
+  setup_pyenv_init
+  initialize_pyenv
+  install_python_versions
+  prepare_virtualenvs
+  install_python3_tools
+  install_python2_tools
+  protect_lib_dirs
+  setup_path_order
+  check_installation
+  echo "Done! Restart the terminal."
+}
 
-cat <<"EOT" >>$HOME/.zshrc
-
-# Virtualenv Wrapper initialization
-export VIRTUALENVWRAPPER_PYTHON=$(which python3)
-source ~/.pyenv/versions/tools39/bin/virtualenvwrapper.sh
-EOT
-
-# Install Python2 Tools
-~/.pyenv/versions/tools27/bin/pip install $PY2TOOLS
-
-# Protect lib dir for global interpreters
-chmod -R -w ~/.pyenv/versions/$PY2/lib/
-chmod -R -w ~/.pyenv/versions/$PY3/lib/
-
-# Setup path order
-pyenv global $PY3 $PY2 tools39 tools27
-
-# Check everything
-pyenv which python | grep -q "$PY3" && echo "✓ $PY3"
-pyenv which python2 | grep -q "$PY2" && echo "✓ $PY2"
-pyenv which youtube-dl | grep -q "tools39" && echo "✓ tools39"
-pyenv which rename | grep -q "tools27" && echo "✓ tools27"
-
-echo "Done! Restart the terminal."
+main

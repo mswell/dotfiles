@@ -1,21 +1,75 @@
 #!/bin/sh
 set -e
 
+export DOTFILES="$PWD"
+
+# Function to install packages with pacman
+install_pacman() {
+  sudo pacman -S --noconfirm "$@"
+}
+
+# Function to install packages with yay
+install_yay() {
+  yay -S --noconfirm --needed "$@"
+}
+
+# Hyprland installation and configuration
+echo "Install Hyprland"
+install_pacman hyprland
+mkdir -p $HOME/.config/hypr/ && cp -r $DOTFILES/config/hypr $HOME/.config/
+
+install_pacman xdg-desktop-portal-hyprland polkit-kde-agent dunst
+cp -r $DOTFILES/config/dunst $HOME/.config/
 
 echo "Installing useful Apps"
 
-# software from 'normal' repositories
-yay -S --noconfirm --needed tmux htop redshift
-yay -S --noconfirm --needed git bat lsd wezterm
-yay -S --noconfirm --needed git-delta vlc wget unclutter curl
-echo "Install applications"
-yay -S --noconfirm --needed ctags lazygit ncurses zsh xclip autojump 
-yay -S --noconfirm --needed meld discord openfortivpn fzf dunst
-  
-# installation of zippers and unzippers
-yay -S --noconfirm --needed unace unrar zip unzip sharutils uudeview arj cabextract
+# Software from 'normal' repositories
+install_yay tmux qt5-wayland qt6-wayland appimagelauncher-bin
+install_yay bat lsd wezterm cliphist librewolf-bin obsidian pavucontrol
+install_yay git-delta vlc wget unclutter curl bash-completion
+install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
+install_yay meld discord openfortivpn fzf hyprpicker
+install_yay thunar thunar-volman thunar-archive-plugin tumbler
+install_yay gvfs xarchiver ffmpegthumbnailer poppler-glib gvfs-mtp gvfs-nfs gvfs-smb unrar zip p7zip ntfs-3g
+
+# Installation of zippers and unzippers
+install_yay unace unrar zip unzip sharutils uudeview arj cabextract
+
+# Install Python and Neovim dependencies
+install_yay python python-setuptools neovim
+
+# Create Neovim configuration directory, if it doesn't exist
+mkdir -p "$HOME/.config/nvim"
+
+# Instala pacotes base para desenvolvimento
+install_yay ripgrep fzf curl unzip neovim docker docker-compose tmux the_silver_searcher tree exa
 
 # Bat config
 mkdir -p "$(bat --config-dir)/themes"
 wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
 bat cache --build
+
+# Instalação de Waybar e configuração
+install_pacman waybar
+cp -r $DOTFILES/config/waybar $HOME/.config/
+
+# Instalação de Tofi e configuração
+install_yay tofi
+cp -r $DOTFILES/config/tofi $HOME/.config/
+
+# Instalação de Hyprpicker, Hyprlock e Hypridle e configuração
+install_yay hyprpicker hyprlock hypridle
+cp -r $DOTFILES/config/hypr/hyprlock.conf $HOME/.config/hypr/
+cp -r $DOTFILES/config/hypr/hypridle $HOME/.config/hypr/
+
+# Instalação de Wlogout e Grimblast e configuração
+install_yay wlogout grimblast
+cp -r $DOTFILES/config/wlogout $HOME/.config/
+
+# Instalação de temas
+echo "Installing themes"
+install_yay kvantum-theme-catppuccin-git
+install_pacman nwg-look qt5ct qt6ct kvantum waypaper
+
+tar -xvf $DOTFILES/config/themes/Catppuccin-Mocha.tar.xz -C /usr/share/themes/
+tar -xvf $DOTFILES/config/icons/Tela-circle-dracula.tar.xz -C /usr/share/icons/
