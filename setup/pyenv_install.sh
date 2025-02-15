@@ -4,7 +4,7 @@
 
 PY3=3.13.2
 PY2=2.7.18
-PY3TOOLS="poetry ipython youtube-dl waypaper pytest black flake8 pylint requests colorama virtualenvwrapper"
+PY3TOOLS="poetry ipython waypaper pytest black flake8 pylint requests colorama virtualenvwrapper"
 PY2TOOLS="rename"
 
 VENVS=~/.ve
@@ -20,7 +20,7 @@ add_to_zshrc() {
   grep -qxF "$1" "$HOME/.zshrc" || echo "$1" >>"$HOME/.zshrc"
 }
 
-# Instala Pyenv
+# Instal Pyenv
 install_pyenv() {
   git clone https://github.com/pyenv/pyenv.git ~/.pyenv
   export PYENV_ROOT="$HOME/.pyenv"

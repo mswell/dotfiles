@@ -1,18 +1,14 @@
 #!/bin/sh
 
-# Instrui o shell a sair se houver erro
 set -e
 
-#--- Constantes
 export DOTFILES="$PWD"
 CONFIG_DIR="$HOME/.config"
 
-#--- Cores
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
-# Função para copiar arquivos
 copy_file() {
   local source="$1"
   local destination="$2"
@@ -20,14 +16,12 @@ copy_file() {
   cp -f "$source" "$destination"
 }
 
-# Função para criar diretórios
 create_dir() {
   local dir="$1"
   echo "${yellow}[+] Criando diretório $dir${reset}"
   [ ! -d "$dir" ] && mkdir -p "$dir"
 }
 
-#---- inicio script
 
 # zsh
 echo "${yellow}[+] Copiando dotfiles zsh${reset}"
@@ -52,12 +46,6 @@ sleep 1
 create_dir "$CONFIG_DIR/bat"
 copy_file "$DOTFILES/config/bat/config" "$CONFIG_DIR/bat/config"
 
-# alacritty
-echo "${yellow}[+] Copiando dotfiles alacritty${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/alacritty"
-copy_file "$DOTFILES/config/alacritty.toml" "$CONFIG_DIR/alacritty/"
-
 # wezterm
 echo "${yellow}[+] Copiando dotfiles Wezterm${reset}"
 sleep 1
@@ -69,11 +57,6 @@ copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
 echo "${yellow}[+] Copy starship config${reset}"
 sleep 1
 copy_file "$DOTFILES/config/starship.toml" "$CONFIG_DIR/"
-
-# Redshift
-echo "${yellow}[+] Copy Redshift config ${reset}"
-create_dir "$CONFIG_DIR/redshift"
-copy_file "$DOTFILES/config/redshift/redshift.conf" "$CONFIG_DIR/redshift/"
 
 # tmux
 echo "${yellow}[+] Copiando tmux${reset}"

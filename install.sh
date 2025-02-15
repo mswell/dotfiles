@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-#-- constantes
 export EDITOR='vim'
 export DOTFILES=$PWD
-#-- cores
+
 export red=$(tput setaf 1)
 export green=$(tput setaf 2)
 export yellow=$(tput setaf 3)
@@ -33,20 +32,18 @@ Banner() {
 
 Menu() {
     echo "[1] - Ubuntu VPS"
-    echo "[2] - ArchLinux like"
+    echo "[2] - Archlinux with Hyprland"
     echo "[3] - Install Hacktools"
-    echo "[4] - Archlinux WSL"
-    echo "[5] - Archlinux with Hyprland"
+    echo "[4] - Install Pyenv"
     echo "[0] - Exit"
     echo
     echo -n "Choose your distro: "
     read -r option
     case $option in
     1) Ubuntu ;;
-    2) Archlinux ;;
+    2) ArchHypr ;;
     3) HackTools ;;
-    4) ArchWSL ;;
-    5) ArchHypr ;;
+    4) Pyenv ;;
     0) exit ;;
     *)
         echo "Unknown option"
@@ -61,14 +58,9 @@ Ubuntu() {
     source setup/ubuntu/setup.sh
 }
 
-Archlinux() {
+Pyenv() {
     echo "Initializing setup :)"
-    source setup/archlinux/setup.sh
-}
-
-ArchWSL() {
-    echo "Initializing setup :)"
-    source setup/archWSL/setup.sh
+    source setup/pyenv_install.sh
 }
 
 ArchHypr() {
@@ -81,7 +73,6 @@ HackTools() {
     source setup/install_hacktools.sh
 }
 
-#----- Inicio
 clear
 Banner
 Menu
