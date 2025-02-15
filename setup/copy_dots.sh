@@ -53,11 +53,6 @@ create_dir "$CONFIG_DIR/wezterm"
 copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
 copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
 
-# Startship
-echo "${yellow}[+] Copy starship config${reset}"
-sleep 1
-copy_file "$DOTFILES/config/starship.toml" "$CONFIG_DIR/"
-
 # tmux
 echo "${yellow}[+] Copiando tmux${reset}"
 sleep 1

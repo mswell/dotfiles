@@ -6,7 +6,8 @@ export TERM="xterm-256color"
 
 [ -f $HOME/.config/zsh/alias.zsh ] && source $HOME/.config/zsh/alias.zsh
 [ -f $HOME/.config/zsh/custom.zsh ] && source $HOME/.config/zsh/custom.zsh
-eval "$(starship init zsh)"
+
+ZSH_THEME="robbyrussell"
 
 plugins=(fzf asdf zsh-autosuggestions virtualenvwrapper zsh-syntax-highlighting)
 

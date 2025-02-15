@@ -16,16 +16,6 @@ chsh -s $(which zsh)
 # Prints instructions for the user
 echo "${yellow}[+] Restart the system to apply the changes.${reset}"
 
-wget -P ~/.local/share/fonts https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \
-&& cd ~/.local/share/fonts \
-&& unzip JetBrainsMono.zip \
-&& rm JetBrainsMono.zip \
-&& fc-cache -fv
-
-# Installs Starship
-echo "${yellow}[+] Installing Starship${reset}"
-sh -c "$(curl -fsSL https://starship.rs/install.sh)"
-
 # Installs Oh-My-Zsh without interaction
 echo "${yellow}[+] Installing Oh-My-Zsh without interaction${reset}"
 export ZSH="$HOME/.oh-my-zsh"
