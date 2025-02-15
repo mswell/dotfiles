@@ -13,7 +13,6 @@ printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
 go env -w GO111MODULE=auto
 
-
 install_tool() {
   local tool="$1"
   local repo="$2"
@@ -22,14 +21,11 @@ install_tool() {
 }
 
 install_tool "fff" "github.com/tomnomnom/fff"
-install_tool "hakrawler" "github.com/hakluke/hakrawler"
 install_tool "tojson" "github.com/tomnomnom/hacks/tojson"
-install_tool "gowitness" "github.com/sensepost/gowitness"
 install_tool "Rush" "github.com/shenwei356/rush"
 install_tool "Gf-Patterns" "1ndianl33t/Gf-Patterns"
 install_tool "LinkFinder" "dark-warlord14/LinkFinder"
 install_tool "Naabu" "github.com/projectdiscovery/naabu/v2/cmd/naabu"
-install_tool "hakcheckurl" "github.com/hakluke/hakcheckurl"
 install_tool "shuffledns" "github.com/projectdiscovery/shuffledns/cmd/shuffledns"
 install_tool "gron" "github.com/tomnomnom/gron"
 install_tool "html-tool" "github.com/tomnomnom/hacks/html-tool"
@@ -44,7 +40,6 @@ install_tool "waybackurls" "github.com/tomnomnom/hacks/waybackurls"
 install_tool "nuclei" "github.com/projectdiscovery/nuclei/v2/cmd/nuclei"
 install_tool "anew" "github.com/tomnomnom/anew"
 install_tool "notify" "github.com/projectdiscovery/notify/cmd/notify"
-install_tool "mildew" "github.com/daehee/mildew/cmd/mildew"
 install_tool "dirdar" "github.com/m4dm0e/dirdar"
 install_tool "unfurl" "github.com/tomnomnom/unfurl"
 install_tool "httpx" "github.com/projectdiscovery/httpx/cmd/httpx"
@@ -54,22 +49,17 @@ install_tool "gauplus" "github.com/bp0lr/gauplus"
 install_tool "subjs" "github.com/lc/subjs"
 install_tool "Gxss" "github.com/KathanP19/Gxss"
 install_tool "gospider" "github.com/jaeles-project/gospider"
-install_tool "dalfox" "github.com/hahwul/dalfox/v2"
 install_tool "puredns" "github.com/d3mondev/puredns/v2"
 install_tool "interactsh-client" "github.com/projectdiscovery/interactsh/cmd/interactsh-client"
-install_tool "gotator" "github.com/Josue87/gotator"
 install_tool "kxss" "github.com/tomnomnom/hacks/kxss"
 install_tool "GetJs" "github.com/003random/getJS"
-install_tool "Goop" "github.com/deletescape/goop"
 install_tool "Meg" "github.com/tomnomnom/meg"
 install_tool "Freq" "github.com/takshal/freq"
 install_tool "Sdlookup" "github.com/j3ssie/sdlookup"
 install_tool "Airixss" "github.com/ferreiraklet/airixss"
 install_tool "Nilo" "github.com/ferreiraklet/nilo"
 install_tool "haip2host" "github.com/hakluke/haip2host"
-install_tool "scopein" "github.com/ferreiraklet/scopein"
 install_tool "metabigor" "github.com/j3ssie/metabigor"
-install_tool "hakrevdns" "github.com/hakluke/hakrevdns"
 install_tool "alterx" "github.com/projectdiscovery/alterx/cmd/alterx"
 install_tool "katana" "github.com/projectdiscovery/katana/cmd/katana"
 install_tool "sourcemapper" "https://github.com/denandz/sourcemapper"
@@ -77,26 +67,19 @@ install_tool "sourcemapper" "https://github.com/denandz/sourcemapper"
 declare -A repos
 repos["gf"]="tomnomnom/gf"
 repos["Gf-Patterns"]="1ndianl33t/Gf-Patterns"
-repos["LinkFinder"]="dark-warlord14/LinkFinder"
 repos["Interlace"]="codingo/Interlace"
 repos["JSScanner"]="0x240x23elu/JSScanner"
 repos["GitTools"]="internetwache/GitTools"
 repos["SecretFinder"]="m4ll0k/SecretFinder"
 repos["M4ll0k"]="m4ll0k/BBTz"
 repos["Git-Dumper"]="arthaud/git-dumper"
-repos["CORStest"]="RUB-NDS/CORStest"
 repos["Knock"]="guelfoweb/knock"
-repos["Photon"]="s0md3v/Photon"
-repos["Sudomy"]="screetsec/Sudomy"
-repos["DNSvalidator"]="vortexau/dnsvalidator"
 repos["Massdns"]="blechschmidt/massdns"
 repos["Dirsearch"]="maurosoria/dirsearch"
-repos["Knoxnl"]="xnl-h4ck3r/knoxnl"
 repos["xnLinkFinder"]="xnl-h4ck3r/xnLinkFinder"
 repos["MSwellDOTS"]="mswell/dotfiles"
 repos["Waymore"]="xnl-h4ck3r/waymore"
 repos["altdns"]="infosec-au/altdns"
-repos["XSStrike-Reborn"]="ItsIgnacioPortal/XSStrike-Reborn"
 
 
 mkdir -p ~/.gf
@@ -107,9 +90,7 @@ mkdir -p ~/.config/amass/
 mkdir -p ~/.config/nuclei/
 
 pip3 install uro
-pip3 install bhedak
 
-eval wget -nc -O ~/Lists/XSS-OFJAAAH.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/XSS/XSS-OFJAAAH.txt
 eval wget -nc -O ~/Lists/params.txt https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
 eval wget -nc -O ~/Lists/raft-large-directories-lowercase.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
 eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
@@ -125,7 +106,6 @@ eval wget -nc -O $HOME/Lists/xato-net-10-million-usernames.txt https://raw.githu
 eval wget -nc -O $HOME/Lists/subdomains-top1million-110000.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt
 eval wget -nc -O $HOME/Lists/raft-large-words.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt
 eval wget -nc -O $HOME/Lists/all.txt https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
-
 
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
 
