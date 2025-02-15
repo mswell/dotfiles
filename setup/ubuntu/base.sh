@@ -12,6 +12,7 @@ sudo apt install -y build-essential \
 		    vim \
 		    xclip \
 		    curl \
+		    fzf \
 		    wget
 
 sudo apt install -y python3 \

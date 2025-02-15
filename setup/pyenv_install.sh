@@ -103,7 +103,6 @@ setup_path_order() {
 check_installation() {
   pyenv which python | grep -q "$PY3" && echo "✓ $PY3"
   pyenv which python2 | grep -q "$PY2" && echo "✓ $PY2"
-  pyenv which youtube-dl | grep -q "tools39" && echo "✓ tools39"
   pyenv which rename | grep -q "tools27" && echo "✓ tools27"
 }
 
