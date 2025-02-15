@@ -32,9 +32,9 @@ Banner() {
 }
 
 Menu() {
-    echo "[1] - Ubuntu like"
+    echo "[1] - Ubuntu VPS"
     echo "[2] - ArchLinux like"
-    echo "[3] - OSX"
+    echo "[3] - Install Hacktools"
     echo "[4] - Archlinux WSL"
     echo "[5] - Archlinux with Hyprland"
     echo "[0] - Exit"
@@ -44,7 +44,7 @@ Menu() {
     case $option in
     1) Ubuntu ;;
     2) Archlinux ;;
-    3) OSX ;;
+    3) HackTools ;;
     4) ArchWSL ;;
     5) ArchHypr ;;
     0) exit ;;
@@ -76,9 +76,9 @@ ArchHypr() {
     source setup/ArchHypr/setup.sh
 }
 
-OSX() {
+HackTools() {
     echo "Initializing setup :)"
-    source setup/osx/setup.sh
+    source setup/install_hacktools.sh
 }
 
 #----- Inicio
