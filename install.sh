@@ -35,6 +35,7 @@ Menu() {
     echo "[2] - Archlinux with Hyprland"
     echo "[3] - Install Hacktools"
     echo "[4] - Install Pyenv"
+    echo "[5] - Archlinux with i3wm"
     echo "[0] - Exit"
     echo
     echo -n "Choose your distro: "
@@ -44,6 +45,7 @@ Menu() {
     2) ArchHypr ;;
     3) HackTools ;;
     4) Pyenv ;;
+    5) ArchI3wm ;;
     0) exit ;;
     *)
         echo "Unknown option"
@@ -66,6 +68,11 @@ Pyenv() {
 ArchHypr() {
     echo "Initializing setup :)"
     source setup/ArchHypr/setup.sh
+}
+
+ArchI3wm() {
+    echo "Initializing setup :)"
+    source setup/ArchI3wm/setup.sh
 }
 
 HackTools() {

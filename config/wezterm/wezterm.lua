@@ -1,48 +1,122 @@
 local wezterm = require 'wezterm'
-local commands = require 'commands'
-local constants = require 'constants'
 
-local config = wezterm.config_builder()
+local config = {}
 
--- Font settings
+if wezterm.config_builder then
+  config = wezterm.config_builder()
+end
+
+local fonts = {
+  -- "MonoLisa",
+  'Geist Mono',
+  'SF Mono',
+  'Monaspace Neon',
+  'Monaspace Xenon',
+  'Monaspace Krypton',
+  'Monaspace Radon',
+  'Monaspace Argon',
+  'Comic Code Ligatures',
+  -- "Liga SFMono Nerd Font",
+  -- "Fira Code Retina",
+  -- "DankMono Nerd Font",
+  -- "Monego Ligatures",
+  -- "Operator Mono Lig",
+  -- "Gintronic",
+  -- "Cascadia Code",
+  -- "JetBrainsMono Nerd Font Mono",
+  -- "Victor Mono",
+  -- "Inconsolata",
+  -- "TempleOS",
+  -- "Apercu Pro",
+}
+local emoji_fonts = {
+  'Apple Color Emoji',
+  'Joypixels',
+  'Twemoji',
+  'Noto Color Emoji',
+  'Noto Emoji',
+}
+
+-- https://www.monolisa.dev/playground
+-- https://fontdrop.info/#/?darkmode=true
+-- https://helpx.adobe.com/fonts/using/open-type-syntax.html
+-- SF Mono
+-- config.harfbuzz_features =
+-- 	{ "-c2sc", "liga", "ccmp", "locl", "-smcp", "-ss03", "-ss04", "ss05", "ss06", "ss07", "-ss08", "-ss09" }
+-- Fira Code
+-- https://github.com/tonsky/FiraCode/wiki/How-to-enable-stylistic-sets
+-- config.harfbuzz_features = { "cv01", "cv02", "cv06", "cv10", "cv13", "ss01", "ss04", "ss05", "ss02" }
+-- monaspace
+-- config.harfbuzz_features =
+-- 	{ "calt", "liga", "dlig", "zero", "ss01", "ss02", "ss03", "ss04", "ss05", "ss06", "ss07", "ss08" }
+-- geist /> === // 0O
+-- config.harfbuzz_features =
+-- 	{ "calt", "liga", "dlig", "zero", "ss01", "ss02", "ss03", "ss04", "ss05", "ss06", "ss07", "ss08", "-ss09" }
+-- monolisa
+-- @ <=0xF \\ \n
+config.harfbuzz_features = {
+  'calt',
+  'liga',
+  'zero',
+  '-ss01',
+  'ss02',
+  '-ss03',
+  'ss04',
+  'ss05',
+  '-ss06',
+  '-ss07',
+  '-ss08',
+  '-ss09',
+  'ss10',
+  'ss11',
+  'ss12',
+  '-ss13',
+  'ss14',
+  'ss15',
+  'ss16',
+  'ss17',
+  'ss18',
+}
+config.font =
+    wezterm.font_with_fallback { fonts[1], emoji_fonts[1], emoji_fonts[2] }
+-- config.disable_default_key_bindings = true
+config.front_end = 'WebGpu'
+config.enable_scroll_bar = false
+config.scrollback_lines = 10240
 config.font_size = 16
-config.line_height = 1.2
-config.font = wezterm.font 'DankMono Nerd Font'
-config.font_rules = {
-  {
-    italic = true,
-    intensity = 'Bold',
-    font = wezterm.font('DankMono Nerd Font', {
-      italic = true,
-      weight = 'Regular',
-    }),
-  },
-}
-
--- Colors
-config.colors = require 'cyberdream'
-
--- Appearance
-config.cursor_blink_rate = 0
-config.window_decorations = 'RESIZE'
-config.hide_tab_bar_if_only_one_tab = true
+config.enable_tab_bar = false
+config.hide_tab_bar_if_only_one_tab = false
+config.automatically_reload_config = true
+config.default_cursor_style = 'BlinkingBar'
+config.initial_cols = 80
+config.initial_rows = 25
+config.use_fancy_tab_bar = true
+config.tab_bar_at_bottom = false
+-- config.window_decorations = "RESIZE|TITLE"
+-- config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
 config.window_padding = {
-  left = 0,
-  right = 0,
-  top = 0,
-  bottom = 0,
+  left = 30,
+  right = 30,
+  top = 30,
+  bottom = 30,
 }
-config.window_background_image = constants.bg_image
-config.macos_window_background_blur = 40
--- config.window_background_opacity = 0.95
+config.window_frame = {
+  font = wezterm.font { family = 'SF Mono' },
+  -- font = wezterm.font({ family = "Geist Mono" }),
+  active_titlebar_bg = '#1e1e1e',
+  inactive_titlebar_bg = '#1e1e1e',
+  font_size = 15.0,
+}
 
--- Miscellaneous settings
-config.max_fps = 120
-config.prefer_egl = true
+-- config.color_scheme = "OneDark (base16)"
+config.color_scheme = 'Catppuccin Mocha'
+-- local act = wezterm.action
+config.window_background_opacity = 0.97
 
--- Custom commands
-wezterm.on('augment-command-palette', function()
-  return commands
-end)
+-- config.keys = {
+-- 	{ key = "a", mods = "ctrl", action = act.ActivateTabRelative(-1) },
+-- 	{ key = "b", mods = "ctrl", action = act.ActivateTabRelative(1) },
+-- }
 
 return config
+
