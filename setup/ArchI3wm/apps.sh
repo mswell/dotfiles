@@ -14,9 +14,11 @@ install_yay() {
 }
 
 # i3wm configuration
-echo "Install Hyprland"
-install_pacman hyprland
+echo "Install i3wm"
+install_pacman i3-wm i3lock i3status i3blocks xss-lock xterm lightdm lightdm-gtk-greeter dmenu
 mkdir -p $HOME/.config/i3 && cp -r $DOTFILES/config/i3 $HOME/.config/
+cp $DOTFILES/config/.Xresources $HOME/
+xrdb -merge $HOME/.Xresources
 
 install_pacman polkit-gnome npm dunst
 cp -r $DOTFILES/config/dunst $HOME/.config/
