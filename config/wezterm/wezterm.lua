@@ -1,40 +1,40 @@
-local wezterm = require 'wezterm'
+local wezterm = require("wezterm")
 
 local config = {}
 
 if wezterm.config_builder then
-  config = wezterm.config_builder()
+	config = wezterm.config_builder()
 end
 
 local fonts = {
-  -- "MonoLisa",
-  'Geist Mono',
-  'SF Mono',
-  'Monaspace Neon',
-  'Monaspace Xenon',
-  'Monaspace Krypton',
-  'Monaspace Radon',
-  'Monaspace Argon',
-  'Comic Code Ligatures',
-  -- "Liga SFMono Nerd Font",
-  -- "Fira Code Retina",
-  -- "DankMono Nerd Font",
-  -- "Monego Ligatures",
-  -- "Operator Mono Lig",
-  -- "Gintronic",
-  -- "Cascadia Code",
-  -- "JetBrainsMono Nerd Font Mono",
-  -- "Victor Mono",
-  -- "Inconsolata",
-  -- "TempleOS",
-  -- "Apercu Pro",
+	-- "MonoLisa",
+	"Geist Mono",
+	"SF Mono",
+	"Monaspace Neon",
+	"Monaspace Xenon",
+	"Monaspace Krypton",
+	"Monaspace Radon",
+	"Monaspace Argon",
+	"Comic Code Ligatures",
+	-- "Liga SFMono Nerd Font",
+	-- "Fira Code Retina",
+	-- "DankMono Nerd Font",
+	-- "Monego Ligatures",
+	-- "Operator Mono Lig",
+	-- "Gintronic",
+	-- "Cascadia Code",
+	-- "JetBrainsMono Nerd Font Mono",
+	-- "Victor Mono",
+	-- "Inconsolata",
+	-- "TempleOS",
+	-- "Apercu Pro",
 }
 local emoji_fonts = {
-  'Apple Color Emoji',
-  'Joypixels',
-  'Twemoji',
-  'Noto Color Emoji',
-  'Noto Emoji',
+	"Apple Color Emoji",
+	"Joypixels",
+	"Twemoji",
+	"Noto Color Emoji",
+	"Noto Emoji",
 }
 
 -- https://www.monolisa.dev/playground
@@ -55,39 +55,38 @@ local emoji_fonts = {
 -- monolisa
 -- @ <=0xF \\ \n
 config.harfbuzz_features = {
-  'calt',
-  'liga',
-  'zero',
-  '-ss01',
-  'ss02',
-  '-ss03',
-  'ss04',
-  'ss05',
-  '-ss06',
-  '-ss07',
-  '-ss08',
-  '-ss09',
-  'ss10',
-  'ss11',
-  'ss12',
-  '-ss13',
-  'ss14',
-  'ss15',
-  'ss16',
-  'ss17',
-  'ss18',
+	"calt",
+	"liga",
+	"zero",
+	"-ss01",
+	"ss02",
+	"-ss03",
+	"ss04",
+	"ss05",
+	"-ss06",
+	"-ss07",
+	"-ss08",
+	"-ss09",
+	"ss10",
+	"ss11",
+	"ss12",
+	"-ss13",
+	"ss14",
+	"ss15",
+	"ss16",
+	"ss17",
+	"ss18",
 }
-config.font =
-    wezterm.font_with_fallback { fonts[1], emoji_fonts[1], emoji_fonts[2] }
+config.font = wezterm.font_with_fallback({ fonts[1], emoji_fonts[1], emoji_fonts[2] })
 -- config.disable_default_key_bindings = true
-config.front_end = 'WebGpu'
+config.front_end = "WebGpu"
 config.enable_scroll_bar = false
 config.scrollback_lines = 10240
 config.font_size = 16
 config.enable_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = false
 config.automatically_reload_config = true
-config.default_cursor_style = 'BlinkingBar'
+config.default_cursor_style = "BlinkingBar"
 config.initial_cols = 80
 config.initial_rows = 25
 config.use_fancy_tab_bar = true
@@ -95,21 +94,22 @@ config.tab_bar_at_bottom = false
 -- config.window_decorations = "RESIZE|TITLE"
 -- config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
 config.window_padding = {
-  left = 30,
-  right = 30,
-  top = 30,
-  bottom = 30,
+	left = 30,
+	right = 30,
+	top = 30,
+	bottom = 30,
 }
 config.window_frame = {
-  font = wezterm.font { family = 'SF Mono' },
-  -- font = wezterm.font({ family = "Geist Mono" }),
-  active_titlebar_bg = '#1e1e1e',
-  inactive_titlebar_bg = '#1e1e1e',
-  font_size = 15.0,
+	font = wezterm.font({ family = "SF Mono" }),
+	-- font = wezterm.font({ family = "Geist Mono" }),
+	active_titlebar_bg = "#1e1e1e",
+	inactive_titlebar_bg = "#1e1e1e",
+	font_size = 15.0,
 }
 
 -- config.color_scheme = "OneDark (base16)"
-config.color_scheme = 'Catppuccin Mocha'
+-- config.color_scheme = 'Catppuccin Mocha'
+config.color_scheme = "tokyonight"
 -- local act = wezterm.action
 config.window_background_opacity = 0.97
 
@@ -119,4 +119,3 @@ config.window_background_opacity = 0.97
 -- }
 
 return config
-
