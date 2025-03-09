@@ -5,12 +5,12 @@ export DOTFILES="$PWD"
 
 # Function to install packages with pacman
 install_pacman() {
-  sudo pacman -S --noconfirm "$@"
+    sudo pacman -S --noconfirm "$@"
 }
 
 # Function to install packages with yay
 install_yay() {
-  yay -S --noconfirm --needed "$@"
+    yay -S --noconfirm --needed "$@"
 }
 
 # Hyprland installation and configuration
@@ -26,7 +26,7 @@ echo "Installing useful Apps"
 # Software from 'normal' repositories
 install_yay tmux qt5-wayland qt6-wayland appimagelauncher-bin
 install_yay bat lsd wezterm cliphist librewolf-bin obsidian pavucontrol
-install_yay git-delta vlc wget unclutter curl bash-completion
+install_yay git-delta vlc flameshot-git wget unclutter curl bash-completion
 install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
 install_yay meld discord openfortivpn fzf hyprpicker
 install_yay thunar thunar-volman thunar-archive-plugin tumbler
