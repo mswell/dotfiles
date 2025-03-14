@@ -17,6 +17,7 @@ install_yay() {
 echo "Install Hyprland"
 install_pacman hyprland
 mkdir -p $HOME/.config/hypr/ && cp -r $DOTFILES/config/hypr $HOME/.config/
+mkdir -p $HOME/.config/kitty/ && cp -r $DOTFILES/config/kitty $HOME/.config/
 
 install_pacman xdg-desktop-portal-hyprland polkit-kde-agent dunst
 cp -r $DOTFILES/config/dunst $HOME/.config/
@@ -28,7 +29,7 @@ install_yay tmux qt5-wayland qt6-wayland appimagelauncher-bin
 install_yay bat lsd wezterm cliphist librewolf-bin obsidian pavucontrol
 install_yay git-delta vlc flameshot-git wget unclutter curl bash-completion
 install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
-install_yay meld discord openfortivpn fzf 
+install_yay meld discord openfortivpn fzf
 install_yay thunar thunar-volman thunar-archive-plugin tumbler
 install_yay gvfs xarchiver ffmpegthumbnailer poppler-glib gvfs-mtp gvfs-nfs gvfs-smb unrar zip p7zip ntfs-3g
 
@@ -59,8 +60,6 @@ cp -r $DOTFILES/config/tofi $HOME/.config/
 
 # Instalação de Hyprpicker, Hyprlock e Hypridle e configuração
 install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch
-cp -r $DOTFILES/config/hypr/hyprlock.conf $HOME/.config/hypr/
-cp -r $DOTFILES/config/hypr/hypridle $HOME/.config/hypr/
 
 # Instalação de Wlogout e Grimblast e configuração
 install_yay wlogout grimblast

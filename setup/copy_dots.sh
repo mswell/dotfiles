@@ -10,18 +10,17 @@ yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
 copy_file() {
-  local source="$1"
-  local destination="$2"
-  echo "${green}[+] Copiando $source => $destination${reset}"
-  cp -f "$source" "$destination"
+    local source="$1"
+    local destination="$2"
+    echo "${green}[+] Copiando $source => $destination${reset}"
+    cp -f "$source" "$destination"
 }
 
 create_dir() {
-  local dir="$1"
-  echo "${yellow}[+] Criando diretório $dir${reset}"
-  [ ! -d "$dir" ] && mkdir -p "$dir"
+    local dir="$1"
+    echo "${yellow}[+] Criando diretório $dir${reset}"
+    [ ! -d "$dir" ] && mkdir -p "$dir"
 }
-
 
 # zsh
 echo "${yellow}[+] Copiando dotfiles zsh${reset}"
@@ -52,6 +51,12 @@ sleep 1
 create_dir "$CONFIG_DIR/wezterm"
 copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
 copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
+
+# wezterm
+echo "${yellow}[+] Copiando dotfiles ${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/flameshot"
+copy_file "$DOTFILES/config/flameshot/flameshot.ini" "$CONFIG_DIR/flameshot/"
 
 # tmux
 echo "${yellow}[+] Copiando tmux${reset}"
