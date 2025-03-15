@@ -59,7 +59,9 @@ install_yay tofi
 cp -r $DOTFILES/config/tofi $HOME/.config/
 
 # Instalação de Hyprpicker, Hyprlock e Hypridle e configuração
-install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch
+install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch hyprpaper
+
+mkdir -p $HOME/.config/backgrounds/ && cp -r $DOTFILES/config/backgrounds $HOME/.config/
 
 # Instalação de Wlogout e Grimblast e configuração
 install_yay wlogout grimblast
