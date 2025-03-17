@@ -29,7 +29,7 @@ zinit light Aloxaf/fzf-tab
 # Add in snippets
 zinit snippet OMZL::git.zsh
 zinit snippet OMZP::git
-# zinit snippet OMZP::asdf
+zinit snippet OMZP::asdf
 zinit snippet OMZP::sudo
 zinit snippet OMZP::archlinux
 zinit snippet OMZP::aws
@@ -120,13 +120,3 @@ export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
 "
 
 zstyle ':fzf-tab:*' fzf-flags $(echo $FZF_DEFAULT_OPTS)
-
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-export WORKON_HOME=~/.ve
-export PROJECT_HOME=~/Projects
-eval "$(pyenv init -)"
-eval "$(pyenv init --path)"
-if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
-export VIRTUALENVWRAPPER_PYTHON=$(which python3)
-source ~/.pyenv/versions/tools39/bin/virtualenvwrapper.sh
