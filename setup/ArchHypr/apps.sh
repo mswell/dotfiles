@@ -19,7 +19,7 @@ install_pacman hyprland
 mkdir -p $HOME/.config/hypr/ && cp -r $DOTFILES/config/hypr $HOME/.config/
 mkdir -p $HOME/.config/kitty/ && cp -r $DOTFILES/config/kitty $HOME/.config/
 
-install_pacman xdg-desktop-portal-hyprland polkit-kde-agent dunst
+install_pacman xdg-desktop-portal-hyprland dunst
 cp -r $DOTFILES/config/dunst $HOME/.config/
 
 echo "Installing useful Apps"
@@ -59,7 +59,7 @@ install_yay tofi
 cp -r $DOTFILES/config/tofi $HOME/.config/
 
 # Instalação de Hyprpicker, Hyprlock e Hypridle e configuração
-install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch hyprpaper
+install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch hyprpaper hyprpolkitagent
 
 mkdir -p $HOME/.config/backgrounds/ && cp -r $DOTFILES/config/backgrounds $HOME/.config/
 
