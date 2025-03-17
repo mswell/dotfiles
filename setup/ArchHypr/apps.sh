@@ -51,7 +51,7 @@ wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tok
 bat cache --build
 
 # Instalação de Waybar e configuração
-install_pacman waybar
+install_pacman waybar zoxide
 cp -r $DOTFILES/config/waybar $HOME/.config/
 
 # Instalação de Tofi e configuração

@@ -32,6 +32,7 @@ copy_file "$DOTFILES/config/zsh/custom.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/alias.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/functions.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/.zprofile" "$HOME/.zprofile"
+copy_file "$DOTFILES/config/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
 
 # git
 echo "${yellow}[+] Copiando dotfiles git${reset}"
