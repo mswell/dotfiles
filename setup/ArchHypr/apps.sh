@@ -43,7 +43,7 @@ install_yay python python-setuptools neovim
 mkdir -p "$HOME/.config/nvim"
 
 # Instala pacotes base para desenvolvimento
-install_yay ripgrep fzf curl unzip neovim docker docker-compose tmux the_silver_searcher tree exa
+install_yay ripgrep fzf curl unzip neovim docker docker-compose tmux the_silver_searcher tree exa nwg-look
 
 # Bat config
 mkdir -p "$(bat --config-dir)/themes"
