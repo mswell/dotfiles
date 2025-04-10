@@ -30,7 +30,7 @@ install_yay picom mousepad arandr xdg-users-dirs rofi libnotify tmux appimagelau
 install_yay bat lsd wezterm librewolf-bin obsidian pavucontrol
 install_yay git-delta vlc unclutter bash-completion
 install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
-install_yay meld discord openfortivpn fzf
+install_yay meld discord openfortivpn fzf ghostty
 install_yay thunar thunar-volman thunar-archive-plugin tumbler dosfstools lxappearance
 install_yay gvfs xarchiver ffmpegthumbnailer poppler-glib gvfs-mtp gvfs-nfs gvfs-smb unrar zip p7zip ntfs-3g
 

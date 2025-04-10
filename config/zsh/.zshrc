@@ -29,7 +29,7 @@ zinit light Aloxaf/fzf-tab
 # Add in snippets
 zinit snippet OMZL::git.zsh
 zinit snippet OMZP::git
-zinit snippet OMZP::asdf
+# zinit snippet OMZP::asdf
 zinit snippet OMZP::sudo
 zinit snippet OMZP::archlinux
 zinit snippet OMZP::aws
@@ -40,12 +40,16 @@ zinit snippet OMZP::command-not-found
 [ -f $HOME/.config/zsh/alias.zsh ] && source $HOME/.config/zsh/alias.zsh
 [ -f $HOME/.config/zsh/custom.zsh ] && source $HOME/.config/zsh/custom.zsh
 
+export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/snapd/snap/bin"''
+fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+
 # Load completions
 autoload -Uz compinit && compinit
 
 export EDITOR='vim'
 
-export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/snapd/snap/bin"''
+
 
 # go
 export GOROOT=/usr/local/go

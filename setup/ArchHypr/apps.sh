@@ -29,7 +29,7 @@ install_yay tmux qt5-wayland qt6-wayland appimagelauncher-bin
 install_yay bat lsd wezterm cliphist librewolf-bin obsidian pavucontrol
 install_yay git-delta vlc flameshot-git wget unclutter curl bash-completion
 install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
-install_yay meld discord openfortivpn fzf
+install_yay meld discord openfortivpn fzf ghostty
 install_yay thunar thunar-volman thunar-archive-plugin tumbler
 install_yay gvfs xarchiver ffmpegthumbnailer poppler-glib gvfs-mtp gvfs-nfs gvfs-smb unrar zip p7zip ntfs-3g
 

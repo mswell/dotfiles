@@ -46,6 +46,12 @@ sleep 1
 create_dir "$CONFIG_DIR/bat"
 copy_file "$DOTFILES/config/bat/config" "$CONFIG_DIR/bat/config"
 
+# Ghostty
+echo "${yellow}[+] Copiando dotfiles Ghostty${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/ghostty"
+copy_file "$DOTFILES/config/Ghostty/config" "$CONFIG_DIR/ghostty/"
+
 # wezterm
 echo "${yellow}[+] Copiando dotfiles Wezterm${reset}"
 sleep 1
@@ -53,7 +59,7 @@ create_dir "$CONFIG_DIR/wezterm"
 copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
 copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
 
-# wezterm
+# flameshot
 echo "${yellow}[+] Copiando dotfiles ${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/flameshot"
