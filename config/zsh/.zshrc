@@ -41,6 +41,10 @@ zinit snippet OMZP::command-not-found
 [ -f $HOME/.config/zsh/custom.zsh ] && source $HOME/.config/zsh/custom.zsh
 
 export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/snapd/snap/bin"''
+
+# FOR WSL USE
+#export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/snapd/snap/bin:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA NvDLISR:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Users/mswel/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/mswel/AppData/Local/Programs/Microsoft VS Code/bin"  
+
 fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
 export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 

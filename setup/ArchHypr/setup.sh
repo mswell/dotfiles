@@ -20,7 +20,7 @@ source_script "$DOTFILES/setup/ArchHypr/base.sh"
 source_script "$DOTFILES/setup/install_golang.sh"
 source_script "$DOTFILES/setup/ArchHypr/apps.sh"
 source_script "$DOTFILES/setup/ArchHypr/fonts.sh"
-source_script "$DOTFILES/setup/ArchHypr/terminal.sh"
+source_script "$DOTFILES/setup/terminal.sh"
 source_script "$DOTFILES/setup/copy_dots.sh"
 
 echo "ArchHypr setup completed successfully!"
