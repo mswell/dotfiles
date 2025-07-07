@@ -59,7 +59,7 @@ install_yay tofi
 cp -r $DOTFILES/config/tofi $HOME/.config/
 
 # Instalação de Hyprpicker, Hyprlock e Hypridle e configuração
-install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch hyprpaper hyprpolkitagent
+install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch hyprpaper hyprpolkitagent swappy
 
 mkdir -p $HOME/.config/backgrounds/ && cp -r $DOTFILES/config/backgrounds $HOME/.config/
 
