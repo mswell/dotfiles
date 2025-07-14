@@ -69,7 +69,7 @@ cp -r $DOTFILES/config/wlogout $HOME/.config/
 
 # Instalação de temas
 echo "Installing themes"
-install_yay kvantum-theme-catppuccin-git
+install_yay kvantum-theme-catppuccin-git jome
 install_pacman nwg-look qt5ct qt6ct kvantum waypaper
 
 sudo tar -xvf $DOTFILES/config/themes/Catppuccin-Mocha.tar.xz -C /usr/share/themes/
