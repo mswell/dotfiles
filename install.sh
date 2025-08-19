@@ -32,32 +32,31 @@ Banner() {
 }
 
 Menu() {
-    echo "[1] - Ubuntu VPS"
-    echo "[2] - Archlinux with Hyprland"
-    echo "[3] - Install Hacktools"
-    echo "[4] - Install Pyenv"
-    echo "[5] - Archlinux with i3wm"
-    echo "[6] - Archlinux WSL"
-    echo "[7] - Archlinux DE"
-    echo "[0] - Exit"
-    echo
-    echo -n "Choose your distro: "
-    read -r option
-    case $option in
-    1) Ubuntu ;;
-    2) ArchHypr ;;
-    3) HackTools ;;
-    4) Pyenv ;;
-    5) ArchI3wm ;;
-    6) ArchWSL ;;
-    7) ArchDE ;;
-    0) exit ;;
-    *)
-        echo "Unknown option"
+    while true; do
+        echo "[1] - Ubuntu VPS"
+        echo "[2] - Archlinux with Hyprland"
+        echo "[3] - Install Hacktools"
+        echo "[4] - Install Pyenv"
+        echo "[5] - Archlinux with i3wm"
+        echo "[6] - Archlinux WSL"
+        echo "[7] - Archlinux DE"
+        echo "[0] - Exit"
         echo
-        Menu
-        ;;
-    esac
+        echo -n "Choose your distro: "
+        read -r option
+        
+        case $option in
+            1) Ubuntu; break ;;
+            2) ArchHypr; break ;;
+            3) HackTools; break ;;
+            4) Pyenv; break ;;
+            5) ArchI3wm; break ;;
+            6) ArchWSL; break ;;
+            7) ArchDE; break ;;
+            0) exit 0 ;;
+            *) echo "${red}Unknown option. Please try again.${reset}";;
+        esac
+    done
 }
 
 Ubuntu() {
