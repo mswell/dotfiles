@@ -45,12 +45,12 @@ wellSubRecon() {
 # Fetches subdomains from CertSpotter API
 certspotter() {
   curl -s "https://api.certspotter.com/v1/issuances?domain=$1&expand=dns_names&expand=issuer&expand=cert" | \
-    jq -c '.[].dns_names' | grep -o '"[^"].*"' | tr -d '"' | sort -fu
+    jq -c '.[].dns_names' | grep -o '"[^"]\+"' | tr -d '"' | sort -fu
 }
 
 # Fetches subdomains from crt.sh
 crtsh() {
-  curl -s "https://crt.sh/?q=%.$"1"" | sed 's/<\]?[^>]*>//g' | grep "$1"
+  curl -s "https://crt.sh/?q=%.$"1"" | sed 's/<\]?\?[^>]*>//g' | grep "$1"
 }
 
 # Fetches subdomains from crt.sh (JSON output)
@@ -194,7 +194,7 @@ bbrfAddDomainsAndUrls() {
 bbrfresolvedomains() {
   for p in $(bbrf programs); do
     bbrf domains --view unresolved -p "$p" | \
-      dnsx -silent -a -resp | tr -d '[]' | tee 
+      dnsx -silent -a -resp | tr -d '[]' | tee \
       >(awk '{print $1":"$2}' | bbrf domain update - -p "$p" -s dnsx) \
       >(awk '{print $1":"$2}' | bbrf domain add - -p "$p" -s dnsx) \
       >(awk '{print $2":"$1}' | bbrf ip add - -p "$p" -s dnsx) \
@@ -228,7 +228,7 @@ crawler() {
   xargs -a Without404 -P 50 -I % bash -c "echo % | waybackurls" 2>/dev/null | anew -q waybackurls_out
   xargs -a Without404 -P 50 -I % bash -c "echo % | gau --blacklist eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt --retries 3 --threads 50" 2>/dev/null | anew -q gau_out 2>/dev/null &>/dev/null
   katana -list Without404 -d 2 -ef eot,jpg,jpeg,gif,css,tif,tiff,png,ttf,otf,woff,woff2,ico,svg,txt -output katana_output.txt
-  cat gospider_out gau_out waybackurls_out katana_output.txt 2>/dev/null | sed '/^[[^]/d' | grep "$Domain" | sort -u | uro | anew -q crawlerResults.txt
+  cat gospider_out gau_out waybackurls_out katana_output.txt 2>/dev/null | sed '/^\</d' | grep "$Domain" | sort -u | uro | anew -q crawlerResults.txt
 }
 
 # ===================================
@@ -458,104 +458,89 @@ secretfinder() {
 # Nuclei Scans & Workflows
 # ===================================
 
+# Generic Nuclei scanner function to reduce code duplication.
+# Usage: run_nuclei_scan <output_file> <success_message> <nuclei_args...>
+run_nuclei_scan() {
+    local output_file="$1"
+    local success_message="$2"
+    local notify_id="${3:-nuclei}" # Default notify ID is 'nuclei'
+    shift 3
+    local nuclei_args=($@)
+
+    if [ ! -s "ALLHTTP" ]; then
+        echo "${red}[-] ALLHTTP file not found or empty. Skipping scan.${reset}"
+        return 1
+    fi
+
+    echo "${yellow}[+] Running Nuclei scan: ${success_message}${reset}"
+    nuclei -l ALLHTTP -H "$UserAgent" -o "$output_file" "${nuclei_args[@]}"
+
+    if [ -s "$output_file" ]; then
+        echo "${green}[+] ${success_message} found! Check file: ${output_file}${reset}" | notify -silent -id "$notify_id"
+        notify -silent -bulk -data "$output_file" -id "$notify_id"
+    fi
+}
+
 updateTemplatesNuc() {
   echo "${yellow}[+] Updating Nuclei templates...${reset}"
   rm -rf ~/nuclei-templates
   git clone --branch main --depth 1 https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-templates
 }
 
-# The functions below will be replaced by the new helper function
+# --- Refactored Scan Functions ---
 jiraScan() {
-  echo "${yellow}[+] Jira Scan ${reset}"
-  cat ALLHTTP | nuclei -t $CUSTOM_NUCLEI_TEMPLATES_PATH/ssrf-jira-well.yaml -H $UserAgent -o jiraNuclei
-  [ -s "jiraNuclei" ] && echo "Jira vector found :)" | notify -silent -id nuclei
-  [ -s "jiraNuclei" ] && notify -silent -bulk -data jiraNuclei -id nuclei
+    run_nuclei_scan "jiraNuclei" "Jira vector" "nuclei" -t "$CUSTOM_NUCLEI_TEMPLATES_PATH/ssrf-jira-well.yaml"
 }
 
 GitScan() {
-  echo "[+] Git scan"
-  cat ALLHTTP | nuclei -tags git -H $UserAgent -o gitvector
-  [ -s "gitvector" ] && echo "Git vector found :)" | notify -silent -id nuclei
-  [ -s "gitvector" ] && notify -silent -bulk -data gitvector -id nuclei
+    run_nuclei_scan "gitvector" "Git vector" "nuclei" -tags git
 }
 
 lfiScan() {
-  echo "[+] LFI scan"
-  cat ALLHTTP | nuclei -tags lfi -H $UserAgent -o lfivector
-  [ -s "lfivector" ] && echo "LFI vector found :)" | notify -silent -id nuclei
-  [ -s "lfivector" ] && notify -silent -bulk -data lfivector -id nuclei
+    run_nuclei_scan "lfivector" "LFI vector" "nuclei" -tags lfi
 }
 
 panelNuc() {
-  echo "[+] Panel scan"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags panel -H $UserAgent -o nucPanel
-  [ -s "nucPanel" ] && echo "Panel found :)" | notify -silent -id nuclei
-  [ -s "nucPanel" ] && notify -silent -bulk -data nucPanel -id nuclei
+    run_nuclei_scan "nucPanel" "Admin panel" "nuclei" -tags panel
+}
+
+exposureNuc() {
+    run_nuclei_scan "exposurevector" "Exposure vector" "nuclei" -tags exposure
+}
+
+nucTakeover() {
+    run_nuclei_scan "nucleiTakeover" "Takeover" "nuclei" -tags takeover
+    run_nuclei_scan "takeovers_m4c" "Takeover m4c" "nuclei" -t "$CUSTOM_NUCLEI_TEMPLATES_PATH/m4cddr-takeovers.yaml"
+}
+
+graphqldetect() {
+    run_nuclei_scan "graphqldetect" "GraphQL endpoint" "api" -id graphql-detect
+}
+
+ssrfdetect() {
+    run_nuclei_scan "ssrfdetect" "SSRF vector" "nuclei" -tags ssrf
+}
+
+XssScan() {
+    run_nuclei_scan "xssnuclei" "XSS vector" "xss" -tags xss -es info
+}
+
+OpenRedirectScan() {
+    run_nuclei_scan "openredirectVector" "OpenRedirect vector" "nuclei" -tags redirect -es info
+}
+
+swaggerUIdetect() {
+    run_nuclei_scan "swaggerUI" "Swagger endpoint" "api" -tags swagger
+}
+
+APIRecon() {
+    run_nuclei_scan "nucleiapirecon" "API endpoint" "api" -w "$CUSTOM_NUCLEI_TEMPLATES_PATH/api-recon-workflow.yaml"
 }
 
 massALLHTTPtemplate() {
   find "$RECON_PATH" -type f -name ALLHTTP | xargs -I{} -P2 bash -c 'cat {}' | anew allhttpalive
-  cat allhttpalive | nuclei -t "$1" -o massALLTEST.txt
+  nuclei -l allhttpalive -t "$1" -o massALLTEST.txt
   [ -s "massALLTEST.txt" ] && cat massALLTEST.txt | notify -silent
-}
-
-exposureNuc() {
-  echo "[+] Exposure scan"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags exposure -H $UserAgent -o exposurevector
-  [ -s "exposurevector" ] && echo "Exposure vector found :)" | notify -silent -id nuclei
-  [ -s "exposurevector" ] && notify -silent -bulk -data exposurevector -id nuclei
-}
-
-nucTakeover() {
-  echo "[+] Takeover scan"
-  cat ALLHTTP | nuclei -tags takeover -H $UserAgent -o nucleiTakeover
-  [ -s "nucleiTakeover" ] && echo "Takeover found :)" | notify -silent -id nuclei
-  [ -s "nucleiTakeover" ] && notify -silent -bulk -data nucleiTakeover -id nuclei
-  cat ALLHTTP | nuclei -t $CUSTOM_NUCLEI_TEMPLATES_PATH/m4cddr-takeovers.yaml -H $UserAgent -o takeovers_m4c
-  [ -s "takeovers_m4c" ] && echo "Takeover m4c found :)" | notify -silent -id nuclei
-  [ -s "takeovers_m4c" ] && notify -silent -bulk -data takeovers_m4c -id nuclei
-}
-
-graphqldetect() {
-  echo "[+] Graphql Detect"
-  cat ALLHTTP | nuclei -id graphql-detect -H $UserAgent -o graphqldetect
-  [ -s "graphqldetect" ] && echo "Graphql endpoint found :)" | notify -silent -id api
-  [ -s "graphqldetect" ] && notify -silent -bulk -data graphqldetect -id api
-}
-
-ssrfdetect() {
-  echo "[+] SSRF Detect"
-  cat ALLHTTP | nuclei -tags ssrf -H $UserAgent -o ssrfdetect
-  [ -s "ssrfdetect" ] && echo "SSRF vector found :)" | notify -silent -id nuclei
-  [ -s "ssrfdetect" ] && notify -silent -bulk -data ssrfdetect -id nuclei
-}
-
-XssScan() {
-  echo "[+] XSS scan"
-  cat ALLHTTP | nuclei -tags xss -es info -H $UserAgent -o xssnuclei
-  [ -s "xssnuclei" ] && echo "XSS vector found :)" | notify -silent -id xss
-  [ -s "xssnuclei" ] && notify -silent -bulk -data xssnuclei -id xss
-}
-
-OpenRedirectScan() {
-  echo "[+] OpenRedirect scan"
-  cat ALLHTTP | nuclei -tags redirect -es info -H $UserAgent -o openredirectVector
-  [ -s "openredirectVector" ] && echo "OpenRedirect vector found :)" | notify -silent -id nuclei
-  [ -s "openredirectVector" ] && cat openredirectVector | notify -silent -id nuclei
-}
-
-swaggerUIdetect() {
-  echo "[+] Swagger detect"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -tags swagger -H $UserAgent -o swaggerUI
-  [ -s "swaggerUI" ] && echo "Swagger endpoint found :)" | notify -silent -id api
-  [ -s "swaggerUI" ] && notify -silent -bulk -data swaggerUI -id api
-}
-
-APIRecon() {
-  echo "[+] api detect"
-  [ -s "ALLHTTP" ] && cat ALLHTTP | nuclei -w $CUSTOM_NUCLEI_TEMPLATES_PATH/api-recon-workflow.yaml -H $UserAgent -o nucleiapirecon
-  [ -s "nucleiapirecon" ] && echo "api endpoint found :)" | notify -silent -id api
-  [ -s "nucleiapirecon" ] && cat nucleiapirecon | notify -silent -id api
 }
 
 massALLHTTPWebCaching() {
