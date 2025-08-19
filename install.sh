@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 export EDITOR='vim'
-export DOTFILES=$PWD
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+export DOTFILES=$SCRIPT_DIR
 
 export red=$(tput setaf 1)
 export green=$(tput setaf 2)
