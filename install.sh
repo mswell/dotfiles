@@ -32,6 +32,18 @@ Banner() {
     echo "  "
 }
 
+run_setup() {
+    local script_path="$1"
+    echo "Initializing setup :)"
+    # Adicione uma verificação se o arquivo existe antes de tentar executá-lo
+    if [[ -f "$DOTFILES/$script_path" ]]; then
+        source "$DOTFILES/$script_path"
+    else
+        echo "${red}Error: Setup script not found at '$script_path'${reset}"
+        exit 1
+    fi
+}
+
 Menu() {
     while true; do
         echo "[1] - Ubuntu VPS"
@@ -47,52 +59,17 @@ Menu() {
         read -r option
         
         case $option in
-            1) Ubuntu; break ;;
-            2) ArchHypr; break ;;
-            3) HackTools; break ;;
-            4) Pyenv; break ;;
-            5) ArchI3wm; break ;;
-            6) ArchWSL; break ;;
-            7) ArchDE; break ;;
+            1) run_setup "setup/ubuntu/setup.sh"; break ;;
+            2) run_setup "setup/ArchHypr/setup.sh"; break ;;
+            3) run_setup "setup/install_hacktools.sh"; break ;;
+            4) run_setup "setup/pyenv_install.sh"; break ;;
+            5) run_setup "setup/ArchI3wm/setup.sh"; break ;;
+            6) run_setup "setup/ArchWSL/setup.sh"; break ;;
+            7) run_setup "setup/ArchDE/setup.sh"; break ;;
             0) exit 0 ;;
             *) echo "${red}Unknown option. Please try again.${reset}";;
         esac
     done
-}
-
-Ubuntu() {
-    echo "Initializing setup :)"
-    source setup/ubuntu/setup.sh
-}
-
-Pyenv() {
-    echo "Initializing setup :)"
-    source setup/pyenv_install.sh
-}
-
-ArchHypr() {
-    echo "Initializing setup :)"
-    source setup/ArchHypr/setup.sh
-}
-
-ArchI3wm() {
-    echo "Initializing setup :)"
-    source setup/ArchI3wm/setup.sh
-}
-
-ArchWSL() {
-    echo "Initializing setup :)"
-    source setup/ArchWSL/setup.sh
-}
-
-HackTools() {
-    echo "Initializing setup :)"
-    source setup/install_hacktools.sh
-}
-
-ArchDE() {
-    echo "Initializing setup :)"
-    source setup/ArchDE/setup.sh
 }
 
 clear
