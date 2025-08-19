@@ -5,6 +5,12 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# ===================================================================
+# LOAD ENVIRONMENT CONFIGURATION FIRST
+# This ensures that path variables are available to all other scripts.
+[ -f "$HOME/Projects/dotfiles/config/zsh/env.zsh" ] && source "$HOME/Projects/dotfiles/config/zsh/env.zsh"
+# ===================================================================
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 

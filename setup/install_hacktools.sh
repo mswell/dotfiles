@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 
+# Source the central environment configuration to ensure consistency
+source "$(dirname "$0")/../config/zsh/env.zsh"
+
 DEBUG_STD="&>/dev/null"
 DEBUG_ERROR="2>/dev/null"
 
 # TERM COLORS
 bblue='\033[1;34m'
 reset='\033[0m'
+red='\033[0;31m'
 
-dir="$HOME/Tools"
+printf "${bblue} Sourcing environment variables ${reset}\n"
+printf "${yellow} TOOLS_PATH is set to: $TOOLS_PATH ${reset}\n"
+printf "${yellow} LISTS_PATH is set to: $LISTS_PATH ${reset}\n\n"
 
 printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
@@ -83,34 +89,34 @@ repos["altdns"]="infosec-au/altdns"
 
 
 mkdir -p ~/.gf
-mkdir -p ~/Tools/
-mkdir -p ~/Lists/
+mkdir -p "$TOOLS_PATH"
+mkdir -p "$LISTS_PATH"
 mkdir -p ~/.config/notify/
 mkdir -p ~/.config/amass/
 mkdir -p ~/.config/nuclei/
 
 pip3 install uro
 
-eval wget -nc -O ~/Lists/params.txt https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
-eval wget -nc -O ~/Lists/raft-large-directories-lowercase.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
-eval wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
-eval wget -nc -O ~/Lists/httparchive_apiroutes_2022_03_28.txt https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
-eval wget -nc -O ~/Lists/raft-large-files.txt https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-files.txt
-eval wget -nc -O ~/Lists/raft-large-words-lowercase.txt https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-words-lowercase.txt
-eval wget -nc -O $HOME/Lists/namelist.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt
-eval wget -nc -O $HOME/Lists/directory-list-2.3-small.txt ehttps://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-small.txt
-eval wget -nc -O $HOME/Lists/web-extensions.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
-eval wget -nc -O $HOME/Lists/subdomains-top1million-5000.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt
-eval wget -nc -O $HOME/Lists/burp-parameter-names.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/burp-parameter-names.txt
-eval wget -nc -O $HOME/Lists/xato-net-10-million-usernames.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Usernames/xato-net-10-million-usernames.txt
-eval wget -nc -O $HOME/Lists/subdomains-top1million-110000.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt
-eval wget -nc -O $HOME/Lists/raft-large-words.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt
-eval wget -nc -O $HOME/Lists/all.txt https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
+wget -nc -O "$LISTS_PATH/params.txt" https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
+wget -nc -O "$LISTS_PATH/raft-large-directories-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
+wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
+wget -nc -O "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
+wget -nc -O "$LISTS_PATH/raft-large-files.txt" https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-files.txt
+wget -nc -O "$LISTS_PATH/raft-large-words-lowercase.txt" https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/raft-large-words-lowercase.txt
+wget -nc -O "$NAMELIST_TXT" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt
+wget -nc -O "$LISTS_PATH/directory-list-2.3-small.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-small.txt
+wget -nc -O "$LISTS_PATH/web-extensions.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
+wget -nc -O "$LISTS_PATH/subdomains-top1million-5000.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt
+wget -nc -O "$LISTS_PATH/burp-parameter-names.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/burp-parameter-names.txt
+wget -nc -O "$LISTS_PATH/xato-net-10-million-usernames.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Usernames/xato-net-10-million-usernames.txt
+wget -nc -O "$TOP_1M_110K_LIST" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt
+wget -nc -O "$LISTS_PATH/raft-large-words.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt
+wget -nc -O "$ALL_TXT_LIST" https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
 
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
 
-cd "$dir" || {
-    echo "Failed to cd to $dir in ${FUNCNAME[0]} @ line ${LINENO}"
+cd "$TOOLS_PATH" || {
+    echo "Failed to cd to $TOOLS_PATH in ${FUNCNAME[0]} @ line ${LINENO}"
     exit 1
 }
 
@@ -118,9 +124,9 @@ cd "$dir" || {
 repos_step=0
 for repo in "${!repos[@]}"; do
     repos_step=$((repos_step + 1))
-    eval git clone https://github.com/${repos[$repo]} $dir/$repo $DEBUG_STD
-    eval cd $dir/$repo $DEBUG_STD
-    eval git pull $DEBUG_STD
+    git clone https://github.com/${repos[$repo]} "$TOOLS_PATH"/$repo $DEBUG_STD
+    cd "$TOOLS_PATH"/$repo $DEBUG_STD
+    git pull $DEBUG_STD
     exit_status=$?
     if [ $exit_status -eq 0 ]; then
         printf "${yellow} $repo installed (${repos_step}/${#repos[@]})${reset}\n"
@@ -128,26 +134,25 @@ for repo in "${!repos[@]}"; do
         printf "${red} Unable to install $repo, try manually (${repos_step}/${#repos[@]})${reset}\n"
     fi
     if [ -s "requirements.txt" ]; then
-        eval $SUDO pip3 install -r requirements.txt $DEBUG_STD
+        $SUDO pip3 install -r requirements.txt $DEBUG_STD
     fi
     if [ -s "setup.py" ]; then
-        eval $SUDO python3 setup.py install $DEBUG_STD
+        $SUDO python3 setup.py install $DEBUG_STD
     fi
     if [ -s "Makefile" ]; then
-        eval $SUDO make $DEBUG_STD
-        eval $SUDO make install $DEBUG_STD
+        $SUDO make $DEBUG_STD
+        $SUDO make install $DEBUG_STD
     fi
     if [ "gf" = "$repo" ]; then
-        eval cp -r examples/*.json ~/.gf $DEBUG_ERROR
+        cp -r examples/*.json ~/.gf $DEBUG_ERROR
     elif [ "Gf-Patterns" = "$repo" ]; then
-        eval mv *.json ~/.gf $DEBUG_ERROR
+        mv *.json ~/.gf $DEBUG_ERROR
     fi
-    cd "$dir" || {
-        echo "Failed to cd to $dir in ${FUNCNAME[0]} @ line ${LINENO}"
+    cd "$TOOLS_PATH" || {
+        echo "Failed to cd to $TOOLS_PATH in ${FUNCNAME[0]} @ line ${LINENO}"
         exit 1
     }
 done
 
 echo "Add my gf templates"
-cp -r $HOME/Tools/MSwellDOTS/config/home/.gf/*.json $HOME/.gf/
-
+cp -r "$TOOLS_PATH"/MSwellDOTS/config/home/.gf/*.json "$HOME"/.gf/
