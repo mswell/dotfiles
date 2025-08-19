@@ -6,7 +6,7 @@ My personal dotfiles :)
 	<img src="https://raw.githubusercontent.com/mswell/dotfiles/master/images/dotfile.png" alt="Aprenda Python" style="max-width:100%;">
 </p>
 
-## Instalation
+## Installation
 
 Execute:
 

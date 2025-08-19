@@ -251,7 +251,7 @@ secrets() {
 
 }
 
-# Enumeracao de subdominios baseado no dominio informado no arquivo "domains"
+# Subdomain enumeration based on the domain specified in the "domains" file
 subdomainenum() {
   echo "[+] Recon subdomains..."
   Domain=$(cat domains)
@@ -267,7 +267,7 @@ subdomainenum() {
   echo "[+] Passive subdomain recon completed :)"
 }
 
-# pesquisa subdominios no escopo da hackerone
+# Search for subdomains in the HackerOne scope
 checkscope() {
   # https://github.com/michael1026/inscope
   cat sorted.all.subdomains | inscope | tee -a inscope.sorted.all.subdomains
@@ -548,10 +548,10 @@ fleetScan() {
 }
 
 #-------------------------
-# INFORMACOES SOBRE FUNCOES
+# FUNCTION INFORMATION
 #-------------------------
 bb_help() {
-  echo "certspotter() - Enumeracao de subdominios a partir de um dominio informado via https://sslmate.com/ct_search_api/"
+  echo "certspotter() - Subdomain enumeration from a given domain via https://sslmate.com/ct_search_api/"
   echo "-"
 }
-## FIM
+## END
