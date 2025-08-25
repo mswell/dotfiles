@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "Installing base development libraries"
+echo "Installing base system and yay..."
 
 # Update the system and install essential packages
 sudo pacman -Syyu --noconfirm
@@ -16,12 +16,4 @@ if [ ! -d "yay" ]; then
   rm -rf yay
 fi
 
-# Install additional packages
-sudo pacman -S --noconfirm pipewire wireplumber pamixer brightnessctl
-sudo pacman -S --noconfirm sddm && sudo systemctl enable sddm.service
-
-# Install AUR packages
-yay -S --sudoloop --noconfirm brave-bin kitty neovim tar
-yay -Syu --noconfirm git lsb-release vim python-pip
-
-echo "Base development libraries installation completed"
+echo "Base system installation completed."
