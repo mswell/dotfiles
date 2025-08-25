@@ -104,32 +104,43 @@ yay -S --noconfirm --needed "${aur_packages[@]}"
 
 # --- Configuration ---
 
-# Hyprland & Kitty
-mkdir -p $HOME/.config/hypr/ && cp -r $DOTFILES/config/hypr $HOME/.config/
-mkdir -p $HOME/.config/kitty/ && cp -r $DOTFILES/config/kitty $HOME/.config/
+# Function to copy config files if they don't exist
+copy_config() {
+    local config_path="$1"
+    local dest_path="$HOME/.config/$config_path"
+    if [ ! -d "$dest_path" ]; then
+        echo "Copying $config_path configs..."
+        mkdir -p "$(dirname "$dest_path")"
+        cp -r "$DOTFILES/config/$config_path" "$(dirname "$dest_path")/"
+    else
+        echo "$config_path configs already exist. Skipping."
+    fi
+}
 
-# Dunst
-cp -r $DOTFILES/config/dunst $HOME/.config/
+copy_config "hypr"
+copy_config "kitty"
+copy_config "dunst"
+copy_config "waybar"
+copy_config "tofi"
+copy_config "wlogout"
 
 # Create Neovim configuration directory, if it doesn't exist
-mkdir -p "$HOME/.config/nvim"
+if [ ! -d "$HOME/.config/nvim" ]; then
+    mkdir -p "$HOME/.config/nvim"
+fi
 
 # Bat config
-mkdir -p "$(bat --config-dir)/themes"
-wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
-bat cache --build
-
-# Waybar
-cp -r $DOTFILES/config/waybar $HOME/.config/
-
-# Tofi
-cp -r $DOTFILES/config/tofi $HOME/.config/
+if [ ! -f "$(bat --config-dir)/themes/tokyonight_night.tmTheme" ]; then
+    mkdir -p "$(bat --config-dir)/themes"
+    wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
+    bat cache --build
+fi
 
 # Backgrounds
-mkdir -p $HOME/.config/backgrounds/ && cp -r $DOTFILES/config/backgrounds $HOME/.config/
-
-# Wlogout
-cp -r $DOTFILES/config/wlogout $HOME/.config/
+if [ ! -d "$HOME/.config/backgrounds" ]; then
+    mkdir -p "$HOME/.config/backgrounds/"
+    cp -r "$DOTFILES/config/backgrounds" "$HOME/.config/"
+fi
 
 # Themes
 echo "Installing themes"
