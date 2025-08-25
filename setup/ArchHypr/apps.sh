@@ -25,7 +25,7 @@ cp -r $DOTFILES/config/dunst $HOME/.config/
 echo "Installing useful Apps"
 
 # Software from 'normal' repositories
-install_yay tmux qt5-wayland qt6-wayland appimagelauncher-bin
+install_yay tmux qt5-wayland qt6-wayland appimagelauncher-bin network-manager-applet
 install_yay bat lsd wezterm cliphist librewolf-bin obsidian pavucontrol
 install_yay git-delta vlc flameshot-git wget unclutter curl bash-completion
 install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
