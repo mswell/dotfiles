@@ -11,10 +11,10 @@ echo "${yellow}[+] Installing tmux plugin manager${reset}"
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Changes the default shell to zsh
-echo "${yellow}[+] Changing the default shell to zsh${reset}"
+echo "${yellow}[+] Changing default shell to zsh${reset}"
 chsh -s $(which zsh)
 
 # Prints instructions for the user
-echo "${yellow}[+] Restart the system to apply the changes.${reset}"
+echo "${yellow}[+] Please restart the system to apply the changes.${reset}"
 
 echo "${green}[+] Terminal configuration completed!${reset}"
