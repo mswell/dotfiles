@@ -42,7 +42,7 @@ install_yay python python-setuptools neovim
 # Create Neovim configuration directory, if it doesn't exist
 mkdir -p "$HOME/.config/nvim"
 
-# Instala pacotes base para desenvolvimento
+# Install base packages for development
 install_yay ripgrep fzf curl unzip neovim docker docker-compose tmux the_silver_searcher tree exa nwg-look
 
 # Bat config
@@ -50,24 +50,24 @@ mkdir -p "$(bat --config-dir)/themes"
 wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
 bat cache --build
 
-# Instalação de Waybar e configuração
+# Waybar installation and configuration
 install_pacman waybar zoxide
 cp -r $DOTFILES/config/waybar $HOME/.config/
 
-# Instalação de Tofi e configuração
+# Tofi installation and configuration
 install_yay tofi
 cp -r $DOTFILES/config/tofi $HOME/.config/
 
-# Instalação de Hyprpicker, Hyprlock e Hypridle e configuração
+# Hyprpicker, Hyprlock and Hypridle installation and configuration
 install_yay hyprpicker hyprlock hypridle hyprpicker hyprswitch hyprpaper hyprpolkitagent
 
 mkdir -p $HOME/.config/backgrounds/ && cp -r $DOTFILES/config/backgrounds $HOME/.config/
 
-# Instalação de Wlogout e Grimblast e configuração
+# Wlogout and Grimblast installation and configuration
 install_yay wlogout grimblast
 cp -r $DOTFILES/config/wlogout $HOME/.config/
 
-# Instalação de temas
+# Installing themes
 echo "Installing themes"
 install_yay kvantum-theme-catppuccin-git
 install_pacman nwg-look qt5ct qt6ct kvantum waypaper
