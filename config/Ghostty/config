@@ -1,6 +1,8 @@
 shell-integration = zsh
 theme = tokyonight
-font-family = JetBrainsMono Nerd Font
+font-family = CaskaydiaMono Nerd Font
 font-size = 14
 window-padding-x = 4,4
 window-padding-y = 2,4
+keybind = ctrl+slash=text:/
+keybind = shift+ctrl+slash=text:?
