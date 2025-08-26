@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-export DOTFILES="$PWD"
+# Get the absolute path to the directory where the script is located
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Set DOTFILES to the parent directory of the 'setup' directory, which is the project root
+export DOTFILES=$(dirname "$(dirname "$SCRIPT_DIR")")
 
 # Function to execute a script and check if it was successful
 source_script() {
