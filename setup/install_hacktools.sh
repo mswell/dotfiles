@@ -11,7 +11,15 @@ bblue='\033[1;34m'
 reset='\033[0m'
 red='\033[0;31m'
 
+# Check for sudo privileges
+if [[ $EUID -ne 0 ]]; then
+    SUDO='sudo'
+else
+    SUDO=''
+fi
+
 printf "${bblue} Sourcing environment variables ${reset}\n"
+
 printf "${yellow} TOOLS_PATH is set to: $TOOLS_PATH ${reset}\n"
 printf "${yellow} LISTS_PATH is set to: $LISTS_PATH ${reset}\n\n"
 
