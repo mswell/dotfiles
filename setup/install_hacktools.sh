@@ -99,20 +99,51 @@ mkdir -p ~/.config/nuclei/
 
 pip3 install uro --break-system-packages
 
-wget -nc -O "$LISTS_PATH/raft-large-directories-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
-wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
-wget -nc -O "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
-wget -nc -O "$LISTS_PATH/raft-large-files.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-files.txt
-wget -nc -O "$LISTS_PATH/raft-large-words-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words-lowercase.txt
-wget -nc -O "$NAMELIST_TXT" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt
-wget -nc -O "$LISTS_PATH/directory-list-2.3-small.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-small.txt
-wget -nc -O "$LISTS_PATH/web-extensions.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
-wget -nc -O "$LISTS_PATH/subdomains-top1million-5000.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt
-wget -nc -O "$LISTS_PATH/burp-parameter-names.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/burp-parameter-names.txt
-wget -nc -O "$LISTS_PATH/xato-net-10-million-usernames.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Usernames/xato-net-10-million-usernames.txt
-wget -nc -O "$TOP_1M_110K_LIST" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt
-https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt
-wget -nc -O "$ALL_TXT_LIST" https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
+if [ ! -f "$LISTS_PATH/params.txt" ]; then
+    wget -nc -O "$LISTS_PATH/params.txt" https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
+fi
+if [ ! -f "$LISTS_PATH/raft-large-directories-lowercase.txt" ]; then
+    wget -nc -O "$LISTS_PATH/raft-large-directories-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
+fi
+if [ ! -f "$HOME/.gf/potential.json" ]; then
+    wget -nc -O "$HOME/.gf/potential.json" https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
+fi
+if [ ! -f "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" ]; then
+    wget -nc -O "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
+fi
+if [ ! -f "$LISTS_PATH/raft-large-files.txt" ]; then
+    wget -nc -O "$LISTS_PATH/raft-large-files.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-files.txt
+fi
+if [ ! -f "$LISTS_PATH/raft-large-words-lowercase.txt" ]; then
+    wget -nc -O "$LISTS_PATH/raft-large-words-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words-lowercase.txt
+fi
+if [ ! -f "$NAMELIST_TXT" ]; then
+    wget -nc -O "$NAMELIST_TXT" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt
+fi
+if [ ! -f "$LISTS_PATH/directory-list-2.3-small.txt" ]; then
+    wget -nc -O "$LISTS_PATH/directory-list-2.3-small.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-small.txt
+fi
+if [ ! -f "$LISTS_PATH/web-extensions.txt" ]; then
+    wget -nc -O "$LISTS_PATH/web-extensions.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
+fi
+if [ ! -f "$LISTS_PATH/subdomains-top1million-5000.txt" ]; then
+    wget -nc -O "$LISTS_PATH/subdomains-top1million-5000.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt
+fi
+if [ ! -f "$LISTS_PATH/burp-parameter-names.txt" ]; then
+    wget -nc -O "$LISTS_PATH/burp-parameter-names.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/burp-parameter-names.txt
+fi
+if [ ! -f "$LISTS_PATH/xato-net-10-million-usernames.txt" ]; then
+    wget -nc -O "$LISTS_PATH/xato-net-10-million-usernames.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Usernames/xato-net-10-million-usernames.txt
+fi
+if [ ! -f "$TOP_1M_110K_LIST" ]; then
+    wget -nc -O "$TOP_1M_110K_LIST" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt
+fi
+if [ ! -f "$LISTS_PATH/raft-large-words.txt" ]; then
+    wget -nc -O "$LISTS_PATH/raft-large-words.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt
+fi
+if [ ! -f "$ALL_TXT_LIST" ]; then
+    wget -nc -O "$ALL_TXT_LIST" https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt
+fi
 
 printf "${bblue}\n Running: Installing repositories (${#repos[@]})${reset}\n\n"
 
