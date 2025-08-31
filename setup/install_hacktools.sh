@@ -23,8 +23,7 @@ install_tool() {
     local tool="$1"
     local repo="$2"
     local tool_lower=$(echo "$tool" | tr '[:upper:]' '[:lower:]')
-    if command -v "$tool" &> /dev/null || command -v "$tool_lower" &> /dev/null;
- then
+    if command -v "$tool" &>/dev/null || command -v "$tool_lower" &>/dev/null; then
         printf "${yellow}Tool $tool is already installed, skipping.${reset}\n"
         return
     fi
@@ -121,7 +120,7 @@ if [ ! -f "$NAMELIST_TXT" ]; then
     wget -nc -O "$NAMELIST_TXT" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt
 fi
 if [ ! -f "$LISTS_PATH/directory-list-2.3-small.txt" ]; then
-    wget -nc -O "$LISTS_PATH/directory-list-2.3-small.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-small.txt
+    wget -nc -O "$LISTS_PATH/directory-list-2.3-small.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/refs/heads/master/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-small.txt
 fi
 if [ ! -f "$LISTS_PATH/web-extensions.txt" ]; then
     wget -nc -O "$LISTS_PATH/web-extensions.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
@@ -161,11 +160,11 @@ for repo in "${!repos[@]}"; do
     if [ -d "$repo_path/.git" ]; then
         printf "${yellow}Repository $repo already exists. Pulling for updates... (${repos_step}/${#repos[@]})${reset}\n"
         cd "$repo_path"
-        git pull $DEBUG_STD
+        git pull &>/dev/null
         exit_status=$?
     else
         printf "${yellow}Cloning $repo... (${repos_step}/${#repos[@]})${reset}\n"
-        git clone https://github.com/${repos[$repo]} "$repo_path" $DEBUG_STD
+        git clone https://github.com/${repos[$repo]} "$repo_path" &>/dev/null
         exit_status=$?
     fi
 
@@ -197,7 +196,6 @@ for repo in "${!repos[@]}"; do
         exit 1
     }
 done
-
 
 echo "Add my gf templates"
 cp -r "$TOOLS_PATH"/MSwellDOTS/config/home/.gf/*.json "$HOME"/.gf/
