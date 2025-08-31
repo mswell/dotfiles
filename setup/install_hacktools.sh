@@ -183,10 +183,10 @@ for repo in "${!repos[@]}"; do
         cd "$repo_path" || continue
 
         if [ -s "requirements.txt" ]; then
-            $SUDO pip3 install -r requirements.txt --break-system-packages $DEBUG_STD
+            $SUDO pip3 install -r requirements.txt --break-system-packages &>/dev/null
         fi
         if [ -s "setup.py" ]; then
-            $SUDO pip3 install . --break-system-packages $DEBUG_STD
+            $SUDO pip3 install . --break-system-packages &>/dev/null
         fi
         if [ -s "Makefile" ]; then
             $SUDO make &>/dev/null
