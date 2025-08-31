@@ -189,8 +189,8 @@ for repo in "${!repos[@]}"; do
             $SUDO pip3 install . --break-system-packages $DEBUG_STD
         fi
         if [ -s "Makefile" ]; then
-            $SUDO make $DEBUG_STD
-            $SUDO make install $DEBUG_STD
+            $SUDO make &>/dev/null
+            $SUDO make install &>/dev/null
         fi
         if [ "gf" = "$repo" ]; then
             cp -r examples/*.json ~/.gf $DEBUG_ERROR
