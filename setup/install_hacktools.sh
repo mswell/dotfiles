@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Source the central environment configuration to ensure consistency
-source "$(dirname "$0")/../config/zsh/env.zsh"
+source "$(dirname "$0")/config/zsh/env.zsh"
 
 DEBUG_STD="&>/dev/null"
 DEBUG_ERROR="2>/dev/null"
@@ -20,17 +20,21 @@ printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 go env -w GO111MODULE=auto
 
 install_tool() {
-  local tool="$1"
-  local repo="$2"
-  echo "Installing $tool"
-  go install $repo@latest
+    local tool="$1"
+    local repo="$2"
+    local tool_lower=$(echo "$tool" | tr '[:upper:]' '[:lower:]')
+    if command -v "$tool" &> /dev/null || command -v "$tool_lower" &> /dev/null;
+ then
+        printf "${yellow}Tool $tool is already installed, skipping.${reset}\n"
+        return
+    fi
+    echo "Installing $tool"
+    go install $repo@latest
 }
 
 install_tool "fff" "github.com/tomnomnom/fff"
 install_tool "tojson" "github.com/tomnomnom/hacks/tojson"
 install_tool "Rush" "github.com/shenwei356/rush"
-install_tool "Gf-Patterns" "1ndianl33t/Gf-Patterns"
-install_tool "LinkFinder" "dark-warlord14/LinkFinder"
 install_tool "Naabu" "github.com/projectdiscovery/naabu/v2/cmd/naabu"
 install_tool "shuffledns" "github.com/projectdiscovery/shuffledns/cmd/shuffledns"
 install_tool "gron" "github.com/tomnomnom/gron"
@@ -64,11 +68,10 @@ install_tool "Freq" "github.com/takshal/freq"
 install_tool "Sdlookup" "github.com/j3ssie/sdlookup"
 install_tool "Airixss" "github.com/ferreiraklet/airixss"
 install_tool "Nilo" "github.com/ferreiraklet/nilo"
-install_tool "haip2host" "github.com/hakluke/haip2host"
 install_tool "metabigor" "github.com/j3ssie/metabigor"
 install_tool "alterx" "github.com/projectdiscovery/alterx/cmd/alterx"
 install_tool "katana" "github.com/projectdiscovery/katana/cmd/katana"
-install_tool "sourcemapper" "https://github.com/denandz/sourcemapper"
+install_tool "sourcemapper" "github.com/denandz/sourcemapper"
 
 declare -A repos
 repos["gf"]="tomnomnom/gf"
@@ -87,7 +90,6 @@ repos["MSwellDOTS"]="mswell/dotfiles"
 repos["Waymore"]="xnl-h4ck3r/waymore"
 repos["altdns"]="infosec-au/altdns"
 
-
 mkdir -p ~/.gf
 mkdir -p "$TOOLS_PATH"
 mkdir -p "$LISTS_PATH"
@@ -95,9 +97,8 @@ mkdir -p ~/.config/notify/
 mkdir -p ~/.config/amass/
 mkdir -p ~/.config/nuclei/
 
-pip3 install uro
+pip3 install uro --break-system-packages
 
-wget -nc -O "$LISTS_PATH/params.txt" https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
 wget -nc -O "$LISTS_PATH/raft-large-directories-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
 wget -nc -O ~/.gf/potential.json https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
 wget -nc -O "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
@@ -124,35 +125,48 @@ cd "$TOOLS_PATH" || {
 repos_step=0
 for repo in "${!repos[@]}"; do
     repos_step=$((repos_step + 1))
-    git clone https://github.com/${repos[$repo]} "$TOOLS_PATH"/$repo $DEBUG_STD
-    cd "$TOOLS_PATH"/$repo $DEBUG_STD
-    git pull $DEBUG_STD
-    exit_status=$?
-    if [ $exit_status -eq 0 ]; then
-        printf "${yellow} $repo installed (${repos_step}/${#repos[@]})${reset}\n"
+    repo_path="$TOOLS_PATH/$repo"
+
+    if [ -d "$repo_path/.git" ]; then
+        printf "${yellow}Repository $repo already exists. Pulling for updates... (${repos_step}/${#repos[@]})${reset}\n"
+        cd "$repo_path"
+        git pull $DEBUG_STD
+        exit_status=$?
     else
-        printf "${red} Unable to install $repo, try manually (${repos_step}/${#repos[@]})${reset}\n"
+        printf "${yellow}Cloning $repo... (${repos_step}/${#repos[@]})${reset}\n"
+        git clone https://github.com/${repos[$repo]} "$repo_path" $DEBUG_STD
+        exit_status=$?
     fi
-    if [ -s "requirements.txt" ]; then
-        $SUDO pip3 install -r requirements.txt $DEBUG_STD
+
+    if [ $exit_status -ne 0 ]; then
+        printf "${red}Could not clone or pull $repo. Skipping dependencies.${reset}\n"
+    else
+        # Install dependencies if clone/pull was successful
+        cd "$repo_path" || continue
+
+        if [ -s "requirements.txt" ]; then
+            $SUDO pip3 install -r requirements.txt --break-system-packages $DEBUG_STD
+        fi
+        if [ -s "setup.py" ]; then
+            $SUDO pip3 install . --break-system-packages $DEBUG_STD
+        fi
+        if [ -s "Makefile" ]; then
+            $SUDO make $DEBUG_STD
+            $SUDO make install $DEBUG_STD
+        fi
+        if [ "gf" = "$repo" ]; then
+            cp -r examples/*.json ~/.gf $DEBUG_ERROR
+        elif [ "Gf-Patterns" = "$repo" ]; then
+            mv *.json ~/.gf $DEBUG_ERROR
+        fi
     fi
-    if [ -s "setup.py" ]; then
-        $SUDO python3 setup.py install $DEBUG_STD
-    fi
-    if [ -s "Makefile" ]; then
-        $SUDO make $DEBUG_STD
-        $SUDO make install $DEBUG_STD
-    fi
-    if [ "gf" = "$repo" ]; then
-        cp -r examples/*.json ~/.gf $DEBUG_ERROR
-    elif [ "Gf-Patterns" = "$repo" ]; then
-        mv *.json ~/.gf $DEBUG_ERROR
-    fi
+
     cd "$TOOLS_PATH" || {
-        echo "Failed to cd to $TOOLS_PATH in ${FUNCNAME[0]} @ line ${LINENO}"
+        echo "Failed to cd back to $TOOLS_PATH in ${FUNCNAME[0]} @ line ${LINENO}"
         exit 1
     }
 done
+
 
 echo "Add my gf templates"
 cp -r "$TOOLS_PATH"/MSwellDOTS/config/home/.gf/*.json "$HOME"/.gf/
