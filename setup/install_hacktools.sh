@@ -193,9 +193,9 @@ for repo in "${!repos[@]}"; do
             $SUDO make install &>/dev/null
         fi
         if [ "gf" = "$repo" ]; then
-            cp -r examples/*.json ~/.gf $DEBUG_ERROR
+            cp -r examples/*.json ~/.gf 2>/dev/null
         elif [ "Gf-Patterns" = "$repo" ]; then
-            mv *.json ~/.gf $DEBUG_ERROR
+            mv *.json ~/.gf 2>/dev/null
         fi
     fi
 
