@@ -88,6 +88,11 @@ yay_packages="
     hyprpolkitagent
     wlogout
     grimblast
+    jpegoptim
+    optipng
+    swappy
+    brightnessctl
+    pamixer
     kvantum-theme-catppuccin-git
 "
 
