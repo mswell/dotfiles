@@ -3,20 +3,15 @@ set -e
 
 export DOTFILES="$PWD"
 
-# Function to install packages with pacman
-install_pacman() {
-    sudo pacman -S --noconfirm --needed "$@"
-}
-
 # Function to install packages with yay
 install_yay() {
     yay -S --noconfirm --needed "$@"
 }
 
-# --- Package Lists ---
-
-# Official repository packages (pacman)
-pacman_packages="
+# AUR and other packages (yay)
+yay_packages="
+    tmux
+    qt5-wayland
     hyprland
     xdg-desktop-portal-hyprland
     dunst
@@ -27,12 +22,6 @@ pacman_packages="
     qt6ct
     kvantum
     waypaper
-"
-
-# AUR and other packages (yay)
-yay_packages="
-    tmux
-    qt5-wayland
     qt6-wayland
     bat
     lsd
@@ -103,9 +92,6 @@ yay_packages="
 "
 
 # --- Installation ---
-
-echo "Installing packages from official repositories..."
-install_pacman $pacman_packages
 
 echo "Installing packages from AUR and other sources..."
 install_yay $yay_packages
