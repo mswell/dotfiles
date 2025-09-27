@@ -27,6 +27,14 @@ printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
 go env -w GO111MODULE=auto
 
+# Install ProjectDiscovery Tool Manager (pdtm)
+printf "${bblue} Installing ProjectDiscovery Tool Manager (pdtm) ${reset}\n"
+go install github.com/projectdiscovery/pdtm/cmd/pdtm@latest
+
+# Install ProjectDiscovery tools using pdtm
+printf "${bblue} Installing ProjectDiscovery tools via pdtm ${reset}\n"
+pdtm -install -tools "naabu,shuffledns,chaos,nuclei,notify,httpx,dnsx,subfinder,interactsh-client,alterx,katana"
+
 install_tool() {
     local tool="$1"
     local repo="$2"
@@ -42,11 +50,8 @@ install_tool() {
 install_tool "fff" "github.com/tomnomnom/fff"
 install_tool "tojson" "github.com/tomnomnom/hacks/tojson"
 install_tool "Rush" "github.com/shenwei356/rush"
-install_tool "Naabu" "github.com/projectdiscovery/naabu/v2/cmd/naabu"
-install_tool "shuffledns" "github.com/projectdiscovery/shuffledns/cmd/shuffledns"
 install_tool "gron" "github.com/tomnomnom/gron"
 install_tool "html-tool" "github.com/tomnomnom/hacks/html-tool"
-install_tool "Chaos" "github.com/projectdiscovery/chaos-client/cmd/chaos"
 install_tool "gf" "github.com/tomnomnom/gf"
 install_tool "qsreplace" "github.com/tomnomnom/qsreplace"
 install_tool "Amass" "github.com/owasp-amass/amass/v4/..."
@@ -54,20 +59,14 @@ install_tool "ffuf" "github.com/ffuf/ffuf"
 install_tool "assetfinder" "github.com/tomnomnom/assetfinder"
 install_tool "github-subdomains" "github.com/gwen001/github-subdomains"
 install_tool "waybackurls" "github.com/tomnomnom/hacks/waybackurls"
-install_tool "nuclei" "github.com/projectdiscovery/nuclei/v2/cmd/nuclei"
 install_tool "anew" "github.com/tomnomnom/anew"
-install_tool "notify" "github.com/projectdiscovery/notify/cmd/notify"
 install_tool "dirdar" "github.com/m4dm0e/dirdar"
 install_tool "unfurl" "github.com/tomnomnom/unfurl"
-install_tool "httpx" "github.com/projectdiscovery/httpx/cmd/httpx"
-install_tool "dnsx" "github.com/projectdiscovery/dnsx/cmd/dnsx"
-install_tool "subfinder" "github.com/projectdiscovery/subfinder/v2/cmd/subfinder"
 install_tool "gauplus" "github.com/bp0lr/gauplus"
 install_tool "subjs" "github.com/lc/subjs"
 install_tool "Gxss" "github.com/KathanP19/Gxss"
 install_tool "gospider" "github.com/jaeles-project/gospider"
 install_tool "puredns" "github.com/d3mondev/puredns/v2"
-install_tool "interactsh-client" "github.com/projectdiscovery/interactsh/cmd/interactsh-client"
 install_tool "kxss" "github.com/tomnomnom/hacks/kxss"
 install_tool "GetJs" "github.com/003random/getJS"
 install_tool "Meg" "github.com/tomnomnom/meg"
@@ -76,8 +75,6 @@ install_tool "Sdlookup" "github.com/j3ssie/sdlookup"
 install_tool "Airixss" "github.com/ferreiraklet/airixss"
 install_tool "Nilo" "github.com/ferreiraklet/nilo"
 install_tool "metabigor" "github.com/j3ssie/metabigor"
-install_tool "alterx" "github.com/projectdiscovery/alterx/cmd/alterx"
-install_tool "katana" "github.com/projectdiscovery/katana/cmd/katana"
 install_tool "sourcemapper" "github.com/denandz/sourcemapper"
 
 declare -A repos
@@ -106,17 +103,8 @@ mkdir -p ~/.config/nuclei/
 
 pip3 install uro --break-system-packages
 
-if [ ! -f "$LISTS_PATH/params.txt" ]; then
-    wget -nc -O "$LISTS_PATH/params.txt" https://raw.githubusercontent.com/s0md3v/Arjun/master/arjun/db/params.txt
-fi
 if [ ! -f "$LISTS_PATH/raft-large-directories-lowercase.txt" ]; then
     wget -nc -O "$LISTS_PATH/raft-large-directories-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
-fi
-if [ ! -f "$HOME/.gf/potential.json" ]; then
-    wget -nc -O "$HOME/.gf/potential.json" https://raw.githubusercontent.com/devanshbatham/ParamSpider/master/gf_profiles/potential.json
-fi
-if [ ! -f "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" ]; then
-    wget -nc -O "$LISTS_PATH/httparchive_apiroutes_2022_03_28.txt" https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_2022_03_28.txt
 fi
 if [ ! -f "$LISTS_PATH/raft-large-files.txt" ]; then
     wget -nc -O "$LISTS_PATH/raft-large-files.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-files.txt
