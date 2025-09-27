@@ -172,13 +172,18 @@ O sistema inclui uma vasta coleção de ferramentas para:
 - Scripts de setup copiam automaticamente
 - Testar mudanças antes de commitar
 
-## 🤝 Contribuição
+## 🌐 Idiomas / Languages
 
-1. Fork o projeto
-2. Criar branch para feature (`git checkout -b feature/AmazingFeature`)
-3. Commit mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push branch (`git push origin feature/AmazingFeature`)
-5. Abrir Pull Request
+- [English](./README_EN.md) - English version
+- [Português (Brasileiro)](./README.md) - Versão em português
+
+## 🤝 Contribuição / Contributing
+
+1. Fork o projeto / Fork the project
+2. Criar branch para feature (`git checkout -b feature/AmazingFeature`) / Create a feature branch
+3. Commit mudanças (`git commit -m 'Add some AmazingFeature'`) / Commit your changes
+4. Push branch (`git push origin feature/AmazingFeature`) / Push to the branch
+5. Abrir Pull Request / Open a Pull Request
 
 ## 📝 Licença
 
