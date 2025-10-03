@@ -35,5 +35,5 @@ sudo apt install -y python3 \
 		    jq \
 		    apt-transport-https \
 		    xvfb \
-		    prips $DEBUG_STD
+		    prips ${DEBUG_STD:+$DEBUG_STD}
 echo "${yellow}[*] Done. ${reset}"

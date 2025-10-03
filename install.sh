@@ -46,7 +46,7 @@ run_setup() {
 
 Menu() {
     while true; do
-        echo "[1] - Ubuntu VPS"
+        echo "[1] - Ubuntu/Debian VPS"
         echo "[2] - Archlinux with Hyprland"
         echo "[3] - Install Hacktools"
         echo "[4] - Install Pyenv"

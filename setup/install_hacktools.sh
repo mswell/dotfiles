@@ -10,6 +10,7 @@ DEBUG_ERROR="2>/dev/null"
 bblue='\033[1;34m'
 reset='\033[0m'
 red='\033[0;31m'
+yellow='\033[1;33m'
 
 # Check for sudo privileges
 if [[ $EUID -ne 0 ]]; then
@@ -25,6 +26,11 @@ printf "${yellow} LISTS_PATH is set to: $LISTS_PATH ${reset}\n\n"
 
 printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
+if ! command -v go >/dev/null 2>&1; then
+  printf "${red}[!] Go is not installed or not present in PATH.${reset}\n"
+  source "$(dirname "$0")/install_golang.sh"
+fi
+
 go env -w GO111MODULE=auto
 
 # Install ProjectDiscovery Tool Manager (pdtm)
@@ -33,7 +39,7 @@ go install github.com/projectdiscovery/pdtm/cmd/pdtm@latest
 
 # Install ProjectDiscovery tools using pdtm
 printf "${bblue} Installing ProjectDiscovery tools via pdtm ${reset}\n"
-pdtm -install -tools "naabu,shuffledns,chaos,nuclei,notify,httpx,dnsx,subfinder,interactsh-client,alterx,katana"
+pdtm -install "naabu,shuffledns,chaos,nuclei,notify,httpx,dnsx,subfinder,interactsh-client,alterx,katana"
 
 install_tool() {
     local tool="$1"
@@ -171,7 +177,7 @@ for repo in "${!repos[@]}"; do
         cd "$repo_path" || continue
 
         if [ -s "requirements.txt" ]; then
-            $SUDO pip3 install -r requirements.txt --break-system-packages &>/dev/null
+            $SUDO pip3 install -r requirements.txt --break-system-packages --ignore-installed &>/dev/null
         fi
         if [ -s "setup.py" ]; then
             $SUDO pip3 install . --break-system-packages &>/dev/null
@@ -193,5 +199,5 @@ for repo in "${!repos[@]}"; do
     }
 done
 
-echo "Add my gf templates"
+printf "${bblue} Adding my gf templates ${reset}\n"
 cp -r "$TOOLS_PATH"/MSwellDOTS/config/home/.gf/*.json "$HOME"/.gf/
