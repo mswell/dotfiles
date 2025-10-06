@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail  # Exit on error, undefined vars, and pipe failures
+
 # Source the central environment configuration to ensure consistency
 source "$(dirname "$0")/config/zsh/env.zsh"
 
@@ -107,7 +109,8 @@ mkdir -p ~/.config/notify/
 mkdir -p ~/.config/amass/
 mkdir -p ~/.config/nuclei/
 
-pip3 install uro --break-system-packages
+# Install uro in user site-packages (PEP 668 compliant)
+python3 -m pip install --user uro
 
 if [ ! -f "$LISTS_PATH/raft-large-directories-lowercase.txt" ]; then
     wget -nc -O "$LISTS_PATH/raft-large-directories-lowercase.txt" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt
@@ -177,10 +180,12 @@ for repo in "${!repos[@]}"; do
         cd "$repo_path" || continue
 
         if [ -s "requirements.txt" ]; then
-            $SUDO pip3 install -r requirements.txt --break-system-packages --ignore-installed &>/dev/null
+            # Install in user site-packages (PEP 668 compliant)
+            python3 -m pip install --user -r requirements.txt &>/dev/null
         fi
         if [ -s "setup.py" ]; then
-            $SUDO pip3 install . --break-system-packages &>/dev/null
+            # Install in user site-packages (PEP 668 compliant)
+            python3 -m pip install --user . &>/dev/null
         fi
         if [ -s "Makefile" ]; then
             $SUDO make &>/dev/null

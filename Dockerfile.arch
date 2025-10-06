@@ -1,0 +1,34 @@
+# Dockerfile for testing Arch Linux dotfiles installation
+FROM archlinux:latest
+
+# Set TERM to prevent tput errors
+ENV TERM=xterm-256color
+
+# Update system and install base packages
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+    sudo \
+    git \
+    curl \
+    wget \
+    base-devel \
+    && pacman -Scc --noconfirm
+
+# Create a test user (don't run as root)
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Switch to test user
+USER testuser
+WORKDIR /home/testuser
+
+# Copy dotfiles to container
+COPY --chown=testuser:testuser . /home/testuser/dotfiles
+
+# Set DOTFILES environment variable
+ENV DOTFILES=/home/testuser/dotfiles
+
+WORKDIR /home/testuser/dotfiles
+
+# Default command - run bash for interactive testing
+CMD ["/bin/bash"]

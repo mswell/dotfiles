@@ -28,9 +28,16 @@ sleep 1
 create_dir "$CONFIG_DIR/zsh"
 
 copy_file "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
+copy_file "$DOTFILES/config/zsh/env.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/custom.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/alias.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/functions.zsh" "$CONFIG_DIR/zsh/"
+
+# Copy modular functions directory
+echo "${green}[+] Copiando funções modulares${reset}"
+create_dir "$CONFIG_DIR/zsh/functions"
+cp -rf "$DOTFILES/config/zsh/functions/"* "$CONFIG_DIR/zsh/functions/"
+
 copy_file "$DOTFILES/config/zsh/.zprofile" "$HOME/.zprofile"
 copy_file "$DOTFILES/config/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
 

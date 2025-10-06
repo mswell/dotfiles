@@ -33,7 +33,6 @@ yay_packages="
     pavucontrol
     git-delta
     vlc
-    flameshot-git
     wget
     unclutter
     curl

@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -euo pipefail  # Exit on error, undefined vars, and pipe failures
 
 red=$(tput setaf 1)
 green=$(tput setaf 2)

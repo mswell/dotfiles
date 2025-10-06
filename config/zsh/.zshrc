@@ -8,7 +8,13 @@ fi
 # ===================================================================
 # LOAD ENVIRONMENT CONFIGURATION FIRST
 # This ensures that path variables are available to all other scripts.
-[ -f "$HOME/Projects/dotfiles/config/zsh/env.zsh" ] && source "$HOME/Projects/dotfiles/config/zsh/env.zsh"
+# Auto-detect dotfiles location (portable across different clone paths)
+if [ -f "$HOME/.config/zsh/env.zsh" ]; then
+    source "$HOME/.config/zsh/env.zsh"
+elif [ -f "$HOME/Projects/dotfiles/config/zsh/env.zsh" ]; then
+    # Fallback to default location if not copied yet
+    source "$HOME/Projects/dotfiles/config/zsh/env.zsh"
+fi
 # ===================================================================
 
 # Set the directory we want to store zinit and plugins

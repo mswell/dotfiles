@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -euo pipefail  # Exit on error, undefined vars, and pipe failures
+
 URL_RUST="https://sh.rustup.rs"
 
 red=$(tput setaf 1)
@@ -10,7 +12,15 @@ reset=$(tput sgr0)
 echo "${yellow}[+] Install tools for developers${reset}"
 
 echo "${yellow}[+] Install python & neovim dependencies${reset}"
-sudo -H pip3 install --upgrade pynvim virtualenvwrapper --break-system-packages
+# Use pipx for CLI tools instead of --break-system-packages (PEP 668 compliant)
+sudo apt install -y python3-pipx
+pipx ensurepath
+
+# Install pynvim in user site-packages (safe)
+python3 -m pip install --user --upgrade pynvim
+
+# virtualenvwrapper via pipx (isolated from system Python)
+pipx install virtualenvwrapper
 
 [ ! -d "$HOME/.config/nvim" ] && mkdir -p $HOME/.config/nvim
 sudo apt install -y neovim

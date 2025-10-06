@@ -5,10 +5,22 @@ export EDITOR='vim'
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 export DOTFILES=$SCRIPT_DIR
 
-export red=$(tput setaf 1)
-export green=$(tput setaf 2)
-export yellow=$(tput setaf 3)
-export reset=$(tput sgr0)
+# Set TERM if not defined (for Docker/minimal environments)
+export TERM="${TERM:-xterm}"
+
+# Colors with fallback if tput fails
+export red=$(tput setaf 1 2>/dev/null || echo "")
+export green=$(tput setaf 2 2>/dev/null || echo "")
+export yellow=$(tput setaf 3 2>/dev/null || echo "")
+export blue=$(tput setaf 4 2>/dev/null || echo "")
+export reset=$(tput sgr0 2>/dev/null || echo "")
+
+# Source logging and validation libraries
+source "$DOTFILES/setup/lib/logging.sh"
+source "$DOTFILES/setup/lib/preflight.sh"
+
+# Enable error trapping for better logging
+trap_errors
 
 #--- Funcoes
 Banner() {
@@ -34,12 +46,25 @@ Banner() {
 
 run_setup() {
     local script_path="$1"
-    echo "Initializing setup :)"
-    # Adicione uma verificação se o arquivo existe antes de tentar executá-lo
-    if [[ -f "$DOTFILES/$script_path" ]]; then
-        source "$DOTFILES/$script_path"
+    local script_name=$(basename "$script_path")
+
+    log_step "Starting setup: $script_name"
+    log_info "Script path: $script_path"
+
+    # Check if script exists
+    if [[ ! -f "$DOTFILES/$script_path" ]]; then
+        log_error "Setup script not found: $script_path"
+        log_summary "FAILED" "Script not found: $script_path"
+        exit 1
+    fi
+
+    # Execute setup script
+    if source "$DOTFILES/$script_path"; then
+        log_info "Setup completed: $script_name"
+        log_summary "COMPLETED" "$script_name"
     else
-        echo "${red}Error: Setup script not found at '$script_path'${reset}"
+        log_error "Setup failed: $script_name"
+        log_summary "FAILED" "$script_name"
         exit 1
     fi
 }
@@ -74,4 +99,20 @@ Menu() {
 
 clear
 Banner
+
+log_info "========================================="
+log_info "  Dotfiles Installation System Started"
+log_info "========================================="
+log_info "Installation log: $LOG_FILE"
+echo ""
+
+# Run pre-flight checks before showing menu
+log_step "System Validation"
+if ! run_preflight_checks; then
+    echo ""
+    log_error "Pre-flight checks failed!"
+    log_summary "FAILED" "System validation checks did not pass"
+    exit 1
+fi
+
 Menu

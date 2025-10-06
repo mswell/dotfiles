@@ -1,0 +1,241 @@
+name: CI - Dotfiles Validation
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  shellcheck:
+    name: ShellCheck - Script Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './setup'
+          severity: warning
+          ignore_paths: '.git'
+
+  test-ubuntu:
+    name: Test Ubuntu Installation
+    runs-on: ubuntu-latest
+    needs: shellcheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl wget git build-essential
+
+      - name: Run pre-flight checks
+        run: |
+          export DOTFILES=$PWD
+          bash setup/lib/preflight.sh
+
+      - name: Test Ubuntu base setup (dry-run)
+        run: |
+          export DOTFILES=$PWD
+          # Verify scripts can be sourced without errors
+          bash -n setup/ubuntu/base.sh
+          bash -n setup/ubuntu/devel.sh
+          bash -n setup/ubuntu/apps.sh
+          bash -n setup/ubuntu/terminal.sh
+
+      - name: Verify modular functions structure
+        run: |
+          test -f config/zsh/functions/utils.zsh || exit 1
+          test -f config/zsh/functions/recon.zsh || exit 1
+          test -f config/zsh/functions/scanning.zsh || exit 1
+          test -f config/zsh/functions/crawling.zsh || exit 1
+          test -f config/zsh/functions/vulns.zsh || exit 1
+          test -f config/zsh/functions/nuclei.zsh || exit 1
+          test -f config/zsh/functions/infra.zsh || exit 1
+          echo "✓ All modular function files exist"
+
+  test-arch:
+    name: Test Arch Linux Installation
+    runs-on: ubuntu-latest
+    needs: shellcheck
+    container:
+      image: archlinux:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install base dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm git curl wget base-devel
+
+      - name: Test Arch scripts syntax
+        run: |
+          export DOTFILES=$PWD
+          bash -n setup/ArchHypr/setup.sh
+          bash -n setup/ArchHypr/base.sh
+          bash -n setup/ArchHypr/apps.sh
+
+  validate-links:
+    name: Validate External URLs
+    runs-on: ubuntu-latest
+    needs: shellcheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract and validate URLs
+        run: |
+          # Extract URLs from scripts
+          grep -rh "https://" setup/ config/ | \
+            grep -oE 'https://[a-zA-Z0-9./?=_%:-]*' | \
+            sort -u > urls.txt
+
+          echo "Found $(wc -l < urls.txt) unique URLs"
+
+          # Test critical URLs (GitHub, SecLists, etc.)
+          critical_urls=(
+            "https://github.com"
+            "https://raw.githubusercontent.com/danielmiessler/SecLists"
+            "https://raw.githubusercontent.com/trickest/resolvers"
+          )
+
+          for url in "${critical_urls[@]}"; do
+            if curl -sSf --head "$url" > /dev/null 2>&1; then
+              echo "✓ $url is accessible"
+            else
+              echo "✗ $url is NOT accessible"
+              exit 1
+            fi
+          done
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: shellcheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Simple grep for common secret patterns
+          if grep -r "AKIA[0-9A-Z]{16}" . --exclude-dir=.git; then
+            echo "Found potential AWS keys!"
+            exit 1
+          fi
+
+          if grep -r "ghp_[a-zA-Z0-9]{36}" . --exclude-dir=.git; then
+            echo "Found potential GitHub tokens!"
+            exit 1
+          fi
+
+          echo "✓ No obvious secrets found"
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    needs: shellcheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          todos=$(grep -rn "TODO\|FIXME\|XXX\|HACK" setup/ config/ --exclude-dir=.git || true)
+          if [ -n "$todos" ]; then
+            echo "Found TODO/FIXME comments:"
+            echo "$todos"
+            echo "::warning::TODO/FIXME comments found in code"
+          fi
+
+      - name: Check script formatting
+        run: |
+          # Verify consistent shebang usage
+          echo "Checking shebangs..."
+          find setup/ -name "*.sh" -exec head -1 {} \; | sort -u
+
+      - name: Verify error handling
+        run: |
+          # Check that scripts have set -e or set -euo pipefail
+          echo "Verifying error handling in scripts..."
+          for script in setup/**/*.sh; do
+            if ! grep -q "set -e" "$script"; then
+              echo "⚠️  $script missing error handling"
+            fi
+          done
+
+  integration-test:
+    name: Integration Test (Docker)
+    runs-on: ubuntu-latest
+    needs: [test-ubuntu, test-arch]
+
+    strategy:
+      matrix:
+        os: [ubuntu:22.04, ubuntu:24.04]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test in Docker container
+        run: |
+          docker run --rm -v $PWD:/dotfiles -w /dotfiles ${{ matrix.os }} bash -c "
+            apt-get update && apt-get install -y git curl wget
+            export DOTFILES=/dotfiles
+            bash setup/lib/preflight.sh
+          "
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [shellcheck, test-ubuntu, test-arch, validate-links, security-scan, code-quality, integration-test]
+    if: always()
+
+    steps:
+      - name: Check all jobs status
+        run: |
+          echo "CI Pipeline Summary:"
+          echo "===================="
+          echo "ShellCheck: ${{ needs.shellcheck.result }}"
+          echo "Ubuntu Tests: ${{ needs.test-ubuntu.result }}"
+          echo "Arch Tests: ${{ needs.test-arch.result }}"
+          echo "URL Validation: ${{ needs.validate-links.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Integration Test: ${{ needs.integration-test.result }}"
+
+          # Fail if any critical job failed
+          if [ "${{ needs.shellcheck.result }}" != "success" ] || \
+             [ "${{ needs.test-ubuntu.result }}" != "success" ]; then
+            echo "❌ Critical jobs failed"
+            exit 1
+          fi
+
+          echo "✅ All critical checks passed"
