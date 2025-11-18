@@ -17,7 +17,6 @@ source_script() {
 
 # Execute the configuration scripts
 source_script "$DOTFILES/setup/ArchWSL/apps.sh"
-source_script "$DOTFILES/setup/install_golang.sh"
 source_script "$DOTFILES/setup/terminal.sh"
 source_script "$DOTFILES/setup/copy_dots.sh"
 

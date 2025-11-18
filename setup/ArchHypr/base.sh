@@ -5,7 +5,7 @@ echo "Installing base system and yay..."
 
 # Update the system and install essential packages
 sudo pacman -Syyu --noconfirm
-sudo pacman -S --noconfirm --needed git base-devel
+sudo pacman -S --noconfirm --needed git base-devel go
 
 # Install yay (AUR helper)
 if [ ! -d "yay" ]; then

@@ -28,8 +28,17 @@ printf "${yellow} LISTS_PATH is set to: $LISTS_PATH ${reset}\n\n"
 
 printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
-if ! command -v go >/dev/null 2>&1; then
-  printf "${red}[!] Go is not installed or not present in PATH.${reset}\n"
+# Detect Go installation
+if command -v go >/dev/null 2>&1; then
+  printf "${green}[+] Go found in PATH: $(which go)${reset}\n"
+elif [ -f "/usr/local/go/bin/go" ]; then
+  printf "${yellow}[*] Go found in /usr/local/go, adding to PATH${reset}\n"
+  export PATH=$PATH:/usr/local/go/bin
+elif [ -f "/usr/bin/go" ]; then
+  printf "${green}[+] Go found in /usr/bin${reset}\n"
+  export PATH=$PATH:/usr/bin
+else
+  printf "${red}[!] Go is not installed. Installing manually...${reset}\n"
   source "$(dirname "$0")/install_golang.sh"
 fi
 

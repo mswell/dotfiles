@@ -82,6 +82,41 @@ Sources `config/zsh/env.zsh` for all path variables.
 - Configures directories: `~/.ve` (virtualenvs), `~/Projects` (projects)
 - **Assumes system dependencies already installed** by distro scripts
 
+### Go Installation (setup/install_golang.sh)
+
+**Distribution-specific approach:**
+
+**Arch Linux** - Uses pacman (package manager):
+- Go installed automatically in `base.sh` via `pacman -S go`
+- Location: `/usr/bin/go`
+- Updates managed automatically by pacman
+- No manual intervention needed
+- Prevents version conflicts between manual and system installations
+
+**Ubuntu/Debian** - Uses manual installation:
+- Executed via `setup/ubuntu/setup.sh`
+- Downloads latest Go version from golang.org
+- Installs to `/usr/local/go`
+- Adds `/usr/local/go/bin` to PATH in `~/.profile`
+- Always gets the latest Go version
+
+**Path Detection** (`config/zsh/.zshrc`):
+- Automatically detects Go installation location
+- Prioritizes system package manager installation (pacman/apt)
+- Falls back to manual installation if found
+- Sets GOPATH to `$HOME/go` and adds `$GOPATH/bin` to PATH
+
+**Migration for Arch Users:**
+- If you have existing manual Go installation causing version conflicts
+- Run: `./setup/migrate_go_arch.sh`
+- This script will:
+  1. Remove manual installation from `/usr/local/go`
+  2. Install Go via pacman
+  3. Clean up Go cache
+  4. Guide you to reinstall Go tools
+
+**Note:** `install_hacktools.sh` automatically detects Go in both locations and falls back to manual installation only if Go is not found anywhere.
+
 ### ZSH Functions (config/zsh/functions.zsh)
 
 **Bug bounty reconnaissance workflow functions** - comprehensive toolkit for security testing:

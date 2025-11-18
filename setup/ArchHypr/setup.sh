@@ -21,7 +21,6 @@ source_script() {
 
 # Execute the configuration scripts
 source_script "$DOTFILES/setup/ArchHypr/base.sh"
-source_script "$DOTFILES/setup/install_golang.sh"
 source_script "$DOTFILES/setup/ArchHypr/apps.sh"
 source_script "$DOTFILES/setup/ArchHypr/fonts.sh"
 source_script "$DOTFILES/setup/terminal.sh"

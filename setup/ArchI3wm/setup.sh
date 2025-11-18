@@ -17,7 +17,6 @@ source_script() {
 
 # Execute the configuration scripts
 source_script "$DOTFILES/setup/ArchI3wm/base.sh"
-source_script "$DOTFILES/setup/install_golang.sh"
 source_script "$DOTFILES/setup/ArchI3wm/apps.sh"
 source_script "$DOTFILES/setup/ArchI3wm/fonts.sh"
 source_script "$DOTFILES/setup/terminal.sh"

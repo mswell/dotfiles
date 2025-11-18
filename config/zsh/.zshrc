@@ -67,10 +67,17 @@ export EDITOR='vim'
 
 
 
-# go
-export GOROOT=/usr/local/go
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+# go - detect installation location
+if command -v go &> /dev/null; then
+  # Go is already in PATH (installed via package manager)
+  export GOPATH=$HOME/go
+  export PATH=$PATH:$GOPATH/bin
+elif [ -d "/usr/local/go" ]; then
+  # Manual installation in /usr/local/go
+  export GOROOT=/usr/local/go
+  export GOPATH=$HOME/go
+  export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+fi
 
 source $HOME/Tools/gf/gf-completion.zsh
 bindkey -s ^f "tmux-sessionizer\n"
