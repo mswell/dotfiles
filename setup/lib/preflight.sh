@@ -109,10 +109,14 @@ check_disk_space() {
 check_internet() {
     echo "${blue}[INFO] Checking internet connectivity...${reset}"
 
+    # Try ping first, fall back to curl (ping may be blocked in some environments)
     if ! ping -c 1 -W 2 8.8.8.8 &>/dev/null; then
-        echo "${red}[ERROR] No internet connection detected${reset}"
-        echo "${yellow}[INFO] Internet required for downloading packages and tools${reset}"
-        return 1
+        # Ping failed, try HTTP-based check (GitHub Actions blocks ICMP)
+        if ! curl -s --connect-timeout 5 https://www.google.com &>/dev/null; then
+            echo "${red}[ERROR] No internet connection detected${reset}"
+            echo "${yellow}[INFO] Internet required for downloading packages and tools${reset}"
+            return 1
+        fi
     fi
 
     # Check if we can reach GitHub (critical for cloning repos)
