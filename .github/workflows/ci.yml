@@ -210,7 +210,7 @@ jobs:
 
       - name: Test in Docker container
         run: |
-          docker run --rm -v $PWD:/dotfiles -w /dotfiles ${{ matrix.os }} bash -c "
+          docker run --rm -e CI=true -e GITHUB_ACTIONS=true -v $PWD:/dotfiles -w /dotfiles ${{ matrix.os }} bash -c "
             apt-get update && apt-get install -y git curl wget
             export DOTFILES=/dotfiles
             bash setup/lib/preflight.sh
