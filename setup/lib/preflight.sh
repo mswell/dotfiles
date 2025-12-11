@@ -21,6 +21,11 @@ reset=$(tput sgr0 2>/dev/null || echo "")
 
 # Check if running as root (should NOT be root for safety)
 check_not_root() {
+    # Skip in CI environments where root is common
+    if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
+        echo "${yellow}⚠ Skipping root check in CI environment${reset}"
+        return 0
+    fi
     if [ "$EUID" -eq 0 ]; then
         echo "${red}[ERROR] Do not run this script as root!${reset}"
         echo "${yellow}[INFO] Run as regular user with sudo access instead.${reset}"
@@ -31,6 +36,11 @@ check_not_root() {
 
 # Check for sudo access
 check_sudo_access() {
+    # Skip in CI environments (usually runs as root)
+    if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
+        echo "${yellow}⚠ Skipping sudo check in CI environment${reset}"
+        return 0
+    fi
     if ! sudo -n true 2>/dev/null; then
         echo "${yellow}[WARN] Testing sudo access...${reset}"
         sudo -v || {
