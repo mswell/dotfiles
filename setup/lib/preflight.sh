@@ -73,10 +73,15 @@ detect_distro() {
         *)
             echo "${yellow}[WARN] Unsupported distribution: $PRETTY_NAME${reset}"
             echo "${yellow}[INFO] Supported: Ubuntu, Debian, Arch Linux, Manjaro${reset}"
-            read -p "Continue anyway? (y/N): " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                return 1
+            # Auto-continue in CI environments
+            if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
+                echo "${yellow}⚠ Auto-continuing in CI environment${reset}"
+            else
+                read -p "Continue anyway? (y/N): " -n 1 -r
+                echo
+                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                    return 1
+                fi
             fi
             ;;
     esac
@@ -114,10 +119,15 @@ check_internet() {
     if ! curl -s --connect-timeout 5 https://github.com &>/dev/null; then
         echo "${yellow}[WARN] Cannot reach github.com${reset}"
         echo "${yellow}[INFO] This may cause issues downloading tools${reset}"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            return 1
+        # Auto-continue in CI environments
+        if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
+            echo "${yellow}⚠ Auto-continuing in CI environment${reset}"
+        else
+            read -p "Continue anyway? (y/N): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                return 1
+            fi
         fi
     fi
 
