@@ -207,9 +207,9 @@ run_preflight_checks() {
     )
 
     for check in "${checks[@]}"; do
-        ((checks_total++))
+        ((checks_total++)) || true
         if $check; then
-            ((checks_passed++))
+            ((checks_passed++)) || true
         else
             echo "${red}[FAIL] $check failed${reset}"
             return 1
