@@ -66,13 +66,13 @@ detect_distro() {
             echo "${green}✓ Detected: $PRETTY_NAME${reset}"
             export DETECTED_DISTRO="debian"
             ;;
-        arch|manjaro)
+        arch|manjaro|cachyos)
             echo "${green}✓ Detected: $PRETTY_NAME${reset}"
             export DETECTED_DISTRO="arch"
             ;;
         *)
             echo "${yellow}[WARN] Unsupported distribution: $PRETTY_NAME${reset}"
-            echo "${yellow}[INFO] Supported: Ubuntu, Debian, Arch Linux, Manjaro${reset}"
+            echo "${yellow}[INFO] Supported: Ubuntu, Debian, Arch Linux, Manjaro, CachyOS${reset}"
             # Auto-continue in CI environments
             if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
                 echo "${yellow}⚠ Auto-continuing in CI environment${reset}"
