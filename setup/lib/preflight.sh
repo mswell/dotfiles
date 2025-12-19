@@ -27,9 +27,10 @@ check_not_root() {
         return 0
     fi
     if [ "$EUID" -eq 0 ]; then
-        echo "${red}[ERROR] Do not run this script as root!${reset}"
-        echo "${yellow}[INFO] Run as regular user with sudo access instead.${reset}"
-        return 1
+        echo "${yellow}[WARN] Running as root is dangerous!${reset}"
+        echo "${yellow}[INFO] Ideally, run as a regular user with sudo access.${reset}"
+        echo "${yellow}[INFO] Continuing as root per user request...${reset}"
+        return 0
     fi
     echo "${green}✓ Not running as root${reset}"
 }
