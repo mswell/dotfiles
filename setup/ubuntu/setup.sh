@@ -9,4 +9,4 @@ source $DOTFILES/setup/ubuntu/apps.sh
 source $DOTFILES/setup/ubuntu/terminal.sh
 source $DOTFILES/setup/copy_dots.sh
 
-echo "Now u need to install pyenv and hacktools"
+echo "Now run option [4] for dev environment (mise) and [3] for hacktools"

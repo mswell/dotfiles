@@ -17,7 +17,7 @@ This is a comprehensive dotfiles management system for automated Linux developme
 - `[1]` - Ubuntu/Debian VPS (servers, web development)
 - `[2]` - Arch Linux + Hyprland (modern desktop, Wayland)
 - `[3]` - Install Hacktools (security testing, CTF, bug bounty)
-- `[4]` - Install Pyenv (Python environment with pyenv)
+- `[4]` - Install Dev Environment (mise: Python + Node.js)
 - `[5]` - Arch Linux + i3wm (tiling window manager, X11)
 - `[6]` - Arch Linux WSL (Windows Subsystem for Linux)
 - `[7]` - Arch Linux DE (traditional desktop environment)
@@ -26,10 +26,10 @@ This is a comprehensive dotfiles management system for automated Linux developme
 
 **Critical:** Scripts must be run in the correct order:
 1. Run distro-specific setup first (option 1, 2, 5, 6, or 7) - installs system dependencies
-2. Run pyenv installation (option 4) - sets up Python environment
+2. Run dev environment installation (option 4) - sets up Python + Node.js via mise
 3. Run hacktools installation (option 3) - installs security tools
 
-**Do not run pyenv or hacktools before system setup** - they depend on system packages being installed first.
+**Do not run devenv or hacktools before system setup** - they depend on system packages being installed first.
 
 ## Architecture
 
@@ -74,13 +74,23 @@ Installs bug bounty and security testing tools:
 
 Sources `config/zsh/env.zsh` for all path variables.
 
-### Python Environment (setup/pyenv_install.sh)
+### Development Environment (setup/devenv_install.sh)
 
-- Installs pyenv with virtualenv and update plugins
-- Creates Python 3.12.7 installation
+Uses **mise** (ex-rtx) - unified version manager replacing pyenv, asdf, nvm:
+
+- Installs mise via official installer
+- Installs Python 3.12.7 and Node.js 22 (LTS)
 - Sets up virtualenv: `tools3.12` with poetry, ipython, pytest, black, ruff, mypy
+- Creates global `~/.tool-versions` file
 - Configures directories: `~/.ve` (virtualenvs), `~/Projects` (projects)
-- **Assumes system dependencies already installed** by distro scripts
+
+**Key commands:**
+```bash
+mise list                    # List installed versions
+mise install python@3.13     # Install specific version
+mise use --global python@3.12  # Set global version
+mise use python@3.11         # Set project-local version
+```
 
 ### Go Installation (setup/install_golang.sh)
 
@@ -245,7 +255,7 @@ bypass4xx
 - `config/zsh/env.zsh` - **Central path configuration** (source of truth)
 - `config/zsh/functions.zsh` - Bug bounty workflow functions
 - `setup/install_hacktools.sh` - Security tools installation
-- `setup/pyenv_install.sh` - Python environment setup
+- `setup/devenv_install.sh` - Dev environment setup (mise: Python + Node.js)
 - `setup/copy_dots.sh` - Copies config files to home directory
 
 ## Common Patterns

@@ -74,7 +74,7 @@ Menu() {
         echo "[1] - Ubuntu/Debian VPS"
         echo "[2] - Archlinux with Hyprland"
         echo "[3] - Install Hacktools"
-        echo "[4] - Install Pyenv"
+        echo "[4] - Install Dev Environment (mise: Python + Node.js)"
         echo "[5] - Archlinux with i3wm"
         echo "[6] - Archlinux WSL"
         echo "[7] - Archlinux DE"
@@ -87,7 +87,7 @@ Menu() {
             1) run_setup "setup/ubuntu/setup.sh"; break ;;
             2) run_setup "setup/ArchHypr/setup.sh"; break ;;
             3) run_setup "setup/install_hacktools.sh"; break ;;
-            4) run_setup "setup/pyenv_install.sh"; break ;;
+            4) run_setup "setup/devenv_install.sh"; break ;;
             5) run_setup "setup/ArchI3wm/setup.sh"; break ;;
             6) run_setup "setup/ArchWSL/setup.sh"; break ;;
             7) run_setup "setup/ArchDE/setup.sh"; break ;;

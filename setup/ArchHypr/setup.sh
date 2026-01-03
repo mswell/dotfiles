@@ -27,4 +27,4 @@ source_script "$DOTFILES/setup/terminal.sh"
 source_script "$DOTFILES/setup/copy_dots.sh"
 
 echo "ArchHypr setup completed successfully!"
-echo "Now u need to install pyenv and hacktools"
+echo "Now run option [4] for dev environment (mise) and [3] for hacktools"
