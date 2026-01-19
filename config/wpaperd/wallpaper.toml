@@ -1,5 +1,5 @@
 [default]
-path = "~/Pictures/Wallpapers"
+path = "~/Pictures/backgrounds"
 duration = "30m"
 mode = "center"
 sorting = "random"
