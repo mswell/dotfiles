@@ -93,6 +93,8 @@ yay_packages="
     brightnessctl
     pamixer
     kvantum-theme-catppuccin-git
+    wpaperd
+    bibata-cursor-theme-bin
 "
 
 # --- Installation ---
@@ -106,9 +108,11 @@ echo "Copying configuration files..."
 mkdir -p "$HOME/.config/hypr" && cp -r "$DOTFILES/config/hypr" "$HOME/.config/"
 mkdir -p "$HOME/.config/kitty" && cp -r "$DOTFILES/config/kitty" "$HOME/.config/"
 cp -r "$DOTFILES/config/dunst" "$HOME/.config/"
+cp -r "$DOTFILES/config/wpaperd" "$HOME/.config/"
 cp -r "$DOTFILES/config/waybar" "$HOME/.config/"
 cp -r "$DOTFILES/config/tofi" "$HOME/.config/"
 mkdir -p "$HOME/.config/backgrounds" && cp -r "$DOTFILES/config/backgrounds" "$HOME/.config/"
+mkdir -p "$HOME/Pictures/" && cp -r "$DOTFILES/config/backgrounds" "$HOME/Pictures/"
 cp -r "$DOTFILES/config/wlogout" "$HOME/.config/"
 
 # Create Neovim configuration directory, if it doesn't exist
