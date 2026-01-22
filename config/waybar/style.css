@@ -9,30 +9,35 @@
 
 #waybar {
   background: transparent;
-  color: #c6d0f5;
+  color: #c0caf5;
   margin: 2px 2px;
 }
 
 #workspaces {
   border-radius: 5px;
   margin: 5px;
-  background: #101010;
+  background: #1a1b26;
   margin-left: 1rem;
 }
 
 #workspaces button {
-  color: #babbf1;
+  color: #787c99;
   border-radius: 5px;
   padding: 0.4rem;
 }
 
 #workspaces button.active {
-  color: #99d1db;
+  color: #7aa2f7;
   border-radius: 5px;
 }
 
 #workspaces button:hover {
-  color: #85c1dc;
+  color: #bb9af7;
+  border-radius: 5px;
+}
+
+#workspaces button.urgent {
+  color: #f7768e;
   border-radius: 5px;
 }
 
@@ -47,29 +52,29 @@
 #memory,
 #custom-lock,
 #custom-power {
-  background-color: #101010;
+  background-color: #1a1b26;
   padding: 0.5rem 1rem;
   margin: 5px 0;
   border-radius: 0px 5px 5px 0px;
 }
 
 #custom-stream_status {
-  background-color: #101010;
+  background-color: #1a1b26;
   padding: 0.5rem 1rem;
   margin: 5px 0;
   border-radius: 0px 5px 5px 0px;
 }
 
 #custom-stream_status.up {
-  color: #c3e88d;
+  color: #9ece6a;
 }
 
 #custom-stream_status.warning {
-  color: #ff9e64;
+  color: #e0af68;
 }
 
 #custom-stream_status.down {
-  color: #ea999c;
+  color: #f7768e;
 }
 
 #memory {
@@ -77,25 +82,25 @@
 }
 
 #clock {
-  color: #8caaee;
+  color: #7aa2f7;
   border-radius: 5px;
   margin-right: 1rem;
 }
 
 #battery {
-  color: #a6d189;
+  color: #9ece6a;
 }
 
 #battery.charging {
-  color: #a6d189;
+  color: #9ece6a;
 }
 
 #battery.warning:not(.charging) {
-  color: #e78284;
+  color: #f7768e;
 }
 
 #backlight {
-  color: #e5c890;
+  color: #e0af68;
 }
 
 #backlight,
@@ -104,25 +109,25 @@
 }
 
 #pulseaudio {
-  color: #ea999c;
+  color: #bb9af7;
   border-radius: 5px 0px 0px 5%;
   margin-left: 1rem;
 }
 
 #custom-music {
-  color: #ca9ee6;
+  color: #7dcfff;
   border-radius: 5px;
 }
 
 #custom-lock {
   border-radius: 5px 0px 0px 5px;
-  color: #babbf1;
+  color: #c0caf5;
 }
 
 #custom-power {
   margin-right: 1rem;
   border-radius: 0px 5px 5px 0px;
-  color: #e78284;
+  color: #f7768e;
 }
 
 #tray {
