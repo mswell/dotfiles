@@ -26,7 +26,28 @@ wellSubRecon() {
   if [ -s "cidr" ]; then
     cat cidr | anew clean.subdomains
   fi
-  brutesub
+  subPermutation
+}
+
+# Generates and resolves permutations of discovered subdomains
+# Usage: subPermutation
+# Requires: clean.subdomains file
+# Outputs: permutations.txt (added to clean.subdomains)
+subPermutation() {
+  echo "${yellow}[+] Generating subdomain permutations with alterx...${reset}"
+  if [ ! -s "clean.subdomains" ]; then
+    echo "${red}[-] clean.subdomains not found or empty.${reset}"
+    return 1
+  fi
+
+  cat clean.subdomains | alterx -silent | puredns resolve -r "$RESOLVERS_LIST" --skip-validation | tee permutations.txt
+
+  if [ -s "permutations.txt" ]; then
+    cat permutations.txt | anew clean.subdomains
+    echo "${green}[+] Permutation completed. $(wc -l < permutations.txt) new subdomains resolved.${reset}"
+  else
+    echo "${yellow}[!] No new permutations resolved.${reset}"
+  fi
 }
 
 # Subdomain enumeration based on the domain specified in the "domains" file

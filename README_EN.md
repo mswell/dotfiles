@@ -150,6 +150,168 @@ Modern desktop with Wayland:
 ./install.sh # Choose option 4
 ```
 
+## 🎯 Bug Bounty Recon Toolkit
+
+This dotfiles includes a **complete reconnaissance toolkit** for bug bounty hunters, with modular ZSH functions that automate the recon workflow.
+
+### Reconnaissance Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           RECON WORKFLOW                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  workspaceRecon "target.com"     ← Creates workspace: target.com/YYYY-MM-DD│
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    SUBDOMAIN ENUMERATION                            │   │
+│  │  subdomainenum     → subfinder, amass, crt.sh → dnsx resolve       │   │
+│  │  subPermutation    → alterx + puredns (permutations)               │   │
+│  │  Output: clean.subdomains                                           │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                      PORT SCANNING                                  │   │
+│  │  naabuRecon        → Top 100 ports scan                            │   │
+│  │  naabuFullPorts    → Full port range (excl. common)                │   │
+│  │  Output: naabuScan                                                  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                     HTTP PROBING                                    │   │
+│  │  getalive          → httpx probe, categorizes by status code       │   │
+│  │  Output: ALLHTTP, 200HTTP, 403HTTP, Without404                     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                   CRAWLING & DATA                                   │   │
+│  │  crawler           → gospider, waybackurls, gau, katana            │   │
+│  │  JScrawler         → JavaScript file discovery                     │   │
+│  │  getjsurls         → JS URL extraction + validation                │   │
+│  │  secretfinder      → Secrets in JS files                           │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                  VULNERABILITY SCANNING                             │   │
+│  │  Nuclei Scans      → exposureNuc, GitScan, XssScan, nucTakeover   │   │
+│  │  xsshunter         → Multi-tool XSS detection                      │   │
+│  │  bypass4xx         → 403/401 bypass attempts                       │   │
+│  │  prototypefuzz     → Prototype pollution testing                   │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Available Functions
+
+#### 🔍 Subdomain Enumeration (`functions/recon.zsh`)
+
+| Function | Description | Input | Output |
+|----------|-------------|-------|--------|
+| `workspaceRecon <domain>` | Creates organized workspace by date | domain | `domain/YYYY-MM-DD/` |
+| `wellSubRecon` | Complete subdomain enum pipeline | `domains` | `clean.subdomains` |
+| `subdomainenum` | Passive enum (subfinder, amass, crt.sh) | `domains` | `all.subdomains`, `clean.subdomains` |
+| `subPermutation` | Generates permutations with alterx + puredns | `clean.subdomains` | `permutations.txt` |
+| `subtakeover` | Detects subdomain takeover | `clean.subdomains` | `subtakeover.txt` |
+
+#### 🌐 Port Scanning & HTTP Probing (`functions/scanning.zsh`)
+
+| Function | Description | Input | Output |
+|----------|-------------|-------|--------|
+| `naabuRecon` | Port scan top 100 ports | `clean.subdomains` | `naabuScan` |
+| `naabuFullPorts` | Full port scan | `clean.subdomains` | `full_ports.txt` |
+| `getalive` | HTTP probe + categorization | `naabuScan` | `ALLHTTP`, `200HTTP`, `403HTTP` |
+| `screenshot` | Screenshots with aquatone | `ALLHTTP` | `aqua_out/` |
+
+#### 🕷️ Crawling & Data Collection (`functions/crawling.zsh`)
+
+| Function | Description | Input | Output |
+|----------|-------------|-------|--------|
+| `crawler` | Multi-tool crawler | `Without404` | `crawlerResults.txt` |
+| `JScrawler` | Discovers JS files | `200HTTP` | `crawlJS`, `JSroot/` |
+| `getjsurls` | Extracts and validates JS URLs | `crawlerResults.txt` | `js_livelinks.txt` |
+| `secretfinder` | Searches secrets in JS | `js_livelinks.txt` | `js_secrets_result` |
+| `getdata` | Saves all responses | `ALLHTTP` | `AllHttpData/` |
+
+#### ⚡ Nuclei Workflows (`functions/nuclei.zsh`)
+
+| Function | Description | Tags/Template |
+|----------|-------------|---------------|
+| `exposureNuc` | Detects exposures | `exposure` |
+| `GitScan` | Detects exposed .git | `git` |
+| `XssScan` | XSS scan | `xss` |
+| `nucTakeover` | Subdomain takeover | `takeover` |
+| `graphqldetect` | Detects GraphQL endpoints | `graphql-detect` |
+| `swaggerUIdetect` | Detects Swagger UI | `swagger` |
+| `APIRecon` | API reconnaissance | custom workflow |
+| `OpenRedirectScan` | Open redirect | `redirect` |
+| `lfiScan` | LFI vulnerabilities | `lfi` |
+
+#### 🔓 Vulnerability Scanning (`functions/vulns.zsh`)
+
+| Function | Description | Input | Output |
+|----------|-------------|-------|--------|
+| `xsshunter` | XSS multi-scanner (airixss, freq, xsstrike) | `domains` | `airixss.txt`, `FreqXSS.txt` |
+| `bypass4xx` | Bypass 403/401 | `403HTTP` | `4xxbypass.txt` |
+| `prototypefuzz` | Prototype pollution | `ALLHTTP` | notifications |
+| `Corstest` | CORS misconfiguration | `roots` | `CORSHTTP` |
+| `smuggling` | HTTP Request Smuggling | `hosts` | `smuggler_op.txt` |
+| `fufdir <url>` | Directory fuzzing | URL | stdout |
+| `fufapi <url>` | API endpoint fuzzing | URL | stdout |
+
+#### 🛠️ Utilities (`functions/utils.zsh`)
+
+| Function | Description |
+|----------|-------------|
+| `getfreshresolvers` | Downloads updated DNS resolvers list |
+| `getalltxt` | Downloads jhaddix's all.txt wordlist |
+| `certspotter <domain>` | Fetches subdomains via CertSpotter |
+| `crtsh <domain>` | Fetches subdomains via crt.sh |
+| `ipinfo <ip>` | IP information via ipinfo.io |
+
+### Ready-to-Use Workflows (`custom.zsh`)
+
+```bash
+# Complete automated recon
+wellRecon
+
+# API-focused recon
+newRecon
+
+# Nuclei scans only
+wellNuclei
+```
+
+### Usage Example
+
+```bash
+# 1. Setup workspace
+workspaceRecon example.com
+
+# 2. Complete subdomain enumeration (includes permutations)
+wellSubRecon
+
+# 3. Port scan + HTTP probe
+naabuRecon
+getalive
+
+# 4. Crawling and JS collection
+crawler
+getjsurls
+secretfinder
+
+# 5. Vulnerability scanning
+exposureNuc
+XssScan
+nucTakeover
+bypass4xx
+```
+
 ## 🔒 Security and Hacking Tools
 
 The system includes a vast collection of tools for:

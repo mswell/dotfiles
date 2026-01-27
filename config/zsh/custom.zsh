@@ -2,7 +2,6 @@
 
 wellRecon() {
   wellSubRecon
-  # subPermutation
   naabuRecon
   getalive
   dnsrecords
