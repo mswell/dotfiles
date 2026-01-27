@@ -157,54 +157,54 @@ Este dotfiles inclui um **toolkit completo de reconhecimento** para bug bounty h
 ### Fluxo de Reconhecimento
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           RECON WORKFLOW                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  workspaceRecon "target.com"     ← Cria workspace: target.com/YYYY-MM-DD/  │
-│           │                                                                 │
-│           ▼                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                    SUBDOMAIN ENUMERATION                            │   │
-│  │  subdomainenum     → subfinder, amass, crt.sh → dnsx resolve       │   │
-│  │  subPermutation    → alterx + puredns (permutations)               │   │
-│  │  Output: clean.subdomains                                           │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│           │                                                                 │
-│           ▼                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                      PORT SCANNING                                  │   │
-│  │  naabuRecon        → Top 100 ports scan                            │   │
-│  │  naabuFullPorts    → Full port range (excl. common)                │   │
-│  │  Output: naabuScan                                                  │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│           │                                                                 │
-│           ▼                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                     HTTP PROBING                                    │   │
-│  │  getalive          → httpx probe, categoriza por status code       │   │
-│  │  Output: ALLHTTP, 200HTTP, 403HTTP, Without404                     │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│           │                                                                 │
-│           ▼                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                   CRAWLING & DATA                                   │   │
-│  │  crawler           → gospider, waybackurls, gau, katana            │   │
-│  │  JScrawler         → JavaScript file discovery                     │   │
-│  │  getjsurls         → JS URL extraction + validation                │   │
-│  │  secretfinder      → Secrets in JS files                           │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│           │                                                                 │
-│           ▼                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                  VULNERABILITY SCANNING                             │   │
-│  │  Nuclei Scans      → exposureNuc, GitScan, XssScan, nucTakeover   │   │
-│  │  xsshunter         → Multi-tool XSS detection                      │   │
-│  │  bypass4xx         → 403/401 bypass attempts                       │   │
-│  │  prototypefuzz     → Prototype pollution testing                   │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           RECON WORKFLOW                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  workspaceRecon "target.com"   ← Cria workspace: target.com/YYYY-MM-DD/  │
+│         │                                                                │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                    SUBDOMAIN ENUMERATION                           │  │
+│  │  subdomainenum     → subfinder, amass, crt.sh → dnsx resolve       │  │
+│  │  subPermutation    → alterx + puredns (permutations)               │  │
+│  │  Output: clean.subdomains                                          │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│         │                                                                │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                        PORT SCANNING                               │  │
+│  │  naabuRecon        → Top 100 ports scan                            │  │
+│  │  naabuFullPorts    → Full port range (excl. common)                │  │
+│  │  Output: naabuScan                                                 │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│         │                                                                │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                        HTTP PROBING                                │  │
+│  │  getalive          → httpx probe, categoriza por status code       │  │
+│  │  Output: ALLHTTP, 200HTTP, 403HTTP, Without404                     │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│         │                                                                │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                       CRAWLING & DATA                              │  │
+│  │  crawler           → gospider, waybackurls, gau, katana            │  │
+│  │  JScrawler         → JavaScript file discovery                     │  │
+│  │  getjsurls         → JS URL extraction + validation                │  │
+│  │  secretfinder      → Secrets in JS files                           │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│         │                                                                │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                    VULNERABILITY SCANNING                          │  │
+│  │  Nuclei Scans      → exposureNuc, GitScan, XssScan, nucTakeover    │  │
+│  │  xsshunter         → Multi-tool XSS detection                      │  │
+│  │  bypass4xx         → 403/401 bypass attempts                       │  │
+│  │  prototypefuzz     → Prototype pollution testing                   │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Funções Disponíveis
