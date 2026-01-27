@@ -5,18 +5,18 @@ window {
   background: transparent;
 }
 button {
-    background-color: #1a1b1f;
+    background-color: #282828;
     border-width: 0px;
     border-radius: 0;
     background-repeat: no-repeat;
     background-position: center;
     background-size: 25%;
-    color: #5e81ac;
+    color: #83a598;
 }
 
 button:active, button:hover {
-    background-color: #4c566a;
-    color: #81a1c1;
+    background-color: #3c3836;
+    color: #8ec07c;
     outline-style: none;
 }
 
@@ -49,5 +49,3 @@ button:active, button:hover {
     opacity: 0.9;
     background-image: image(url("/usr/share/wlogout/icons/reboot.png"), url("/usr/local/share/wlogout/icons/reboot.png"));
 }
-
-

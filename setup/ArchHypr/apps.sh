@@ -92,9 +92,15 @@ yay_packages="
     swappy
     brightnessctl
     pamixer
-    kvantum-theme-catppuccin-git
     wpaperd
     bibata-cursor-theme-bin
+    gruvbox-material-gtk-theme-git
+    pop-gtk-theme
+    gruvbox-plus-icon-theme-git
+    pop-icon-theme
+    bibata-cursor-gruvbox-git
+    kvantum-theme-gruvbox-git
+    rofi
 "
 
 # --- Installation ---
@@ -115,18 +121,24 @@ mkdir -p "$HOME/.config/backgrounds" && cp -r "$DOTFILES/config/backgrounds" "$H
 mkdir -p "$HOME/Pictures/" && cp -r "$DOTFILES/config/backgrounds" "$HOME/Pictures/"
 cp -r "$DOTFILES/config/wlogout" "$HOME/.config/"
 
-# Create Neovim configuration directory, if it doesn't exist
+mkdir -p "$HOME/.config/rofi/colors"
+mkdir -p "$HOME/.config/rofi/launchers/type-2/shared"
+mkdir -p "$HOME/.config/rofi/launchers/type-3/shared"
+cp -r "$DOTFILES/config/rofi/colors/"* "$HOME/.config/rofi/colors/"
+cp -r "$DOTFILES/config/rofi/launchers/"* "$HOME/.config/rofi/launchers/"
+
+mkdir -p "$HOME/.config/gtk-3.0"
+mkdir -p "$HOME/.config/gtk-4.0"
+mkdir -p "$HOME/.config/Kvantum"
+cp "$DOTFILES/config/gtk-3.0/settings.ini" "$HOME/.config/gtk-3.0/"
+cp "$DOTFILES/config/gtk-4.0/settings.ini" "$HOME/.config/gtk-4.0/"
+cp "$DOTFILES/config/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/"
+cp "$DOTFILES/config/.gtkrc-2.0" "$HOME/.gtkrc-2.0"
+
 mkdir -p "$HOME/.config/nvim"
 
-# Bat config
 echo "Configuring bat..."
-mkdir -p "$(bat --config-dir)/themes"
-wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
-bat cache --build
-
-# Installing themes
-echo "Extracting themes..."
-sudo tar -xvf "$DOTFILES/config/themes/Catppuccin-Mocha.tar.xz" -C /usr/share/themes/
-sudo tar -xvf "$DOTFILES/config/icons/Tela-circle-dracula.tar.xz" -C /usr/share/icons/
+mkdir -p "$HOME/.config/bat"
+cp "$DOTFILES/config/bat/config" "$HOME/.config/bat/"
 
 echo "Apps installation and configuration completed."

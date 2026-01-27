@@ -1,0 +1,50 @@
+/* Gruvbox Dark Color Palette for Waybar */
+/* https://github.com/morhetz/gruvbox */
+
+/* Background */
+@define-color bg_hard #1d2021;
+@define-color bg #282828;
+@define-color bg_soft #32302f;
+@define-color bg1 #3c3836;
+@define-color bg2 #504945;
+@define-color bg3 #665c54;
+@define-color bg4 #7c6f64;
+
+/* Foreground */
+@define-color fg #ebdbb2;
+@define-color fg0 #fbf1c7;
+@define-color fg1 #ebdbb2;
+@define-color fg2 #d5c4a1;
+@define-color fg3 #bdae93;
+@define-color fg4 #a89984;
+
+/* Gray */
+@define-color gray #928374;
+
+/* Red */
+@define-color red #cc241d;
+@define-color red_bright #fb4934;
+
+/* Green */
+@define-color green #98971a;
+@define-color green_bright #b8bb26;
+
+/* Yellow */
+@define-color yellow #d79921;
+@define-color yellow_bright #fabd2f;
+
+/* Blue */
+@define-color blue #458588;
+@define-color blue_bright #83a598;
+
+/* Purple */
+@define-color purple #b16286;
+@define-color purple_bright #d3869b;
+
+/* Aqua */
+@define-color aqua #689d6a;
+@define-color aqua_bright #8ec07c;
+
+/* Orange */
+@define-color orange #d65d0e;
+@define-color orange_bright #fe8019;

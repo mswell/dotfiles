@@ -9,35 +9,35 @@
 
 #waybar {
   background: transparent;
-  color: #c0caf5;
+  color: #ebdbb2;
   margin: 2px 2px;
 }
 
 #workspaces {
   border-radius: 5px;
   margin: 5px;
-  background: #1a1b26;
+  background: #282828;
   margin-left: 1rem;
 }
 
 #workspaces button {
-  color: #787c99;
+  color: #928374;
   border-radius: 5px;
   padding: 0.4rem;
 }
 
 #workspaces button.active {
-  color: #7aa2f7;
+  color: #8ec07c;
   border-radius: 5px;
 }
 
 #workspaces button:hover {
-  color: #bb9af7;
+  color: #fe8019;
   border-radius: 5px;
 }
 
 #workspaces button.urgent {
-  color: #f7768e;
+  color: #fb4934;
   border-radius: 5px;
 }
 
@@ -52,29 +52,29 @@
 #memory,
 #custom-lock,
 #custom-power {
-  background-color: #1a1b26;
+  background-color: #282828;
   padding: 0.5rem 1rem;
   margin: 5px 0;
   border-radius: 0px 5px 5px 0px;
 }
 
 #custom-stream_status {
-  background-color: #1a1b26;
+  background-color: #282828;
   padding: 0.5rem 1rem;
   margin: 5px 0;
   border-radius: 0px 5px 5px 0px;
 }
 
 #custom-stream_status.up {
-  color: #9ece6a;
+  color: #b8bb26;
 }
 
 #custom-stream_status.warning {
-  color: #e0af68;
+  color: #fabd2f;
 }
 
 #custom-stream_status.down {
-  color: #f7768e;
+  color: #fb4934;
 }
 
 #memory {
@@ -82,25 +82,25 @@
 }
 
 #clock {
-  color: #7aa2f7;
+  color: #83a598;
   border-radius: 5px;
   margin-right: 1rem;
 }
 
 #battery {
-  color: #9ece6a;
+  color: #b8bb26;
 }
 
 #battery.charging {
-  color: #9ece6a;
+  color: #b8bb26;
 }
 
 #battery.warning:not(.charging) {
-  color: #f7768e;
+  color: #fb4934;
 }
 
 #backlight {
-  color: #e0af68;
+  color: #fabd2f;
 }
 
 #backlight,
@@ -109,25 +109,25 @@
 }
 
 #pulseaudio {
-  color: #bb9af7;
+  color: #d3869b;
   border-radius: 5px 0px 0px 5%;
   margin-left: 1rem;
 }
 
 #custom-music {
-  color: #7dcfff;
+  color: #8ec07c;
   border-radius: 5px;
 }
 
 #custom-lock {
   border-radius: 5px 0px 0px 5px;
-  color: #c0caf5;
+  color: #ebdbb2;
 }
 
 #custom-power {
   margin-right: 1rem;
   border-radius: 0px 5px 5px 0px;
-  color: #f7768e;
+  color: #fb4934;
 }
 
 #tray {
@@ -135,4 +135,3 @@
   margin-left: 1rem;
   border-radius: 5px;
 }
-
