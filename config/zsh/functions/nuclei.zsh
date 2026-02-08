@@ -79,7 +79,6 @@ exposureNuc() {
 # Outputs: nucleiTakeover, takeovers_m4c
 nucTakeover() {
     run_nuclei_scan "nucleiTakeover" "Takeover" "nuclei" -tags takeover
-    run_nuclei_scan "takeovers_m4c" "Takeover m4c" "nuclei" -t "$CUSTOM_NUCLEI_TEMPLATES_PATH/m4cddr-takeovers.yaml"
 }
 
 # GraphQL endpoint detection

@@ -2,13 +2,9 @@
 # Port scanning and HTTP probing functions
 #
 
-# Probes for live hosts and categorizes them by status code
-# Usage: getalive
-# Requires: naabuScan file
-# Outputs: HTTPOK, 200HTTP, 403HTTP, Without404, ALLHTTP
 getalive() {
   echo "${yellow}[+] Checking for live hosts...${reset}"
-  httpx -l naabuScan -silent -status-code -tech-detect -title -cl -timeout 10 -threads 10 -o HTTPOK
+  httpx -l naabuScan -silent -status-code -tech-detect -title -ip -cname -location -cl -timeout 10 -threads 10 -o HTTPOK
 
   if [ -s "HTTPOK" ]; then
     grep '200' HTTPOK | awk -F " " '{print $1}' | anew 200HTTP
@@ -18,31 +14,18 @@ getalive() {
   fi
 }
 
-# Port scanning with Naabu (top 100 ports)
-# Usage: naabuRecon
-# Requires: clean.subdomains file
-# Outputs: naabuScanFull, naabuScan
 naabuRecon() {
   echo "${yellow}[+] Running port scan with Naabu...${reset}"
   if [ ! -s "clean.subdomains" ]; then echo "${red}[-] clean.subdomains not found or empty.${reset}"; return 1; fi
-  naabu -l clean.subdomains -r "$RESOLVERS_LIST" -ec -tp 100 -sa -o naabuScanFull
-  [ -s "naabuScanFull" ] && cat naabuScanFull | grep -v '^\[' | anew naabuScan
+  naabu -l clean.subdomains -ec -tp 100 -sa -o naabuScan
 }
 
-# Full port range scanning with Naabu
-# Usage: naabuFullPorts
-# Requires: clean.subdomains file
-# Outputs: full_ports.txt
 naabuFullPorts() {
   echo "${yellow}[+] Running full port scan with Naabu...${reset}"
   if [ ! -s "clean.subdomains" ]; then echo "${red}[-] clean.subdomains not found or empty.${reset}"; return 1; fi
   naabu -p - -l clean.subdomains -exclude-ports 80,443,8443,21,25,22 -o full_ports.txt
 }
 
-# Port scanning and Nuclei scan workflow
-# Usage: scanPortsAndNuclei
-# Requires: dnsx.txt file
-# Outputs: mapcidr.txt, naabuIP.txt, nuclei.txt
 scanPortsAndNuclei() {
   echo '${yellow}[+] Aggregating IPs with mapcidr...${reset}'
   mapcidr -l dnsx.txt -silent -aggregate -o mapcidr.txt
@@ -57,10 +40,6 @@ scanPortsAndNuclei() {
   fi
 }
 
-# Discover hosts from IPs with hakip2host
-# Usage: massHakip2host
-# Requires: domain file, mapcidr.txt file
-# Outputs: hakip2hostResult.txt, cleanHakipResult.txt
 massHakip2host() {
   echo "${yellow}[+] Discovering hosts from IPs with hakip2host...${reset}"
   local Domain
