@@ -102,14 +102,27 @@ config.window_padding = {
 config.window_frame = {
 	font = wezterm.font({ family = "SF Mono" }),
 	-- font = wezterm.font({ family = "Geist Mono" }),
-	active_titlebar_bg = "#1e1e1e",
-	inactive_titlebar_bg = "#1e1e1e",
+	active_titlebar_bg = "#1d2021",
+	inactive_titlebar_bg = "#1d2021",
 	font_size = 15.0,
 }
 
--- config.color_scheme = "OneDark (base16)"
--- config.color_scheme = 'Catppuccin Mocha'
-config.color_scheme = "tokyonight"
+config.color_schemes = {
+	["GruvboxCustom"] = {
+		foreground = "#ebdbb2",
+		background = "#282828",
+		cursor_bg = "#ebdbb2",
+		cursor_fg = "#282828",
+		cursor_border = "#ebdbb2",
+		selection_fg = "#282828",
+		selection_bg = "#ebdbb2",
+		scrollbar_thumb = "#3c3836",
+		split = "#3c3836",
+		ansi = { "#282828", "#cc241d", "#98971a", "#d79921", "#458588", "#b16286", "#689d6a", "#a89984" },
+		brights = { "#928374", "#fb4934", "#b8bb26", "#fabd2f", "#83a598", "#d3869b", "#8ec07c", "#ebdbb2" },
+	},
+}
+config.color_scheme = "GruvboxCustom"
 -- local act = wezterm.action
 config.window_background_opacity = 0.97
 

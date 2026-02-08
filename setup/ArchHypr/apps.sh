@@ -135,6 +135,16 @@ cp "$DOTFILES/config/gtk-4.0/settings.ini" "$HOME/.config/gtk-4.0/"
 cp "$DOTFILES/config/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/"
 cp "$DOTFILES/config/.gtkrc-2.0" "$HOME/.gtkrc-2.0"
 
+# Cursor default
+mkdir -p "$HOME/.icons/default"
+cp "$DOTFILES/config/icons/default/index.theme" "$HOME/.icons/default/"
+
+# Aplicar tema via gsettings
+gsettings set org.gnome.desktop.interface gtk-theme "Gruvbox-Material-Dark"
+gsettings set org.gnome.desktop.interface icon-theme "Gruvbox-Plus-Dark"
+gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic-Gruvbox"
+gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+
 mkdir -p "$HOME/.config/nvim"
 
 echo "Configuring bat..."

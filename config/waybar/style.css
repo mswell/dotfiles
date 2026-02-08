@@ -9,7 +9,7 @@
 
 #waybar {
   background: transparent;
-  color: #ebdbb2;
+  color: #bdae93;
   margin: 2px 2px;
 }
 
@@ -27,12 +27,12 @@
 }
 
 #workspaces button.active {
-  color: #8ec07c;
+  color: #83a598;
   border-radius: 5px;
 }
 
 #workspaces button:hover {
-  color: #fe8019;
+  color: #b8bb26;
   border-radius: 5px;
 }
 
@@ -115,13 +115,13 @@
 }
 
 #custom-music {
-  color: #8ec07c;
+  color: #83a598;
   border-radius: 5px;
 }
 
 #custom-lock {
   border-radius: 5px 0px 0px 5px;
-  color: #ebdbb2;
+  color: #bdae93;
 }
 
 #custom-power {
