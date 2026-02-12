@@ -1,0 +1,9 @@
+id: command-injection
+language: javascript
+rule:
+  pattern: "exec($CMD, $$$)"
+message: |
+  Potential Command Injection vulnerability detected.
+  Executing system commands using template literals with variables can allow an attacker to execute arbitrary commands.
+  Use `execFile` with an array of arguments instead of `exec` with a shell string.
+severity: error

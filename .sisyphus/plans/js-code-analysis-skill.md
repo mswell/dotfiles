@@ -592,7 +592,7 @@ Parallel Speedup: ~50% faster than sequential
 
 ---
 
-- [ ] 8. Create ast-grep Patterns (YAML files)
+- [x] 8. Create ast-grep Patterns (YAML files)
 
   **What to do**:
   - Create pattern files in `setup/Skills/js-code-analysis/references/patterns/`:
@@ -647,7 +647,7 @@ Parallel Speedup: ~50% faster than sequential
 
 ---
 
-- [ ] 9. Create Test Fixtures + Final Integration
+- [x] 9. Create Test Fixtures + Final Integration
 
   **What to do**:
   - Create vulnerable code fixtures in `setup/Skills/js-code-analysis/tests/fixtures/`:

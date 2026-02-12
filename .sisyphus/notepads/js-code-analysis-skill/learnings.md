@@ -52,3 +52,18 @@
 - Implemented JSON and Markdown output formats for better integration with agents and human readability.
 - Included a Safe Harbor warning as required for security tools.
 - Patterns use ast-grep meta-variables (e.g., `$OBJ`, `$DATA`) for flexible matching.
+
+## ast-grep Pattern Creation
+- Created vulnerability patterns for Prototype Pollution, IDOR, SSRF, Command Injection, and NoSQL Injection.
+- **Learning**: ast-grep YAML rules use `constraints` instead of `where` (which might be for CLI only).
+- **Learning**: Severity levels must be one of `hint`, `info`, `warning`, `error`, `off`.
+- **Learning**: Quoting patterns in YAML is safer when they contain braces or special characters.
+- **Learning**: `exec()` is more reliable for matching various command execution styles than `exec(`$CMD`)` in some contexts.
+
+## Test Fixtures and Integration
+- Created comprehensive test fixtures for Prototype Pollution, IDOR, SSRF, Command Injection, and NoSQL Injection.
+- Implemented corresponding `.expected.json` files to enable automated regression testing via `pattern_validator.js`.
+- Fixed `pattern_validator.js` to correctly use `npx -p @ast-grep/cli sg scan --rule` and handle non-zero exit codes from `ast-grep` when matches are found.
+- Updated `SKILL.md` with clear usage instructions for analysis, validation, and safety checks.
+- Verified that the analysis pipeline correctly identifies vulnerabilities in the test fixtures.
+- Note: `ast-grep` patterns for command injection should use `98352$` to match multiple arguments (e.g., `exec($CMD, 98352$)`).

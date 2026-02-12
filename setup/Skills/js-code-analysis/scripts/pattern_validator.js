@@ -80,7 +80,20 @@ function validatePatterns() {
     }
 
     try {
-      const output = execSync(`sg scan -p ${patternPath} ${fixturePath} --json`, { encoding: 'utf8' });
+      let output;
+      try {
+        output = execSync(`npx -p @ast-grep/cli sg scan --rule ${patternPath} ${fixturePath} --json`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+      } catch (e) {
+        // sg scan returns non-zero exit code if matches are found
+        output = e.stdout;
+      }
+      
+      if (!output) {
+        console.error(`❌ ${patternName}: No output from ast-grep`);
+        failed++;
+        return;
+      }
+
       const results = JSON.parse(output);
 
       if (fs.existsSync(expectedPath)) {

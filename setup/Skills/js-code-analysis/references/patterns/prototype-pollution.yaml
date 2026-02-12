@@ -1,0 +1,12 @@
+id: prototype-pollution
+language: javascript
+rule:
+  pattern: $OBJ[$KEY] = $VAL
+constraints:
+  KEY:
+    regex: "__proto__|constructor|prototype"
+message: |
+  Potential Prototype Pollution vulnerability detected.
+  Directly assigning to `__proto__`, `constructor`, or `prototype` can allow an attacker to inject properties into all objects.
+  Ensure you validate keys against a blocklist or use `Object.create(null)` for objects that store user-controlled keys.
+severity: error

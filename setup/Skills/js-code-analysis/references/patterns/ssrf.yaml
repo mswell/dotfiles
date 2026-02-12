@@ -1,0 +1,13 @@
+id: ssrf
+language: javascript
+rule:
+  pattern: "axios.get($URL)"
+constraints:
+  URL:
+    not:
+      regex: "^['\"].*['\"]$"
+message: |
+  Potential Server-Side Request Forgery (SSRF) detected.
+  A network request is being made with a non-literal URL, which might be controlled by a user.
+  Validate the URL against an allow-list of trusted domains and protocols.
+severity: error

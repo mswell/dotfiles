@@ -1,0 +1,9 @@
+id: idor
+language: javascript
+rule:
+  pattern: "$DB.findOne({ id: $REQ.params.$ID })"
+message: |
+  Potential Insecure Direct Object Reference (IDOR) detected.
+  The application is fetching a resource directly using a request parameter without apparent ownership verification.
+  Ensure that the current user has permission to access the resource with the specified ID.
+severity: error

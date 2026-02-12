@@ -1,0 +1,9 @@
+id: nosql-injection
+language: javascript
+rule:
+  pattern: "$DB.findOne({ $KEY: req.body.$VAL })"
+message: |
+  Potential NoSQL Injection vulnerability detected.
+  Passing user-controlled objects from `req.body` directly into a database query can allow attackers to manipulate query logic using operators like `$ne` or `$regex`.
+  Sanitize input by casting it to a string or using a schema validator.
+severity: error
