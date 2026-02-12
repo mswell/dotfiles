@@ -9,3 +9,46 @@
 - Included: Prototype Pollution, IDOR/BOLA, SSRF, Command Injection, NoSQL Injection.
 - Added framework-specific security patterns for Express.js and Next.js.
 - Provided grep and ast-grep detection patterns for each category.
+
+## Reference: HackerOne Examples for JS Code Analysis
+- Created comprehensive reference file at `setup/Skills/js-code-analysis/references/h1-examples.md`.
+- Documented 12 real-world HackerOne reports covering Information Disclosure, DOM XSS, Open Redirect, Logic Flaws, and Prototype Pollution.
+- Key takeaway: Real-world examples provide concrete patterns for manual and automated JS analysis, especially for identifying sensitive data leaks and client-side logic bypasses.
+
+## Escalation Guide Creation (2026-02-12)
+- Created a comprehensive escalation guide for JS code analysis.
+- Documented 5 critical escalation chains:
+  1. IDOR -> ATO (Account Takeover)
+  2. XSS -> RCE (Remote Code Execution, including Electron and React2Shell)
+  3. SSRF -> Cloud Metadata (AWS, GCP, Azure)
+  4. Prototype Pollution -> RCE (Lodash/Handlebars gadgets)
+  5. Open Redirect -> OAuth Hijacking
+- Key takeaway: Escalation is essential for demonstrating the true business impact of vulnerabilities found during static analysis.
+- Reference: React2Shell (CVE-2025-66478) is a high-impact modern gadget for XSS escalation.
+
+## Safe Harbor Verification Script
+- Created `check_safety.js` to automate Safe Harbor checks.
+- Implemented `security.txt` detection via HTTPS.
+- Added support for major bug bounty platforms (HackerOne, Bugcrowd, Intigriti, YesWeHack).
+- Enforced manual confirmation via `--confirm` flag to ensure researcher accountability.
+- Used exit codes (0, 1, 2) for easy integration into automated workflows.
+
+## Pattern Validator Implementation
+- Created `pattern_validator.js` to automate testing of `ast-grep` patterns.
+- The script supports `--patterns-dir` and `--fixtures-dir` for flexible testing.
+- It uses `sg scan --json` to parse results and compares them with `.expected.json` files if present.
+- Added a `--test` flag for environment verification (checking if `sg` is installed).
+
+## Exit Code Refinement
+- Refined exit codes for better automation:
+  - 0: Safe (Confirmed + security.txt found)
+  - 1: Warning (Confirmed but security.txt missing)
+  - 2: Not authorized (Confirmation missing or invalid input)
+
+## analyze.js Implementation
+- Created a Node.js wrapper for `ast-grep` (sg) to perform structural code analysis.
+- Supported categories: prototype-pollution, idor, ssrf, command-injection, nosql-injection, jwt, postmessage, path-traversal, graphql, redos.
+- Used `npx -p @ast-grep/cli sg` to ensure the correct version of ast-grep is used without requiring global installation.
+- Implemented JSON and Markdown output formats for better integration with agents and human readability.
+- Included a Safe Harbor warning as required for security tools.
+- Patterns use ast-grep meta-variables (e.g., `$OBJ`, `$DATA`) for flexible matching.
