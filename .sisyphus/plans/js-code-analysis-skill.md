@@ -60,11 +60,11 @@ Criar uma skill de análise de código JavaScript especializada em bug bounty, c
 - `setup/Skills/js-code-analysis/tests/fixtures/*.js` - Vulnerable code snippets para validação
 
 ### Definition of Done
-- [ ] Skill invocável via `/js-code-analysis` ou detecção automática
-- [ ] Scripts executáveis e retornam help text
-- [ ] ast-grep patterns validados (sintaxe correta)
-- [ ] Safe Harbor warning presente em todas as saídas
-- [ ] Pelo menos 5 vulnerabilidades core com patterns completos
+- [x] Skill invocável via `/js-code-analysis` ou detecção automática
+- [x] Scripts executáveis e retornam help text
+- [x] ast-grep patterns validados (sintaxe correta)
+- [x] Safe Harbor warning presente em todas as saídas
+- [x] Pelo menos 5 vulnerabilidades core com patterns completos
 
 ### Must Have
 - Foco em Express.js e Next.js (maior incidência em bug bounty)
@@ -238,10 +238,10 @@ Parallel Speedup: ~50% faster than sequential
   - `setup/Skills/AgentsSkillsBugBounty/HYBRID_GUIDE.md` - Reference for agent fallback instructions
 
   **Acceptance Criteria**:
-  - [ ] Directory structure: `ls -R setup/Skills/js-code-analysis` shows SKILL.md, scripts/, references/, tests/
-  - [ ] SKILL.md has valid frontmatter (name, description fields)
-  - [ ] SKILL.md contains workflow overview section
-  - [ ] Fallback instruction present for non-Express/Next.js code
+  - [x] Directory structure: `ls -R setup/Skills/js-code-analysis` shows SKILL.md, scripts/, references/, tests/
+  - [x] SKILL.md has valid frontmatter (name, description fields)
+  - [x] SKILL.md contains workflow overview section
+  - [x] Fallback instruction present for non-Express/Next.js code
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -293,10 +293,10 @@ Parallel Speedup: ~50% faster than sequential
   - Research findings: ast-grep CLI syntax, pattern structure
 
   **Acceptance Criteria**:
-  - [ ] Script executable: `node scripts/analyze.js --help` shows usage
-  - [ ] Safe Harbor warning in output or help text
-  - [ ] Supports `--target`, `--category`, `--format` flags
-  - [ ] Returns JSON output when `--format json` specified
+  - [x] Script executable: `node scripts/analyze.js --help` shows usage
+  - [x] Safe Harbor warning in output or help text
+  - [x] Supports `--target`, `--category`, `--format` flags
+  - [x] Returns JSON output when `--format json` specified
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -357,9 +357,9 @@ Parallel Speedup: ~50% faster than sequential
   - Platform policies (HackerOne, Bugcrowd, etc.)
 
   **Acceptance Criteria**:
-  - [ ] Script checks for security.txt: `node check_safety.js --target example.com`
-  - [ ] Returns exit code 0/1/2 based on safety status
-  - [ ] Supports --platform flag for specific platform checks
+  - [x] Script checks for security.txt: `node check_safety.js --target example.com`
+  - [x] Returns exit code 0/1/2 based on safety status
+  - [x] Supports --platform flag for specific platform checks
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -405,9 +405,9 @@ Parallel Speedup: ~50% faster than sequential
   - ast-grep documentation for pattern syntax
 
   **Acceptance Criteria**:
-  - [ ] Script validates pattern syntax: `node pattern_validator.js --validate`
-  - [ ] Supports test mode: `node pattern_validator.js --test`
-  - [ ] Reports pass/fail for each pattern
+  - [x] Script validates pattern syntax: `node pattern_validator.js --validate`
+  - [x] Supports test mode: `node pattern_validator.js --test`
+  - [x] Reports pass/fail for each pattern
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -460,10 +460,10 @@ Parallel Speedup: ~50% faster than sequential
   - Draft file: `.sisyphus/drafts/js-code-analysis-skill.md` - Research findings
 
   **Acceptance Criteria**:
-  - [ ] At least 5 vulnerability categories documented
-  - [ ] Each category has vulnerable code example
-  - [ ] Each category has secure code example
-  - [ ] Detection commands (grep/ast-grep) included
+  - [x] At least 5 vulnerability categories documented
+  - [x] Each category has vulnerable code example
+  - [x] Each category has secure code example
+  - [x] Detection commands (grep/ast-grep) included
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -516,10 +516,10 @@ Parallel Speedup: ~50% faster than sequential
   - CVE details (React2Shell, Lodash PP)
 
   **Acceptance Criteria**:
-  - [ ] At least 5 escalation chains documented
-  - [ ] Each chain has step-by-step explanation
-  - [ ] Code examples or payloads included
-  - [ ] Impact assessment for each escalation
+  - [x] At least 5 escalation chains documented
+  - [x] Each chain has step-by-step explanation
+  - [x] Code examples or payloads included
+  - [x] Impact assessment for each escalation
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -573,9 +573,9 @@ Parallel Speedup: ~50% faster than sequential
   - HackerOne disclosed reports (public only)
 
   **Acceptance Criteria**:
-  - [ ] At least 10 H1 examples documented
-  - [ ] Each has H1 ID link (https://hackerone.com/reports/XXXXXX)
-  - [ ] Categorized by vulnerability type
+  - [x] At least 10 H1 examples documented
+  - [x] Each has H1 ID link (https://hackerone.com/reports/XXXXXX)
+  - [x] Categorized by vulnerability type
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -625,9 +625,9 @@ Parallel Speedup: ~50% faster than sequential
   - `setup/Skills/js-code-analysis/references/vulnerability-patterns.md` - Pattern inspiration
 
   **Acceptance Criteria**:
-  - [ ] At least 5 pattern YAML files created
-  - [ ] Each pattern has: id, pattern, message, severity
-  - [ ] Patterns pass syntax validation: `sg -p "pattern" --json`
+  - [x] At least 5 pattern YAML files created
+  - [x] Each pattern has: id, pattern, message, severity
+  - [x] Patterns pass syntax validation: `sg -p "pattern" --json`
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -680,9 +680,9 @@ Parallel Speedup: ~50% faster than sequential
   - `setup/Skills/js-code-analysis/references/vulnerability-patterns.md` - Vulnerable code examples
 
   **Acceptance Criteria**:
-  - [ ] At least 5 fixture files with vulnerable code
-  - [ ] pattern_validator.js --test passes for all fixtures
-  - [ ] End-to-end test: analyze.js detects vulnerabilities in fixtures
+  - [x] At least 5 fixture files with vulnerable code
+  - [x] pattern_validator.js --test passes for all fixtures
+  - [x] End-to-end test: analyze.js detects vulnerabilities in fixtures
 
   **Agent-Executed QA Scenarios**:
   ```
@@ -746,10 +746,10 @@ node setup/Skills/js-code-analysis/scripts/analyze.js --target setup/Skills/js-c
 ```
 
 ### Final Checklist
-- [ ] All "Must Have" present (Express/Next.js focus, Safe Harbor, ast-grep patterns, escalation techniques, H1 examples)
-- [ ] All "Must NOT Have" absent (auto-exploit, SELF-XSS, destructive tests, all frameworks at once, SAST tools)
-- [ ] All scripts executable with help text
-- [ ] Safe Harbor warning in all script outputs
-- [ ] At least 5 vulnerability patterns validated
-- [ ] Pattern validator passes all fixtures
-- [ ] Fallback instruction for non-Express/Next.js code present in SKILL.md
+- [x] All "Must Have" present (Express/Next.js focus, Safe Harbor, ast-grep patterns, escalation techniques, H1 examples)
+- [x] All "Must NOT Have" absent (auto-exploit, SELF-XSS, destructive tests, all frameworks at once, SAST tools)
+- [x] All scripts executable with help text
+- [x] Safe Harbor warning in all script outputs
+- [x] At least 5 vulnerability patterns validated
+- [x] Pattern validator passes all fixtures
+- [x] Fallback instruction for non-Express/Next.js code present in SKILL.md
