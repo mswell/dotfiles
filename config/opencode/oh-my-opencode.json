@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "google_auth": false,
+  "agents": {
+    "librarian": {
+      "model": "google/gemini-3-flash-preview",
+      "comment": "Contexto massivo para ler documentação de alvos inteira."
+    },
+    "explore": {
+      "model": "google/gemini-3-flash-preview",
+      "comment": "Rápido para explorar diretórios e arquivos."
+    },
+    "oracle": {
+      "model": "zai-coding-plan/glm-5",
+      "thinking": { "type": "enabled" },
+      "comment": "GLM-5 supera Opus 4.5 em raciocínio de longo prazo. O oráculo perfeito."
+    },
+    "frontend-ui-ux-engineer": {
+      "model": "google/gemini-3-pro-preview",
+      "comment": "Gemini 3 ainda é rei em gerar UI/Dashboards (Vibe Coding)."
+    },
+    "document-writer": {
+      "model": "zai-coding-plan/glm-5",
+      "comment": "GLM-5 é excelente em criar relatórios técnicos detalhados (Reports de Bug Bounty)."
+    },
+    "sisyphus": {
+      "model": "google/gemini-3-flash-preview",
+      "comment": "Executor de tarefas repetitivas. Mantenha barato."
+    },
+    "prometheus": {
+      "model": "zai-coding-plan/glm-5",
+      "thinking": { "type": "enabled" },
+      "comment": "Planejador. O GLM-5 brilha em 'Systems Engineering', ideal para planejar ataques."
+    },
+    "metis": {
+      "model": "google/gemini-3-pro-preview",
+      "variant": "high",
+      "comment": "O estrategista pragmático. Gemini 3 Pro equilibra o GLM."
+    },
+    "momus": {
+      "model": "zai-coding-plan/glm-5",
+      "comment": "CRÍTICO: GLM-5 é o seu novo Auditor de Segurança. Ele acha bugs que outros ignoram."
+    },
+    "atlas": {
+      "model": "google/gemini-3-flash-preview"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "google/gemini-3-pro-preview"
+    },
+    "ultrabrain": {
+      "model": "zai-coding-plan/glm-5",
+      "thinking": { "type": "enabled" },
+      "comment": "Quando você precisa de força bruta de raciocínio lógico."
+    },
+    "security-audit": {
+      "model": "zai-coding-plan/glm-5",
+      "comment": "Nova categoria sugerida para Bug Bounty."
+    },
+    "quick": {
+      "model": "google/gemini-3-flash-preview"
+    },
+    "writing": {
+      "model": "zai-coding-plan/glm-5"
+    }
+  }
+}
