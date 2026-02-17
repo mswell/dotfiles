@@ -119,13 +119,30 @@ async function run() {
   const categoriesToScan = category === 'all' ? Object.keys(CATEGORIES) : [category];
   const results = [];
 
+  // Check if ast-grep (sg) is installed globally
+  let useNpx = true;
+  try {
+    execSync('sg --version', { stdio: 'ignore' });
+    useNpx = false;
+  } catch (e) {
+    // sg not found, fallback to npx
+  }
+
   console.error(`[*] Analyzing ${target} for category: ${category}...`);
+  if (useNpx) {
+    console.error(`[*] Using npx to run ast-grep (installing @ast-grep/cli if needed)...`);
+  } else {
+    console.error(`[*] Using global ast-grep (sg)...`);
+  }
 
   for (const cat of categoriesToScan) {
     const patterns = CATEGORIES[cat];
     for (const pattern of patterns) {
       try {
-        const cmd = `npx -p @ast-grep/cli sg run --pattern '${pattern}' --json "${target}"`;
+        const cmd = useNpx 
+          ? `npx -p @ast-grep/cli sg run --pattern '${pattern}' --json "${target}"`
+          : `sg run --pattern '${pattern}' --json "${target}"`;
+          
         const output = execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
         
         if (output.trim()) {

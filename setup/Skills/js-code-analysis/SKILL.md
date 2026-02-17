@@ -17,7 +17,7 @@ Specialized analysis for JavaScript/TypeScript applications, focusing on common 
 
 ## Fallback Instruction
 
-Se o código não for Express.js ou Next.js, invoque um agente especialista em segurança web (subagent_type='oracle', load_skills=['security-audit']) para análise customizada.
+If the code is not Express.js or Next.js, proceed with a generic analysis using the `analyze.js` script with the `--category all` flag. Do not invoke external agents or AI-context tools unless explicitly requested. Use standard tools like `grep` and `ast-grep` for manual verification if needed.
 
 ## Framework Specifics
 
