@@ -2,10 +2,7 @@
 # Port scanning and HTTP probing functions
 #
 
-getalive() {
-  echo "${yellow}[+] Checking for live hosts...${reset}"
-  httpx -l naabuScan -silent -status-code -tech-detect -title -ip -cname -location -cl -timeout 10 -threads 10 -o HTTPOK
-
+filterLive() {
   if [ -s "HTTPOK" ]; then
     grep '200' HTTPOK | awk -F " " '{print $1}' | anew 200HTTP
     grep -E '40[0-4]' HTTPOK | grep -Ev 404 | awk -F " " '{print $1}' | anew 403HTTP
@@ -14,10 +11,21 @@ getalive() {
   fi
 }
 
+getalive() {
+  echo "${yellow}[+] Checking for live hosts...${reset}"
+  httpx -l clean.subdomains -silent -status-code -tech-detect -title -ip -cname -location -cl -timeout 10 -threads 10 -o HTTPOK
+
+  filterLive
+}
+
 naabuRecon() {
   echo "${yellow}[+] Running port scan with Naabu...${reset}"
   if [ ! -s "clean.subdomains" ]; then echo "${red}[-] clean.subdomains not found or empty.${reset}"; return 1; fi
   naabu -l clean.subdomains -ec -tp 100 -sa -o naabuScan
+  httpx -l naabuScan -silent -status-code -tech-detect -title -ip -cname -location -cl -timeout 10 -threads 10 -o HTTPOKSCAN
+  cat HTTPOKSCAN | anew HTTPOK
+
+  filterLive
 }
 
 naabuFullPorts() {

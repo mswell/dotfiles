@@ -47,17 +47,8 @@ newRecon() {
   subdomainenum
   [ -s "asn" ] && cat asn | metabigor net --asn | anew cidr
   [ -s "cidr" ] && cat cidr | anew clean.subdomains
-  naabuRecon
   getalive
+  naabuRecon
   dnsrecords
-  updateTemplatesNuc
-  nucTakeover
-  graphqldetect
-  APIRecon
-  swaggerUIdetect
-  ssrfdetect
-  XssScan
-  OpenRedirectScan
-  GitScan
-  nucauto
+  JScrawler
 }
