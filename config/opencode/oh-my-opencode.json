@@ -3,7 +3,7 @@
   "google_auth": false,
   "agents": {
     "antigravity": {
-      "model": "zai-coding-plan/glm-5",
+      "model": "google/gemini-3.1-pro-preview",
       "thinking": {
         "type": "enabled"
       },
@@ -12,54 +12,60 @@
         "browser",
         "filesystem"
       ],
-      "comment": "Orquestrador na nuvem. Usa o GLM-5 para agir no terminal do seu EliteBook."
+      "comment": "Orquestrador. Usa o Gemini 3.1 Pro para gerenciar o projeto todo sem perder o contexto."
     },
     "librarian": {
-      "model": "zai-coding-plan/glm-4.7",
-      "comment": "Nuvem: Lê documentação e mapeia o alvo usando a API da Zhipu."
+      "model": "google/gemini-2.5-flash",
+      "comment": "Busca documentações de bibliotecas (ex: React, Tailwind) muito rápido e quase de graça."
     },
     "explore": {
-      "model": "zai-coding-plan/glm-4.7",
-      "comment": "Nuvem: Navegação rápida em arquivos e diretórios."
+      "model": "google/gemini-2.5-flash",
+      "comment": "Varre seu código-fonte para entender a estrutura do projeto instantaneamente."
     },
     "oracle": {
       "model": "zai-coding-plan/glm-5",
       "thinking": {
         "type": "enabled"
       },
-      "comment": "O cérebro supremo para resolver impasses técnicos e bypasses."
+      "comment": "Consultor de Backend/Segurança. GLM-5 resolve bugs lógicos complexos e arquitetura pesada."
     },
     "security-audit": {
       "model": "zai-coding-plan/glm-5",
-      "comment": "Especialista em Bug Bounty focado em encontrar falhas críticas."
+      "thinking": {
+        "type": "enabled"
+      },
+      "comment": "Focado 100% em achar vulnerabilidades no seu código ou no alvo do Bounty."
     },
     "frontend-ui-ux-engineer": {
-      "model": "zai-coding-plan/glm-4.7",
-      "comment": "Geração de dashboards de recon e visualização de dados."
+      "model": "google/gemini-3.1-pro-preview",
+      "comment": "O mestre do Frontend. Gemini é excepcional em criar UIs bonitas, responsivas e modernas."
     },
     "document-writer": {
-      "model": "zai-coding-plan/glm-4.7",
-      "comment": "Redação de relatórios profissionais para plataformas de Bounty."
+      "model": "google/gemini-2.5-flash",
+      "comment": "Escreve documentação e READMEs de forma barata e rápida."
     },
     "sisyphus": {
-      "model": "zai-coding-plan/glm-4.7",
-      "comment": "Executor de scripts de automação e tarefas repetitivas."
+      "model": "google/gemini-3.1-pro-preview",
+      "comment": "O desenvolvedor principal. Gemini Pro escreve código, faz refatorações grandes e mantém o estilo do seu repo."
     },
     "prometheus": {
-      "model": "zai-coding-plan/glm-5",
-      "comment": "Planejamento de superfície de ataque e estratégia de recon - GLM-5 para raciocínio estratégico complexo"
+      "model": "google/gemini-3.1-pro-preview",
+      "comment": "Planejador de features. Lê toda a sua base de código para decidir como implementar algo novo."
     },
     "metis": {
       "model": "zai-coding-plan/glm-5",
+      "thinking": {
+        "type": "enabled"
+      },
       "variant": "high",
-      "comment": "O estrategista pragmático usando a inteligência do GLM-5."
+      "comment": "Revisor crítico. Questiona decisões de design (tanto em código quanto em exploits)."
     },
     "momus": {
-      "model": "zai-coding-plan/glm-5",
-      "comment": "Revisão de código e busca por segredos/vulnerabilidades conhecidas - GLM-5 para análise de segurança profunda"
+      "model": "google/gemini-3.1-pro-preview",
+      "comment": "Reviewer de PRs e código. Analisa grandes blocos de alterações de uma só vez."
     },
     "atlas": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "google/gemini-2.5-flash"
     }
   },
   "categories": {
@@ -72,11 +78,14 @@
         "type": "enabled"
       }
     },
+    "visual-engineering": {
+      "model": "google/gemini-3.1-pro-preview"
+    },
     "quick": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "google/gemini-2.5-flash"
     },
     "writing": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "google/gemini-2.5-flash"
     }
   }
 }

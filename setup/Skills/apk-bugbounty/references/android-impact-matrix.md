@@ -2,12 +2,12 @@
 
 ## Impact Assessment Framework
 
-### What makes a finding valid for YesWeHack?
+### What makes a finding valid for Bug Bounty Programs (YesWeHack/HackerOne)?
 
 1. **Reproducible** — Can be demonstrated with concrete steps
 2. **Impactful** — Has real consequence (data breach, account takeover, financial loss)
 3. **Not theoretical** — Requires actual vulnerable code evidence, not just "could be vulnerable"
-4. **In-scope** — The com.vuitton.android app itself, not third-party SDKs unless the vulnerability is in LV's usage
+4. **In-scope** — The target app itself, not third-party SDKs unless the vulnerability is in the target's usage
 
 ---
 
@@ -23,6 +23,8 @@
 | TrustManager bypass | Network position | MITM all traffic | 7.5-9.0 | P0 |
 | debuggable=true (production) | ADB access | Full app compromise | 9.0 | P0 |
 | Stripe/payment live key | Remote | Financial fraud | 9.0-10.0 | P0 |
+| Command Injection | Remote/Local | OS Command Execution | 9.0-10.0 | P0 |
+| ZipSlip (Unsafe Unzipping) | Remote/Local | Arbitrary File Overwrite | 7.5-8.5 | P1 |
 | Firebase DB open (unauth read) | Remote | Customer PII exposure | 8.0-9.0 | P1 |
 | Exported BroadcastReceiver | Malicious app on device | Sensitive data interception | 5.5-7.5 | P1 |
 | HTTP cleartext (auth endpoints) | Network MITM | Credential theft | 6.5-8.0 | P1 |
@@ -45,7 +47,7 @@ Some "local" findings become critical when combined:
 
 ### SDK vs App code
 If a vulnerability is in a third-party SDK (OkHttp, Glide, etc.):
-- Only report if **LV is using it insecurely** (e.g., disabled cert checking in their OkHttp config)
+- Only report if **the target is using it insecurely** (e.g., disabled cert checking in their OkHttp config)
 - Don't report upstream SDK vulns unless they have a CVE and the SDK is outdated
 
 ---
@@ -57,27 +59,29 @@ If a vulnerability is in a third-party SDK (OkHttp, Glide, etc.):
 | CWE-200 | Information Exposure | Logcat, SharedPrefs, external storage |
 | CWE-312 | Cleartext Storage of Sensitive Info | SharedPreferences, SQLite unencrypted |
 | CWE-319 | Cleartext Transmission | HTTP endpoints, no cert pinning with sensitive data |
-| CWE-321 | Use of Hard-coded Cryptographic Key | smali const-string with AES key |
-| CWE-798 | Use of Hard-coded Credentials | API keys, tokens, passwords in smali |
+| CWE-321 | Use of Hard-coded Cryptographic Key | sources const-string with AES key |
+| CWE-798 | Use of Hard-coded Credentials | API keys, tokens, passwords in sources |
 | CWE-489 | Active Debug Code | android:debuggable="true" |
 | CWE-502 | Deserialization of Untrusted Data | Parcelable/Serializable from intents |
 | CWE-601 | Open Redirect | WebView loadUrl(intent.getData()) |
-| CWE-611 | XML External Entity | XML parsers in smali |
+| CWE-611 | XML External Entity | XML parsers in sources |
 | CWE-639 | IDOR | Object references in ContentProvider |
 | CWE-749 | Exposed Dangerous Method | addJavascriptInterface |
+| CWE-78  | OS Command Injection | Runtime.getRuntime().exec() |
+| CWE-22  | Path Traversal | ZipSlip, ContentProvider openFile |
 | CWE-921 | Storage of Sensitive Data in Mechanism without Access Control | External storage |
 | CWE-926 | Improper Export of Android Application Component | exported=true components |
 | CWE-927 | Use of Implicit Intent for Sensitive Communication | Implicit broadcasts with tokens |
 
 ---
 
-## Report Quality Checklist (YesWeHack standard)
+## Report Quality Checklist (Bug Bounty standard)
 
 - [ ] Title is specific (not "Hardcoded Secret" but "Hardcoded Stripe Live API Key Allows Unauthorized Payment Creation")
 - [ ] CVSS vector string included
 - [ ] Step-by-step reproduction (reviewer must be able to reproduce)
 - [ ] Impact is business-relevant (customer data, financial, brand reputation)
 - [ ] File path + grep output as evidence
+- [ ] Taint analysis proven (for WebViews/IPC) - source to sink is clear
 - [ ] Remediation is specific and actionable
 - [ ] Not a duplicate of a known/patched issue
-- [ ] Tested against the specific version analyzed

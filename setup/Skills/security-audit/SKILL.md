@@ -1,302 +1,156 @@
 ---
 name: security-audit
-description: Comprehensive security code audit using multi-phase analysis (Assessment → STRIDE Threat Modeling → Code Review → Report). Use when asked to perform security review, vulnerability assessment, code audit, pentest code review, find security bugs, or analyze code for vulnerabilities. Optimized for bug bounty hunting with concrete evidence and exploitability validation.
+description: Comprehensive security code audit using multi-phase analysis (Assessment → STRIDE Threat Modeling → Code Review → Report). Use when asked to perform security review, vulnerability assessment, code audit, pentest code review, find security bugs, or analyze code for vulnerabilities. Optimized for bug bounty hunting and AppSec with concrete evidence and exploitability validation.
 ---
 
-# Security Audit Skill
+# Security Audit & Code Review Skill
 
-Multi-phase security analysis inspired by professional security team workflows. Produces actionable findings with concrete evidence, not generic warnings.
+Multi-phase security analysis inspired by professional AppSec team workflows. Produces actionable findings with **concrete evidence** (Source-to-Sink), eliminating generic warnings and false positives.
+
+**Rule #1: NO HALLUCINATION.** Every finding MUST be backed by exact file paths, line numbers, code snippets, and a clear, reproducible exploit path.
+**Rule #2: Taint Analysis is MANDATORY.** You must prove how user-controlled input (Source) reaches the dangerous function (Sink) without proper sanitization. Theoretical issues without an attack vector MUST NOT be reported.
+**Rule #3: Maximize AST-grep (`sg`) and Ripgrep (`rg`)** for context-aware code searching instead of simple `grep`.
 
 ## Workflow Overview
 
-Execute phases sequentially. Each phase produces artifacts consumed by the next:
+Execute phases sequentially. Use `.security-audit/audit_draft.md` as your dynamic notepad during Phases 1-3.
 
 ```
-Phase 1: Assessment     → .security-audit/SECURITY.md
-Phase 2: Threat Model   → .security-audit/THREAT_MODEL.json
-Phase 3: Code Review    → .security-audit/VULNERABILITIES.json
-Phase 4: Report         → .security-audit/scan_report.md + scan_results.json
+Phase 1: Architecture & Assessment → Map tech stack, entry points, auth, and data flows.
+Phase 2: STRIDE Threat Modeling    → Identify threats based on the mapped architecture.
+Phase 3: Deep Code Review          → Validate threats by hunting for Sinks and Sources.
+Phase 4: Final Report Generation   → Produce the actionable `scan_report.md`.
 ```
 
-## Quick Start
+---
 
-1. Create output directory: `mkdir -p .security-audit`
-2. Run `scripts/detect_project.py` to identify stack
-3. Execute Phase 1-4 sequentially
-4. Run auxiliary scripts as needed (secrets, dependencies)
+## Phase 1: Architecture & Assessment
 
-## Phase 1: Assessment
-
-**Goal:** Map architecture, data flows, entry points, and security controls.
+**Goal:** Understand the application context, tech stack, and attack surface.
 
 **Process:**
-1. Identify project type, languages, frameworks
-2. Map authentication/authorization mechanisms
-3. Document data flows and sensitive data paths
-4. List all entry points (APIs, forms, CLI, websockets)
-5. Note existing security controls
+1. **Detect Tech Stack:** Identify the language, framework, and package managers by analyzing root files (`package.json`, `requirements.txt`, `go.mod`, `pom.xml`, etc.).
+2. **Map Entry Points:** Find all routes, API endpoints, controllers, or exported functions where user input enters the system.
+3. **Map Authentication/Authorization:** Identify how users log in, how sessions/tokens (JWT, cookies) are managed, and how roles/permissions are checked.
+4. **Identify External Dependencies & DBs:** Note how the app connects to databases or external services.
 
-**Output:** Write `SECURITY.md` following this structure:
+**Draft Output (`.security-audit/audit_draft.md`):**
+Start your draft with a quick overview of the Tech Stack, Key Entry Points, Auth Mechanisms, and Initial Areas of Concern.
 
-```markdown
-# Security Assessment: [Project Name]
-Generated: [timestamp]
+---
 
-## Tech Stack
-- Language: [detected]
-- Framework: [detected]
-- Database: [detected]
-- Auth: [mechanism]
+## Phase 2: STRIDE Threat Modeling
 
-## Architecture Overview
-[Brief description of application structure]
-
-## Data Flows
-[Numbered list of critical data flows]
-
-## Entry Points
-| Endpoint | Method | Auth | Input Validation | Notes |
-|----------|--------|------|------------------|-------|
-
-## Authentication Mechanism
-[Details on auth implementation, token handling, session management]
-
-## Authorization Model
-[RBAC, ABAC, or custom. Permission checks location]
-
-## Sensitive Data Paths
-| Data Type | Location | Protection |
-|-----------|----------|------------|
-
-## External Dependencies
-[APIs, services, third-party integrations]
-
-## Existing Security Controls
-[Rate limiting, CSRF, CORS, input validation, etc.]
-
-## Initial Observations
-[Quick notes on potential areas of concern]
-```
-
-**Key searches to perform:**
-- Auth: `grep -rn "auth\|login\|session\|jwt\|token\|password" --include="*.{js,ts,py,go,java,php,rb}"`
-- Secrets: `grep -rn "API_KEY\|SECRET\|PASSWORD\|PRIVATE" --include="*.{js,ts,py,go,env,yaml,yml,json}"`
-- Input: `grep -rn "req\.\|request\.\|params\|body\|query" --include="*.{js,ts,py,go,java,php,rb}"`
-- Database: `grep -rn "SELECT\|INSERT\|UPDATE\|DELETE\|query\|execute" --include="*.{js,ts,py,go,java,php,rb}"`
-
-## Phase 2: Threat Modeling (STRIDE)
-
-**Goal:** Systematically identify threats using STRIDE methodology.
-
-**Read:** `references/stride-methodology.md` for detailed STRIDE guidance.
+**Goal:** Systematically hypothesize potential vulnerabilities based on Phase 1 findings.
 
 **Process:**
-1. Read SECURITY.md from Phase 1
-2. For each component/flow, analyze through STRIDE lens:
-   - **S**poofing: Can identity be faked?
-   - **T**ampering: Can data be modified?
-   - **R**epudiation: Can actions be denied?
-   - **I**nformation Disclosure: Can data leak?
-   - **D**enial of Service: Can availability be impacted?
-   - **E**levation of Privilege: Can permissions be bypassed?
-3. Prioritize by exploitability and impact
+Analyze the mapped architecture through the STRIDE lens and document the most critical hypotheses in your `audit_draft.md`:
+- **S**poofing: Can identity be faked? (e.g., JWT signing flaws, weak session IDs).
+- **T**ampering: Can data/state be modified? (e.g., Mass Assignment, Insecure Direct Object Reference - IDOR).
+- **R**epudiation: Can actions be denied? (e.g., Lack of audit logging for critical actions).
+- **I**nformation Disclosure: Can data leak? (e.g., Verbose errors, hardcoded secrets, Path Traversal).
+- **D**enial of Service: Can availability be impacted? (e.g., Unbounded regex, lack of rate limiting on expensive endpoints).
+- **E**levation of Privilege: Can permissions be bypassed? (e.g., Missing role checks on admin routes, prototype pollution).
 
-**Output:** Write `THREAT_MODEL.json`:
+**Prioritize these high-value targets for Phase 3:**
+1. Authentication/Authorization bypass (IDOR, Broken Access Control).
+2. Remote Code Execution (RCE) / Command Injection.
+3. Server-Side Request Forgery (SSRF).
+4. SQL/NoSQL Injection.
+5. Deserialization flaws & Prototype Pollution.
+6. Hardcoded Secrets (Live API Keys, DB Passwords, JWT Secrets).
 
-```json
-{
-  "project": "[name]",
-  "generated": "[timestamp]",
-  "threats": [
-    {
-      "id": "T-001",
-      "title": "Descriptive threat title",
-      "stride_category": "Spoofing|Tampering|Repudiation|InfoDisclosure|DoS|EoP",
-      "severity": "critical|high|medium|low",
-      "affected_components": ["file.js", "/api/endpoint"],
-      "attack_scenario": "Step-by-step attack description",
-      "preconditions": "What attacker needs",
-      "cwe_id": "CWE-XXX",
-      "cvss_estimate": 7.5,
-      "bounty_relevance": "high|medium|low",
-      "validation_hints": ["What to look for in code review"]
-    }
-  ]
-}
-```
+---
 
-**Prioritize these high-value targets:**
-- Authentication bypass
-- IDOR (Insecure Direct Object Reference)
-- Privilege escalation
-- SSRF (Server-Side Request Forgery)
-- SQL/NoSQL injection
-- Deserialization flaws
-- Business logic bypasses
+## Phase 3: Deep Code Review & Taint Analysis
 
-## Phase 3: Code Review
+**Goal:** Hunt for concrete code evidence to validate the threats hypothesized in Phase 2.
 
-**Goal:** Validate threats from Phase 2 with concrete code evidence.
+**Process (The Hunt):**
+Use `rg` (ripgrep) and `ast-grep` to search for dangerous patterns specific to the detected tech stack.
 
-**Read:** `references/vulnerability-patterns.md` for language-specific patterns.
+1. **Hunt for Hardcoded Secrets:**
+   ```bash
+   rg -n -i "(api_key|secret|password|private_key|token|access_key)\s*[:=]\s*['\"][a-zA-Z0-9_\-]{10,}['\"]"
+   # Look for specific formats (e.g., AWS AKIA, Stripe sk_live, JWT secrets)
+   ```
 
-**Process:**
-1. Read THREAT_MODEL.json
-2. For each threat, search codebase for vulnerable patterns
-3. **CRITICAL:** Only report if you find concrete evidence
-4. Document exact file, line number, and vulnerable code
-5. Assess exploitability (confirmed/likely/possible)
+2. **Hunt for Dangerous Sinks (Examples):**
+   - **Command Injection:** Exec, spawn, system, popen.
+   - **SSRF:** fetch, request, axios, urllib, curl.
+   - **Path Traversal/LFI:** fs.readFile, open, file_get_contents.
+   - **SQLi:** Raw query executions, string concatenation in SQL strings.
+   - **Deserialization:** pickle.loads, yaml.load, unserialize.
 
-**Output:** Write `VULNERABILITIES.json`:
+3. **MANDATORY Taint Analysis:**
+   If you find a dangerous Sink (e.g., `exec(cmd)`), you MUST trace the variable `cmd` back to its Source (e.g., an HTTP request parameter).
+   - If the data flow is broken (e.g., the variable is strictly hardcoded), it is NOT a vulnerability.
+   - If the data passes through strict validation (allowlists, type casting), it is NOT a vulnerability.
+   - **Only document the finding in your draft if the path from user input to the dangerous sink is exploitable.**
 
-```json
-{
-  "project": "[name]",
-  "generated": "[timestamp]",
-  "scan_stats": {
-    "files_analyzed": 0,
-    "threats_validated": 0,
-    "vulnerabilities_found": 0
-  },
-  "vulnerabilities": [
-    {
-      "id": "VULN-001",
-      "threat_ref": "T-001",
-      "title": "Specific vulnerability title",
-      "severity": "critical|high|medium|low",
-      "file_path": "src/auth/login.js",
-      "line_number": 67,
-      "code_snippet": "Exact vulnerable code",
-      "evidence": "Detailed explanation of why this is vulnerable",
-      "attack_vector": "How to exploit",
-      "cwe_id": "CWE-XXX",
-      "cvss_score": 8.5,
-      "exploitability": "confirmed|likely|possible",
-      "recommendation": "Specific fix with code example",
-      "references": ["https://..."]
-    }
-  ]
-}
-```
+Record the exact file path, line number, vulnerable code snippet, and the Source-to-Sink flow in your `audit_draft.md`.
 
-**Evidence requirements:**
-- Exact file path and line number
-- Actual code snippet (not pseudocode)
-- Clear explanation of vulnerability
-- Exploitation steps
-- Remediation with code example
+---
 
-## Phase 4: Report Generation
+## Phase 4: Final Report Generation
 
-**Goal:** Compile findings into actionable report.
+**Goal:** Compile the validated findings into a professional, actionable report.
 
 **Process:**
-1. Read VULNERABILITIES.json
-2. Generate executive summary
-3. Create detailed findings report
-4. Calculate statistics
+Read your `.security-audit/audit_draft.md`. For every validated vulnerability, write the final report.
 
-**Output:** Write both `scan_report.md` and `scan_results.json`
+**Output:** Write `.security-audit/scan_report.md`
 
-**Report structure:**
+**Report Structure:**
+
 ```markdown
 # Security Audit Report: [Project Name]
 Date: [timestamp]
 
 ## Executive Summary
-- Total vulnerabilities: X
-- Critical: X | High: X | Medium: X | Low: X
-- Key findings: [top 3 issues]
+- **Tech Stack:** [Languages/Frameworks]
+- **Total Vulnerabilities:** X (Critical: X | High: X | Medium: X | Low: X)
+- **Key Risks:** [1-2 sentences summarizing the most critical issues]
 
-## Severity Distribution
-[Visual or table breakdown]
+---
 
 ## Detailed Findings
 
-### VULN-001: [Title]
-**Severity:** Critical
+### [VULN-001] [Title of Vulnerability]
+**Severity:** Critical | High | Medium | Low
 **CWE:** CWE-XXX
-**File:** `path/to/file.js:67`
+**CVSS Estimate:** X.X
 
-**Description:**
-[Detailed explanation]
+**Description & Impact:**
+[Detailed explanation of the vulnerability and what an attacker can achieve (e.g., "Allows an unauthenticated attacker to execute arbitrary OS commands...")]
 
-**Vulnerable Code:**
+**Evidence & Taint Analysis:**
+File: `path/to/file.ext:line_number`
+
+**Source:** [Explain where user input enters]
+**Sink:** [Explain where the input is executed dangerously]
+
 ```[language]
-[code snippet]
+// [Exact code snippet showing the vulnerable flow]
 ```
 
-**Proof of Concept:**
-[Steps to reproduce]
+**Proof of Concept (Exploit Scenario):**
+[Step-by-step instructions, HTTP request, or conceptual script on how to trigger the vulnerability]
 
-**Recommendation:**
-[Fix with code example]
+**Remediation:**
+[Specific fix with a secure code example, e.g., using parameterized queries or strict allowlists]
 
 ---
-[Repeat for each vulnerability]
-
-## Recommendations Summary
-[Prioritized action items]
-
-## Appendix
-- Files analyzed: X
-- Scan duration: X
-- Tools used: [list]
+[Repeat for each validated vulnerability]
 ```
-
-## Auxiliary Scripts
-
-### detect_project.py
-Run first to identify project stack:
-```bash
-python3 scripts/detect_project.py /path/to/project
-```
-Returns detected languages, frameworks, and recommended exclusions.
-
-### scan_secrets.py
-Scan for hardcoded secrets with entropy analysis:
-```bash
-python3 scripts/scan_secrets.py /path/to/project
-```
-Detects AWS keys, API tokens, private keys, high-entropy strings.
-
-### analyze_dependencies.py
-Check for vulnerable dependencies:
-```bash
-python3 scripts/analyze_dependencies.py /path/to/project
-```
-Analyzes package.json, requirements.txt, go.mod, etc.
-
-## Key References
-
-Load these as needed during analysis:
-
-| Reference | When to use |
-|-----------|-------------|
-| `references/stride-methodology.md` | Phase 2 - threat modeling |
-| `references/vulnerability-patterns.md` | Phase 3 - code patterns by language |
-| `references/cwe-mapping.md` | All phases - CWE lookups |
-| `references/secrets-patterns.md` | Secrets detection |
-| `references/api-security-checklist.md` | API-heavy applications |
-| `references/business-logic-checklist.md` | E-commerce, fintech, auth flows |
 
 ## Directory Exclusions
+When using `rg` or `ast-grep`, standard package directories are ignored by default. If using `find` or `grep`, ensure you exclude:
+- `.git/`, `node_modules/`, `venv/`, `.venv/`, `__pycache__/`, `target/`, `vendor/`, `dist/`, `build/`
 
-Auto-exclude these directories:
-- Universal: `.git/`, `.svn/`, `.hg/`, `node_modules/`, `vendor/`, `dist/`, `build/`
-- Python: `venv/`, `env/`, `.venv/`, `__pycache__/`, `.tox/`, `*.egg-info/`
-- JavaScript: `.npm/`, `.yarn/`, `.next/`, `.nuxt/`
-- Go: `bin/`, `pkg/`
-- Java: `target/`, `.gradle/`, `.m2/`
-- Ruby: `.bundle/`, `tmp/`
-
-## Quality Checklist
-
-Before finalizing report:
-- [ ] Every finding has exact file:line reference
-- [ ] Every finding has actual code snippet
-- [ ] Every finding explains WHY it's vulnerable
-- [ ] Every finding has remediation with code example
-- [ ] No generic/theoretical findings without evidence
-- [ ] Severity ratings are justified
-- [ ] CWE IDs are accurate
+## Quality Checklist Before Finalizing
+- [ ] Every finding has an exact `file:line` reference.
+- [ ] Every finding proves Taint Analysis (Source-to-Sink).
+- [ ] Every finding has a realistic exploit scenario (PoC).
+- [ ] No generic/theoretical findings without code evidence.
+- [ ] Remediation provides actionable, secure code examples.
