@@ -1,6 +1,6 @@
 ---
 name: js-code-analysis
-description: Specialized JavaScript/TypeScript static analysis for bug bounty hunting. Focuses on Node.js, Express.js, and Next.js. Uses AST-grep and ripgrep to find high-impact vulnerabilities (RCE, SSRF, SQLi, SSTI, Prototype Pollution, JWT flaws) by enforcing strict Source-to-Sink Taint Analysis. Every finding MUST have concrete evidence.
+description: Specialized JavaScript/TypeScript static analysis for bug bounty hunting. Focuses on Node.js, Express.js, and Next.js. Uses AST-grep and ripgrep to find high-impact vulnerabilities (RCE, SSRF, SQLi, SSTI, Prototype Pollution, JWT flaws, Frontend-to-Backend interactions, Deserialization) by enforcing strict Source-to-Sink Taint Analysis. Every finding MUST have concrete evidence.
 ---
 
 # JavaScript / TypeScript Bug Bounty Analysis Skill
@@ -9,6 +9,7 @@ Advanced static analysis of JS/TS codebases for high-severity vulnerabilities.
 **Rule #1: NO HALLUCINATION. Every finding MUST be backed by concrete code evidence (file path + line + snippet) and a clear, reproducible exploit path.**
 **Rule #2: Taint Analysis is MANDATORY. You must prove how user-controlled input (Source) reaches the dangerous function (Sink) without proper sanitization.**
 **Rule #3: Maximize AST-grep (`sg`) and Ripgrep (`rg`) for context-aware code searching.**
+**Rule #4: STRICT BRAIN DUMP MANDATE. Before listing any vulnerability, you MUST output a detailed "Brain Dump" documenting your logical thinking process, what you searched for and failed to find, and technical explanations for discarding false positives.**
 
 ## Workflow Overview
 
@@ -16,11 +17,12 @@ Execute phases sequentially. Focus deeply on files modified recently or core bus
 
 ```
 Phase 1: Recon & Routing      → Map Express routes, Next.js API endpoints, Server Actions.
-Phase 2: Auth & Session       → JWT flaws, weak secrets, middleware bypass, IDOR.
-Phase 3: Dangerous Sinks      → RCE, SSRF, Deserialization, SSTI, Path Traversal.
-Phase 4: Injection Flaws      → SQLi, NoSQLi, Command Injection, XSS (SSR flaws).
-Phase 5: Logic & Objects      → Prototype Pollution, Mass Assignment, Race Conditions.
-Phase 6: Taint & Report       → Source-to-Sink trace and PoC generation.
+Phase 2: Client-to-Server Mapping (Frontend Recon) → Find SSRF vectors, state encoding, custom headers in frontend.
+Phase 3: Auth & Session       → JWT flaws, weak secrets, middleware bypass, IDOR.
+Phase 4: Dangerous Sinks      → RCE, SSRF, Deserialization, SSTI, Path Traversal.
+Phase 5: Injection Flaws      → SQLi, NoSQLi, Command Injection, XSS (SSR flaws).
+Phase 6: Logic & Objects      → Prototype Pollution, Mass Assignment, Race Conditions.
+Phase 7: Taint & Report       → Source-to-Sink trace and PoC generation.
 ```
 
 ---
@@ -51,7 +53,38 @@ rg -n "req\.(body|query|params|headers|cookies)"
 
 ---
 
-## Phase 2: Auth & Session Flaws
+## Phase 2: Client-to-Server Surface Mapping (Frontend Recon)
+
+**Goal:** Act as an infrastructure and logic flaw hunter. Analyze how the Frontend interacts with the Backend to discover hidden attack surfaces (SSRF, Deserialization, Infrastructure Injection). Ignore standard UI libraries, focus on business logic and HTTP requests.
+
+**Search commands:**
+```bash
+# 1. SSRF Vectors (Frontend passing URLs/Paths to Backend)
+rg -n "fetch\(.*(?:url|target|path|endpoint|webhook|callback)\s*[:=]"
+rg -n "axios\.(post|get|put)\(.*(?:url|target|path|webhook|callback)\s*[:=]"
+
+# 2. Deserialization & State Manipulation (Complex objects encoded to headers/cookies)
+rg -n "btoa\(JSON\.stringify\("
+rg -n "Buffer\.from\(.*'base64'\)"
+rg -n "localStorage\.setItem\(.*JSON\.stringify"
+
+# 3. Infrastructure Leaks & Custom Headers
+rg -n "axios\.interceptors\.request"
+rg -n "headers:\s*\{.*X-.*:"
+# Hidden or Admin API Routes
+rg -n "['\`]/api/(?:v[0-9]+/)?(?:internal|admin|debug|test)/.*['\`]"
+# Domain parameters (Open Redirect / Host Header)
+rg -n "window\.location\.(origin|href)"
+```
+
+**Extract & Document:**
+- **SSRF Vectors:** Endpoints where frontend passes URLs/domains as parameters to the backend.
+- **State Encapsulation:** Any logic converting objects (`JSON.stringify`) into Base64 before sending to APIs (`/sync`, `/state`, headers, cookies).
+- **Infrastructure/Headers:** Custom headers injected by the frontend (e.g., `X-Custom-Client`, `X-Forwarded-*`) and hidden/undocumented API paths.
+
+---
+
+## Phase 3: Auth & Session Flaws
 
 **Goal:** Find JWT misconfigurations, hardcoded secrets, and broken access control.
 
@@ -77,7 +110,7 @@ rg -n "(client_secret|api_key|access_token)\s*[:=]\s*['\"][a-zA-Z0-9_-]{10,}['\"
 
 ---
 
-## Phase 3: Dangerous Sinks (RCE, SSRF, SSTI)
+## Phase 4: Dangerous Sinks (RCE, SSRF, SSTI)
 
 **Goal:** Find functions that execute code, make network requests, or read arbitrary files.
 
@@ -117,7 +150,7 @@ rg -n "res\.sendFile\("
 
 ---
 
-## Phase 4: Injection Flaws (SQLi & NoSQLi)
+## Phase 5: Injection Flaws (SQLi & NoSQLi)
 
 **Goal:** Find database queries constructed with unsanitized input.
 
@@ -134,7 +167,7 @@ rg -n "\.(find|findOne|update|deleteOne)\(\s*req\.(query|body)"
 
 ---
 
-## Phase 5: Logic Flaws & Objects
+## Phase 6: Logic Flaws & Objects
 
 **Goal:** Prototype Pollution, Mass Assignment, and Race Conditions.
 
@@ -156,10 +189,10 @@ rg -n "async function" | grep -v "await" # Heuristic for detached promises
 
 ---
 
-## Phase 6: Taint Analysis & Report Generation
+## Phase 7: Taint Analysis & Report Generation
 
 **MANDATORY Taint Analysis Process:**
-For every sink identified in Phases 3-5, you MUST trace the data backward to the source (Phase 1).
+For every sink identified in Phases 3-6, you MUST trace the data backward to the source (Phase 1/2).
 1. **Source:** `const targetUrl = req.query.url;`
 2. **Propagator:** `const sanitizedUrl = customFormat(targetUrl);` (Check if `customFormat` actually sanitizes or just formats).
 3. **Sink:** `fetch(sanitizedUrl);`
@@ -168,6 +201,12 @@ For every sink identified in Phases 3-5, you MUST trace the data backward to the
 **Report template (`.js-audit/report.md`):**
 
 ```markdown
+### 🧠 Brain Dump (Processo Cognitivo e Descartes)
+> **[MANDATORY]** Document your logical thinking process here BEFORE listing vulnerabilities.
+> - What did you search for? 
+> - What did you fail to find? 
+> - Highlight code snippets that looked suspicious at first (false positives) but were discarded after deeper analysis, explaining *why* (e.g., "Found a 'url' parameter, but it undergoes strict regex sanitization before fetch").
+
 # JS/TS Bug Bounty Report: [Project Name]
 
 ## Executive Summary

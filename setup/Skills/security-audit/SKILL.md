@@ -10,6 +10,7 @@ Multi-phase security analysis inspired by professional AppSec team workflows. Pr
 **Rule #1: NO HALLUCINATION.** Every finding MUST be backed by exact file paths, line numbers, code snippets, and a clear, reproducible exploit path.
 **Rule #2: Taint Analysis is MANDATORY.** You must prove how user-controlled input (Source) reaches the dangerous function (Sink) without proper sanitization. Theoretical issues without an attack vector MUST NOT be reported.
 **Rule #3: Maximize AST-grep (`sg`) and Ripgrep (`rg`)** for context-aware code searching instead of simple `grep`.
+**Rule #4: STRICT BRAIN DUMP MANDATE. Before listing any vulnerability, you MUST output a detailed "Brain Dump" documenting your logical thinking process, what you searched for and failed to find, and technical explanations for discarding false positives.**
 
 ## Workflow Overview
 
@@ -104,6 +105,47 @@ Read your `.security-audit/audit_draft.md`. For every validated vulnerability, w
 **Report Structure:**
 
 ```markdown
+# 🧠 Brain Dump
+
+## Initial Thoughts & Reconnaissance
+
+- **Project Goal:**
+- **Key Features/Functionality:**
+- **Technology Stack:**
+- **Potential Attack Surface:**
+- **Initial Hypotheses/Areas of Interest:**
+
+## Dynamic Analysis Notes (if applicable)
+
+- **URLs/Endpoints Explored:**
+- **Credentials Used:**
+- **Observed Behavior/Anomalies:**
+- **Tools Used:**
+
+## Static Analysis Notes
+
+- **Codebase Overview:**
+- **Interesting Files/Functions:**
+- **Identified Patterns/Anti-patterns:**
+- **Tools Used:**
+
+## Threat Modeling (STRIDE) Brainstorm
+
+- **Spoofing:**
+- **Tampering:**
+- **Repudiation:**
+- **Information Disclosure:**
+- **Denial of Service:**
+- **Elevation of Privilege:**
+
+## Vulnerability Research Ideas
+
+- **Specific CVEs/Weaknesses to check:**
+- **Common flaws in technology stack:**
+- **Business logic flaws:**
+
+---
+
 # Security Audit Report: [Project Name]
 Date: [timestamp]
 

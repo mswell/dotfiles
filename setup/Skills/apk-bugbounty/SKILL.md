@@ -8,6 +8,7 @@ description: Android APK static analysis for bug bounty hunting. Analyzes decomp
 Static analysis of decompiled Android APKs for bug bounty programs.
 **Rule #1: NO HALLUCINATION. Every finding MUST be backed by concrete code evidence (file path + line + snippet) and a clear, reproducible exploit path.**
 **Rule #2: No impact = not reported. Ignore theoretical issues without an attack vector.**
+**Rule #3: STRICT BRAIN DUMP MANDATE. Before listing any vulnerability, you MUST output a detailed "Brain Dump" documenting your logical thinking process, what you searched for and failed to find, and technical explanations for discarding false positives.**
 
 ## Phase 0: Target Structure & Decompilation
 
@@ -253,6 +254,54 @@ Java.perform(function() {
 
 **Report template:**
 ```markdown
+# 🧠 Brain Dump
+
+## Reconnaissance
+- **Target:**
+- **Version:**
+- **Platform:** Android
+- **Tools Used:** Jadx-GUI, Apktool, adb, Frida, Burp Suite
+
+## Initial Analysis
+- Decompile APK with Jadx and Apktool.
+- Review AndroidManifest.xml for exported components, permissions, and interesting configurations.
+- Check for hardcoded strings (APIs, URLs, credentials) in decompiled source.
+
+## Dynamic Analysis Setup
+- Set up Frida for runtime instrumentation.
+- Configure Burp Suite for proxying traffic.
+- Install APK on a rooted emulator/device.
+
+## Static Analysis Areas
+- **Secrets:** API keys, tokens, credentials, sensitive URLs.
+- **Exported Components:** Activities, Services, Broadcast Receivers, Content Providers.
+- **WebViews:** JavaScript interfaces, URL loading, potential RCE via `addJavascriptInterface`.
+- **Deep Links:** Schemes, hosts, paths, parameter handling.
+- **Firebase:** API keys, database URLs, storage buckets.
+- **Native Libraries:** JNI functions, potential vulnerabilities in native code.
+- **Business Logic:** How the app handles critical functions (auth, payments, data).
+
+## Dynamic Analysis Areas
+- **Network Traffic:** Intercept and analyze all HTTP/HTTPS requests and responses. Look for sensitive data, insecure endpoints, API flaws.
+- **Runtime Behavior:** Use Frida to hook into interesting functions, bypass SSL pinning, observe data flows, manipulate app logic.
+- **Input Validation:** Test all input fields for injection flaws (SQLi, XSS, RCE).
+- **Authorization:** Test for IDORs, privilege escalation.
+
+## Potential Vulnerability Categories
+- Hardcoded Secrets
+- Insecure Data Storage
+- Broken Authentication/Authorization
+- Insecure Communication (SSL Pinning bypass)
+- WebView Vulnerabilities (RCE, XSS)
+- Deep Link Exploitation
+- Exposed API Keys/Endpoints
+- Business Logic Flaws
+- Native Code Vulnerabilities
+- Tapjacking/Overlay Attacks
+- Side-channel Data Leakage
+
+---
+
 # APK Bug Bounty Report: [<app_package_name>]
 
 ## Executive Summary
