@@ -35,7 +35,7 @@ install_yay() {
 }
 
 # Software from 'normal' repositories
-install_yay mousepad zoxide tmux bat lsd librewolf-bin obsidian
+install_yay mousepad zoxide tmux bat lsd librewolf-bin obsidian jq
 install_yay git-delta vlc unclutter bash-completion
 install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
 install_yay meld discord openfortivpn fzf

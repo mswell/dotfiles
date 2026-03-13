@@ -42,7 +42,7 @@ install_pacman
 echo "Installing useful Apps"
 
 # Software from 'normal' repositories
-install_yay zoxide tmux bat lsd git-delta unclutter bash-completion
+install_yay zoxide tmux bat lsd git-delta unclutter bash-completion jq
 install_yay ctags lazygit ncurses zsh xclip autojump fzf
 install_yay unrar zip p7zip ntfs-3g dosfstools
 

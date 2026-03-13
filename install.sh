@@ -78,6 +78,7 @@ Menu() {
         echo "[5] - Archlinux with i3wm"
         echo "[6] - Archlinux WSL"
         echo "[7] - Archlinux DE"
+        echo "[8] - Claude for Bug Bounty (Skills + Agents + Caido AI)"
         echo "[0] - Exit"
         echo
         echo -n "Choose your distro: "
@@ -91,6 +92,7 @@ Menu() {
             5) run_setup "setup/ArchI3wm/setup.sh"; break ;;
             6) run_setup "setup/ArchWSL/setup.sh"; break ;;
             7) run_setup "setup/ArchDE/setup.sh"; break ;;
+            8) run_setup "setup/install_skills.sh"; break ;;
             0) exit 0 ;;
             *) echo "${red}Unknown option. Please try again.${reset}";;
         esac

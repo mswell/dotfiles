@@ -20,7 +20,7 @@ mkdir -p $HOME/.config/i3 && cp -r $DOTFILES/config/i3 $HOME/.config/
 cp $DOTFILES/config/.Xresources $HOME/
 xrdb -merge $HOME/.Xresources
 
-install_pacman polkit-gnome npm dunst zoxide
+install_pacman polkit-gnome npm dunst zoxide jq
 cp -r $DOTFILES/config/dunst $HOME/.config/
 
 echo "Installing useful Apps"

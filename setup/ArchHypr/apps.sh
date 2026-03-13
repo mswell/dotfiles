@@ -101,6 +101,7 @@ yay_packages="
     bibata-cursor-gruvbox-git
     kvantum-theme-gruvbox-git
     rofi
+    jq
 "
 
 # --- Installation ---
