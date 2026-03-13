@@ -1,245 +1,412 @@
 ---
 name: js-code-analysis
-description: Specialized JavaScript/TypeScript static analysis for bug bounty hunting. Focuses on Node.js, Express.js, and Next.js. Uses AST-grep and ripgrep to find high-impact vulnerabilities (RCE, SSRF, SQLi, SSTI, Prototype Pollution, JWT flaws, Frontend-to-Backend interactions, Deserialization) by enforcing strict Source-to-Sink Taint Analysis. Every finding MUST have concrete evidence.
+description: Specialized JavaScript/TypeScript static analysis for bug bounty hunting. Covers Node.js, Express.js, Next.js, NestJS, Fastify, and modern frameworks. Uses AST-grep and Grep tool to find high-impact vulnerabilities (RCE, SSRF, SQLi, SSTI, Prototype Pollution, JWT, DOM XSS, GraphQL, ReDoS, CORS, CSRF) via strict Source-to-Sink Taint Analysis. Every finding MUST have concrete evidence.
 ---
 
 # JavaScript / TypeScript Bug Bounty Analysis Skill
 
 Advanced static analysis of JS/TS codebases for high-severity vulnerabilities.
-**Rule #1: NO HALLUCINATION. Every finding MUST be backed by concrete code evidence (file path + line + snippet) and a clear, reproducible exploit path.**
-**Rule #2: Taint Analysis is MANDATORY. You must prove how user-controlled input (Source) reaches the dangerous function (Sink) without proper sanitization.**
-**Rule #3: Maximize AST-grep (`sg`) and Ripgrep (`rg`) for context-aware code searching.**
-**Rule #4: STRICT BRAIN DUMP MANDATE. Before listing any vulnerability, you MUST output a detailed "Brain Dump" documenting your logical thinking process, what you searched for and failed to find, and technical explanations for discarding false positives.**
+
+**Rule #1: NO HALLUCINATION.** Every finding MUST be backed by concrete code evidence (file path + line + snippet) and a clear, reproducible exploit path.
+**Rule #2: Taint Analysis is MANDATORY.** Prove how user-controlled input (Source) reaches the dangerous function (Sink) without proper sanitization.
+**Rule #3: BRAIN DUMP MANDATE.** Before listing vulnerabilities, document your reasoning, searches performed, dead ends, and false positive eliminations.
+**Rule #4: Use Claude Code tools.** Prefer Grep tool over `rg` via Bash. Use Glob for file discovery. Reserve Bash for `ast-grep` (sg) and `npm audit` only.
+
+## Tool Usage
+
+Subagents MUST use Claude Code's dedicated tools:
+- **Grep tool** for all text/pattern searches (NOT `rg` or `grep` via Bash)
+- **Glob tool** for file discovery (NOT `find` or `ls` via Bash)
+- **Read tool** for file reading (NOT `cat`/`head`/`tail` via Bash)
+- **Bash tool** ONLY for: `ast-grep` (sg) commands, `node` scripts, `npm audit`
+
+**Available scripts (invoke via Bash):**
+- `scripts/analyze.js --target <path> --category <cat>` — ast-grep scanner by vulnerability category
+- `scripts/check_safety.js --target <domain> --platform <name>` — Safe Harbor verification
+- `scripts/pattern_validator.js --patterns-dir <dir> --fixtures-dir <dir>` — validate ast-grep patterns
+
+## Directory Exclusions
+
+ALL searches MUST exclude: `node_modules/`, `dist/`, `build/`, `.next/`, `.nuxt/`, `coverage/`, `.git/`, `vendor/`, `__pycache__/`, `.cache/`, `.turbo/`
+
+Use Grep tool's `glob` parameter to filter (e.g., `glob: "!node_modules/**"`), or target specific source directories.
+
+---
+
+## Phase 0: Setup & Detection
+
+**Goal:** Prepare workspace, detect framework, check for exposed files.
+
+```bash
+mkdir -p .js-audit
+```
+
+1. **Read `package.json`** — identify framework, dependencies, scripts
+2. **Detect framework:**
+   - Express (`express`), Next.js (`next`), NestJS (`@nestjs/core`), Fastify (`fastify`)
+   - Hono, Koa, Nuxt, SvelteKit, Remix, Astro
+3. **Check TypeScript:** presence of `tsconfig.json`
+4. **Check monorepo:** `lerna.json`, `pnpm-workspace.yaml`, `turbo.json`, `nx.json`
+5. **Exposed sensitive files (use Glob):**
+   - `.env*`, `*.pem`, `*.key`, `firebase*.json`, `serviceAccount*.json`, `google-services.json`
+   - Flag any NOT listed in `.gitignore`
+
+---
+
+## Subagent Orchestration
+
+Delegate to 3 parallel subagents, then compile report.
+
+```
+Wave 1 (PARALLEL — launch all three in a single message):
+  ├── js-security-expert agent  → Phases 1 + 2 + 3 (Recon + Frontend + Auth/Session)
+  ├── api-security agent        → Phases 4 + 5 (Dangerous Sinks + Injection Flaws)
+  └── webapp-security agent     → Phase 6 (Logic, DOM XSS, File Upload, Config)
+
+Wave 2 (SEQUENTIAL — after Wave 1 completes):
+  └── report-writer agent → Phase 7: Taint validation + compile .js-audit/report.md
+```
+
+**Steps:**
+1. **Phase 0:** Run setup yourself (NOT delegated).
+2. **Wave 1:** Launch three `Agent` calls in parallel. Provide each with:
+   - Full phase instructions for their assigned phases
+   - Codebase path and detected framework from Phase 0
+   - `references/vulnerability-patterns.md` for pattern matching
+   - `references/cwe-checklist.md` for CWE mapping
+3. **Wave 2:** Launch `report-writer` with all findings + `references/escalation-guide.md` for chain identification.
+4. Output `.js-audit/report.md` path.
+
+---
 
 ## Workflow Overview
 
-Execute phases sequentially. Focus deeply on files modified recently or core business logic.
-
 ```
-Phase 1: Recon & Routing      → Map Express routes, Next.js API endpoints, Server Actions.
-Phase 2: Client-to-Server Mapping (Frontend Recon) → Find SSRF vectors, state encoding, custom headers in frontend.
-Phase 3: Auth & Session       → JWT flaws, weak secrets, middleware bypass, IDOR.
-Phase 4: Dangerous Sinks      → RCE, SSRF, Deserialization, SSTI, Path Traversal.
-Phase 5: Injection Flaws      → SQLi, NoSQLi, Command Injection, XSS (SSR flaws).
-Phase 6: Logic & Objects      → Prototype Pollution, Mass Assignment, Race Conditions.
-Phase 7: Taint & Report       → Source-to-Sink trace and PoC generation.
+Phase 1: Recon & Routing       → Routes, endpoints, Server Actions, middleware chain
+Phase 2: Frontend-to-Backend   → SSRF vectors, postMessage, WebSocket, CORS, state encoding
+Phase 3: Auth & Session        → JWT, OAuth2, CSRF, cookies, session, IDOR, rate limiting
+Phase 4: Dangerous Sinks       → RCE, SSRF, SSTI, Deserialization, Path Traversal
+Phase 5: Injection Flaws       → SQLi, NoSQLi, GraphQL, ReDoS, SSR XSS
+Phase 6: Logic & Client-side   → Prototype Pollution, Mass Assignment, DOM XSS, File Upload, Config
+Phase 7: Taint & Report        → Source-to-Sink validation + report generation
 ```
 
 ---
 
 ## Phase 1: Recon & Routing (Attack Surface Mapping)
 
-**Goal:** Identify where user input enters the application (The "Sources").
+**Goal:** Identify where user input enters the application (Sources).
 
-**Search commands:**
-```bash
-# Express.js Routes
-rg -n "app\.(get|post|put|delete|patch|all)\(" 
-rg -n "router\.(get|post|put|delete|patch|all)\("
+**Search patterns (use Grep tool, targeting source directories only):**
 
-# Next.js API Routes (Pages & App Router) & Server Actions
-rg -n "export async function (GET|POST|PUT|DELETE|PATCH)"
-rg -n "export default function handler"
-rg -n '"use server"'
+1. **Express.js:**
+   - `app\.(get|post|put|delete|patch|all|use)\(`
+   - `router\.(get|post|put|delete|patch|all|use)\(`
 
-# Identify all user input sources (Req bodies, queries, params, headers)
-rg -n "req\.(body|query|params|headers|cookies)"
-```
+2. **Next.js (Pages Router + App Router + Server Actions):**
+   - `export (async )?function (GET|POST|PUT|DELETE|PATCH)` (App Router)
+   - `export default function handler` (Pages Router)
+   - `"use server"` (Server Actions)
+   - `getServerSideProps`, `getStaticProps`
 
-**For each critical route, document:**
-- Endpoint path and HTTP method.
-- Expected user inputs (JSON body, query params).
-- Is it protected by an Auth middleware? (If not, high priority).
+3. **NestJS:**
+   - `@(Get|Post|Put|Delete|Patch|All)\(` (route decorators)
+   - `@Controller\(`, `@Injectable\(`
+
+4. **Fastify:**
+   - `fastify\.(get|post|put|delete|patch)\(`
+
+5. **User input sources (ALL frameworks):**
+   - `req\.(body|query|params|headers|cookies|files|file)`
+   - `ctx\.(request|params|query|body)`
+   - `@Body\(\)`, `@Query\(\)`, `@Param\(\)`, `@Headers\(\)` (NestJS decorators)
+
+6. **Middleware chain (auth bypass vector):**
+   - `app\.use\(`, `router\.use\(`
+   - Map ORDER of middleware — auth applied AFTER route handler registration = bypass
+   - Check for `next()` called without auth validation
+
+**For each route, document:**
+- Endpoint path, HTTP method, input sources
+- Auth middleware applied? Rate limited?
 
 ---
 
-## Phase 2: Client-to-Server Surface Mapping (Frontend Recon)
+## Phase 2: Client-to-Server Surface Mapping
 
-**Goal:** Act as an infrastructure and logic flaw hunter. Analyze how the Frontend interacts with the Backend to discover hidden attack surfaces (SSRF, Deserialization, Infrastructure Injection). Ignore standard UI libraries, focus on business logic and HTTP requests.
+**Goal:** Discover hidden attack surfaces from frontend-backend interaction.
 
-**Search commands:**
-```bash
-# 1. SSRF Vectors (Frontend passing URLs/Paths to Backend)
-rg -n "fetch\(.*(?:url|target|path|endpoint|webhook|callback)\s*[:=]"
-rg -n "axios\.(post|get|put)\(.*(?:url|target|path|webhook|callback)\s*[:=]"
+**Search patterns:**
 
-# 2. Deserialization & State Manipulation (Complex objects encoded to headers/cookies)
-rg -n "btoa\(JSON\.stringify\("
-rg -n "Buffer\.from\(.*'base64'\)"
-rg -n "localStorage\.setItem\(.*JSON\.stringify"
+1. **SSRF vectors (frontend passing URLs to backend):**
+   - `fetch\(` with variable URL arguments (not string literals)
+   - `axios\.(get|post|put|request)\(` with variable arguments
+   - Parameters named: `url`, `target`, `path`, `endpoint`, `webhook`, `callback`, `redirect`, `proxy`, `dest`
 
-# 3. Infrastructure Leaks & Custom Headers
-rg -n "axios\.interceptors\.request"
-rg -n "headers:\s*\{.*X-.*:"
-# Hidden or Admin API Routes
-rg -n "['\`]/api/(?:v[0-9]+/)?(?:internal|admin|debug|test)/.*['\`]"
-# Domain parameters (Open Redirect / Host Header)
-rg -n "window\.location\.(origin|href)"
-```
+2. **postMessage vulnerabilities:**
+   - `addEventListener\(["']message["']` — find handlers
+   - Check: is `event.origin` validated? No check = any origin can send data
+   - `postMessage\(` — what data is sent? to what origin?
 
-**Extract & Document:**
-- **SSRF Vectors:** Endpoints where frontend passes URLs/domains as parameters to the backend.
-- **State Encapsulation:** Any logic converting objects (`JSON.stringify`) into Base64 before sending to APIs (`/sync`, `/state`, headers, cookies).
-- **Infrastructure/Headers:** Custom headers injected by the frontend (e.g., `X-Custom-Client`, `X-Forwarded-*`) and hidden/undocumented API paths.
+3. **WebSocket:**
+   - `new WebSocket\(`, `io\(`, `io\.connect\(`, `socket\.on\(`
+   - Auth on WS connection? TLS (`wss://` not `ws://`)? Message validation?
+
+4. **CORS misconfiguration:**
+   - `Access-Control-Allow-Origin` — search for `*` or reflected origin
+   - `cors\(` config — check `origin:` and `credentials:` combination
+   - `res\.(header|setHeader)\(.*Access-Control`
+
+5. **State encoding (deserialization vectors):**
+   - `btoa\(JSON\.stringify\(`, `Buffer\.from\(.*base64`
+   - `JSON\.parse\(atob\(`, `JSON\.parse\(Buffer\.from\(`
+
+6. **Hidden/admin routes:**
+   - `\/api\/(internal|admin|debug|test|_|health|metrics|graphql|graphiql)`
+   - `window\.location\.(origin|href|hash)` — open redirect sources
 
 ---
 
 ## Phase 3: Auth & Session Flaws
 
-**Goal:** Find JWT misconfigurations, hardcoded secrets, and broken access control.
+**Goal:** Find authentication bypass, session management flaws, broken access control.
 
-**Search commands:**
-```bash
-# Hardcoded JWT Secrets & Weak Algorithms
-rg -n "jwt\.sign\(.*,\s*['\"]" 
-rg -n "jwt\.verify\(.*,\s*['\"]"
-rg -n "algorithm:\s*['\"]none['\"]"
+**Search patterns:**
 
-# Middleware Bypass / Missing Auth
-rg -n "next\(\)" | grep -v "err" # Look for paths that call next() without checking roles
-rg -n "req\.user" # See how user identity is trusted/populated
+1. **JWT issues:**
+   - `jwt\.sign\(` — hardcoded secret? weak algorithm?
+   - `jwt\.verify\(` — `algorithms` option set? (prevents algorithm confusion)
+   - `jwt\.decode\(` — decode WITHOUT verify = no signature check (WARNING)
+   - `algorithm.*none` — "none" algorithm attack
 
-# OAuth / Secrets Leaks
-rg -n "(client_secret|api_key|access_token)\s*[:=]\s*['\"][a-zA-Z0-9_-]{10,}['\"]"
-```
+2. **OAuth2 misconfiguration:**
+   - `redirect_uri`, `callback_url` — validated against allowlist?
+   - `state` parameter — generated and checked? (CSRF in OAuth flow)
+   - `client_secret` in frontend code = leaked secret
+   - PKCE: `code_verifier`, `code_challenge` present for public clients?
 
-**High-impact findings:**
-- `jwt.verify` without checking the algorithm (Algorithm confusion).
-- Trusting `req.body.role` or `req.cookies.isAdmin` directly.
-- IDOR: Fetching DB records using raw `req.params.id` without `WHERE user_id = req.user.id`.
+3. **Session & cookies:**
+   - Cookie config: check `httpOnly`, `secure`, `sameSite` flags
+   - `express-session` config: hardcoded `secret`? `resave`? `saveUninitialized`?
+   - Session regeneration after login? (`req.session.regenerate`)
 
----
+4. **CSRF protection:**
+   - `csrf`, `csurf`, `csrf-csrf` in dependencies?
+   - `SameSite` cookie attribute?
+   - State-changing endpoints (POST/PUT/DELETE) without CSRF token
 
-## Phase 4: Dangerous Sinks (RCE, SSRF, SSTI)
+5. **IDOR / Broken Access Control:**
+   - DB queries using `req.params.id` without ownership check (`WHERE owner = req.user.id`)
+   - `findById`, `findOne`, `findByPk` with user-controlled ID
+   - Role checks: `req.user.role`, `req.body.role` — can role be tampered client-side?
 
-**Goal:** Find functions that execute code, make network requests, or read arbitrary files.
+6. **Rate limiting:**
+   - `express-rate-limit`, `rate-limiter-flexible` in dependencies?
+   - Auth endpoints (`/login`, `/register`, `/forgot-password`) without limiting = brute force
 
-**Search commands (Using AST-grep `sg` and `rg`):**
-
-```bash
-# 1. Server-Side Request Forgery (SSRF)
-ast-grep --pattern 'fetch($URL, $$)' --lang typescript
-ast-grep --pattern 'axios($URL, $$)' --lang typescript
-ast-grep --pattern 'axios.get($URL, $$)' --lang typescript
-rg -n "http\.(get|request)\("
-
-# 2. Remote Code Execution (RCE) / Command Injection
-ast-grep --pattern 'exec($CMD, $$)' --lang typescript
-ast-grep --pattern 'execSync($CMD, $$)' --lang typescript
-ast-grep --pattern 'spawn($CMD, $$)' --lang typescript
-rg -n "require\('child_process'\)"
-
-# 3. Unsafe Deserialization
-rg -n "unserialize\("
-rg -n "yaml\.load\(" # Look for js-yaml unsafe load
-rg -n "require\('node-serialize'\)"
-
-# 4. Server-Side Template Injection (SSTI)
-rg -n "res\.render\(.*,\s*req\.(body|query|params)"
-rg -n "ejs\.render\("
-rg -n "pug\.compile\("
-
-# 5. Path Traversal / LFI
-ast-grep --pattern 'fs.readFile($PATH, $$)' --lang typescript
-ast-grep --pattern 'fs.readFileSync($PATH, $$)' --lang typescript
-ast-grep --pattern 'path.join($PATH)' --lang typescript
-rg -n "res\.sendFile\("
-```
-
-**Critical Pattern:** If `$URL` or `$CMD` or `$PATH` contains string interpolation (`` `${req.query.url}` ``) or concatenations from user input WITHOUT validation, it's a Critical finding.
+7. **Password reset:**
+   - Token: cryptographically random? sufficient length? expiry set?
+   - Can same token be reused after password change?
 
 ---
 
-## Phase 5: Injection Flaws (SQLi & NoSQLi)
+## Phase 4: Dangerous Sinks (RCE, SSRF, SSTI, Path Traversal)
 
-**Goal:** Find database queries constructed with unsanitized input.
+**Goal:** Find functions that execute code, make requests, or access files.
 
-**Search commands:**
-```bash
-# Raw SQL Injection (pg, mysql, typeorm raw)
-rg -n "query\(\s*[\`\"'].*\$.*[\`\"']" # Template literals in queries
-ast-grep --pattern '$DB.query($SQL, $$)' --lang typescript
+**Use BOTH Grep tool AND ast-grep (sg via Bash):**
 
-# NoSQL Injection (MongoDB / Mongoose)
-rg -n "\.(find|findOne|update|deleteOne)\(\s*req\.(query|body)"
-# Look for missing $eq sanitization allowing {"$ne": null} bypasses
-```
+1. **RCE / Command Injection:**
+   - Grep: `child_process`, `exec\(`, `execSync\(`, `spawn\(`, `spawnSync\(`
+   - Grep: `eval\(`, `new Function\(`, `vm\.runIn`, `vm\.createScript`
+   - sg: `exec($CMD)`, `exec(\`$CMD\`)`, `execSync($CMD)`, `spawn($CMD, $$)`
+   - sg: `eval($CODE)`, `new Function($CODE)`
+   - sg: `setTimeout($STR, $$)` — string argument (not function) = eval-like
+
+2. **SSRF:**
+   - Grep: `fetch\(`, `axios`, `got\(`, `request\(`, `http\.get\(`, `https\.request\(`, `undici`
+   - sg: `fetch($URL)`, `fetch($URL, $$)`, `axios.get($URL)`, `axios($CFG)`
+   - sg: `got($URL)`, `http.get($URL)`
+
+3. **Deserialization:**
+   - `unserialize\(`, `node-serialize`
+   - `yaml\.load\(` (js-yaml without `safeLoad` / `SAFE_SCHEMA`)
+   - `JSON\.parse\(` with user input flowing to prototype-sensitive operations
+
+4. **SSTI:**
+   - `res\.render\(.*req\.(body|query|params)` — user input in template context
+   - `ejs\.render\(`, `pug\.compile\(`, `handlebars\.compile\(`, `nunjucks\.renderString\(`
+   - Template string with user input in response: `` res.send(`...${req.query.x}...`) ``
+
+5. **Path Traversal / LFI:**
+   - `fs\.readFile`, `fs\.readFileSync`, `fs\.createReadStream` — check if path includes user input
+   - `fs\.writeFile`, `fs\.writeFileSync` — arbitrary file write
+   - `path\.join\(` or `path\.resolve\(` with user-controlled segments without `../` check
+   - `res\.sendFile\(`, `res\.download\(`
+
+**Critical:** If ANY sink receives user input via interpolation or concatenation WITHOUT validation → Critical finding.
 
 ---
 
-## Phase 6: Logic Flaws & Objects
+## Phase 5: Injection Flaws
 
-**Goal:** Prototype Pollution, Mass Assignment, and Race Conditions.
+**Goal:** SQL/NoSQL injection, GraphQL abuse, ReDoS, SSR XSS.
 
-**Search commands:**
-```bash
-# Prototype Pollution (Unsafe Merge/Clone)
-rg -n "\.merge\("
-rg -n "Object\.assign\(.*,\s*req\.body\)"
-rg -n "lodash\.merge"
+1. **SQL Injection:**
+   - Template literals in queries: `` query(`SELECT ... WHERE id = ${id}`) ``
+   - String concat: `"SELECT * FROM " + table`
+   - Grep: `\.query\(`, `\.raw\(`, `knex\.raw\(`, `sequelize\.query\(`, `prisma\.\$queryRaw`
+   - sg: `$DB.query(\`$SQL\`)`, `knex.raw($SQL)`
+   - **Exclude safe patterns:** parameterized queries (`$1`, `?`, `:name` placeholders)
 
-# Mass Assignment
-# Look for ORM create/update directly taking req.body
-ast-grep --pattern '$MODEL.create(req.body)' --lang typescript
-ast-grep --pattern '$MODEL.update(req.body, $$)' --lang typescript
+2. **NoSQL Injection (MongoDB/Mongoose):**
+   - `\.(find|findOne|updateOne|deleteOne)\(.*req\.(body|query)`
+   - User objects in query enabling `{ $ne: null }`, `{ $regex: ".*" }` operators
+   - Fix check: `mongo-sanitize`, `String()` casting, explicit `$eq`
 
-# Race Conditions (Missing Await)
-rg -n "async function" | grep -v "await" # Heuristic for detached promises
-```
+3. **GraphQL:**
+   - Introspection enabled: `introspection:\s*true` or not explicitly disabled
+   - Missing depth/complexity limits: check for `graphql-depth-limit`, `graphql-query-complexity`
+   - Batching: multiple ops in single request without limit
+   - Resolver auth: auth checks in resolvers (not just middleware)?
+   - Field suggestion leak: `Did you mean` in error responses
+
+4. **ReDoS (Regex Denial of Service):**
+   - `new RegExp\(` with user-controlled pattern = arbitrary ReDoS
+   - Nested quantifiers in hardcoded regex: `(a+)+`, `(a|a)*`, `([a-z]+)*`
+   - Grep: `\.match\(`, `\.replace\(`, `\.test\(` with dynamic regex argument
+
+5. **SSR XSS:**
+   - `dangerouslySetInnerHTML` with user-derived data
+   - `res\.send\(.*req\.(body|query|params)` — unsanitized in response
+   - Template engines rendering user input without escaping
+
+---
+
+## Phase 6: Logic Flaws, DOM XSS & Configuration
+
+**Goal:** Prototype Pollution, Mass Assignment, DOM XSS, file upload, configuration.
+
+1. **Prototype Pollution:**
+   - `Object\.assign\(.*req\.body`, `\.merge\(`, `lodash\.merge`, `_.merge`, `_.defaultsDeep`
+   - Deep merge/clone with user-controlled keys (`__proto__`, `constructor`, `prototype`)
+   - sg: `Object.assign($T, req.body)`, `_.merge($T, $S)`
+
+2. **Mass Assignment:**
+   - ORM create/update with raw request body:
+   - sg: `$M.create(req.body)`, `$M.update(req.body, $$)`
+   - Sequelize without `fields` whitelist, Mongoose without strict schema
+   - Prisma: `prisma.$M.create({ data: req.body })`
+
+3. **DOM-based XSS (frontend):**
+   - **Sources:** `location\.(search|hash|href)`, `document\.referrer`, `document\.URL`, `window\.name`
+   - **Sinks:** `\.innerHTML`, `\.outerHTML`, `document\.write`, `eval\(`, `jQuery\.html\(`, `\$\(.*\)\.html\(`
+   - `dangerouslySetInnerHTML` with user-derived data (React)
+   - `v-html` (Vue), `[innerHTML]` (Angular) with dynamic binding
+
+4. **File upload:**
+   - `multer`, `formidable`, `busboy` — check:
+     - File type validation (extension AND mime type)?
+     - Filename sanitization (path traversal via `../`)?
+     - File size limits set?
+     - Storage destination (public accessible directory?)
+
+5. **Environment & config exposure:**
+   - `.env` files committed (check `.gitignore`)
+   - `process\.env` values leaked to client-side bundle
+   - Next.js: `NEXT_PUBLIC_` prefix exposes vars to client — audit what's prefixed
+   - Debug mode in production: `NODE_ENV.*development`, `DEBUG=`
+   - Source maps: `*.map` files in build output
+
+6. **Race conditions:**
+   - Check-then-act without transaction: read balance → check → update
+   - Missing `await` on critical async operations
+   - `Promise.all` on dependent operations that should be sequential
 
 ---
 
 ## Phase 7: Taint Analysis & Report Generation
 
-**MANDATORY Taint Analysis Process:**
-For every sink identified in Phases 3-6, you MUST trace the data backward to the source (Phase 1/2).
-1. **Source:** `const targetUrl = req.query.url;`
-2. **Propagator:** `const sanitizedUrl = customFormat(targetUrl);` (Check if `customFormat` actually sanitizes or just formats).
-3. **Sink:** `fetch(sanitizedUrl);`
-4. **Verdict:** If the flow is unbroken by strict validation (regex, allowlists, type casting), it is a vulnerability.
+**MANDATORY Taint Analysis for every finding:**
+1. **Source:** Where user input enters (e.g., `req.query.url`)
+2. **Propagator:** How it flows (assignments, function calls, transformations)
+3. **Sanitizer check:** Validation present? (allowlist, type cast, library sanitizer)
+4. **Sink:** Where it reaches a dangerous function (e.g., `fetch(url)`)
+5. **Verdict:** Unbroken flow without strict validation = vulnerability
 
-**Report template (`.js-audit/report.md`):**
+**References for report-writer agent:**
+- `references/cwe-checklist.md` for CWE mapping and CVSS scoring
+- `references/escalation-guide.md` for identifying attack chain escalations
+- `references/h1-examples.md` for real-world precedent
+
+**Output:** Write `.js-audit/report.md`
+
+### Report Template
 
 ```markdown
-### 🧠 Brain Dump (Processo Cognitivo e Descartes)
-> **[MANDATORY]** Document your logical thinking process here BEFORE listing vulnerabilities.
-> - What did you search for? 
-> - What did you fail to find? 
-> - Highlight code snippets that looked suspicious at first (false positives) but were discarded after deeper analysis, explaining *why* (e.g., "Found a 'url' parameter, but it undergoes strict regex sanitization before fetch").
+# Brain Dump
+
+## Project Overview
+- **Framework:** [detected from Phase 0]
+- **Language:** JS / TS
+- **Entry points:** [count of routes/endpoints]
+- **Auth mechanism:** [JWT / session / OAuth / none]
+- **Key dependencies:** [security-relevant packages]
+
+## Attack Surface Summary
+- **Routes without auth:** [list]
+- **Dangerous sinks found:** [count by type]
+- **External integrations:** [APIs, databases, cloud services]
+
+## Analysis Log
+- [Key decisions, patterns investigated, reasoning]
+- [Interesting code paths and potential attack chains]
+
+## Dead Ends & False Positive Elimination
+- [Sinks found but properly validated/sanitized — with explanation]
+- [Patterns searched but not present in this codebase]
+- [Findings investigated and discarded — specific reason]
+
+---
 
 # JS/TS Bug Bounty Report: [Project Name]
 
 ## Executive Summary
-- Findings: [N] total | Critical: X | High: X | Medium: X
+- **Findings:** N total | Critical: X | High: X | Medium: X | Low: X
+- **Framework:** [detected]
+- **Key Risks:** [1-2 sentences]
 
 ---
 
-## [VULN-001] [Vulnerability Type] — [SEVERITY]
+## [VULN-001] Title — SEVERITY
 
-**CWE:** CWE-XXX
-**CVSS:** X.X (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
-**Impact:** [Concrete impact - e.g., "Allows an unauthenticated attacker to read arbitrary internal AWS metadata via SSRF."]
+**CWE:** CWE-XXX — [Title]
+**CVSS 3.1:** X.X (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
+**Impact:** [Concrete impact]
 
 ### Evidence & Taint Analysis
-File: `src/controllers/api.ts:42`
-
-**Source:** User input enters via `req.query.url`.
+**Source:** `src/routes/api.ts:15`
 ```typescript
-40: export const proxyRequest = async (req, res) => {
-41:   const userUrl = req.query.url; // <-- SOURCE
+const userUrl = req.query.url; // SOURCE
 ```
 
-**Sink:** The input is passed directly to `axios.get` without validation.
+**Propagator:** (if intermediate processing exists)
+
+**Sink:** `src/routes/api.ts:20`
 ```typescript
-42:   const response = await axios.get(userUrl); // <-- SINK
+const response = await fetch(userUrl); // SINK — no validation
 ```
 
-### Exploit Payload (PoC)
+**Flow:** `req.query.url` → `userUrl` → `fetch(userUrl)` — unvalidated
+
+### Exploit PoC
 ```http
 GET /api/proxy?url=http://169.254.169.254/latest/meta-data/ HTTP/1.1
 Host: target.com
 ```
 
 ### Remediation
-[Provide specific code fix using an allowlist or strict URL parsing]
+```typescript
+// Specific fix with secure code example
+```
 ```

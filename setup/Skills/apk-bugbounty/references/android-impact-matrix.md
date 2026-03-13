@@ -52,29 +52,6 @@ If a vulnerability is in a third-party SDK (OkHttp, Glide, etc.):
 
 ---
 
-## CWE Quick Reference
-
-| CWE | Name | Common Android manifestation |
-|-----|------|------------------------------|
-| CWE-200 | Information Exposure | Logcat, SharedPrefs, external storage |
-| CWE-312 | Cleartext Storage of Sensitive Info | SharedPreferences, SQLite unencrypted |
-| CWE-319 | Cleartext Transmission | HTTP endpoints, no cert pinning with sensitive data |
-| CWE-321 | Use of Hard-coded Cryptographic Key | sources const-string with AES key |
-| CWE-798 | Use of Hard-coded Credentials | API keys, tokens, passwords in sources |
-| CWE-489 | Active Debug Code | android:debuggable="true" |
-| CWE-502 | Deserialization of Untrusted Data | Parcelable/Serializable from intents |
-| CWE-601 | Open Redirect | WebView loadUrl(intent.getData()) |
-| CWE-611 | XML External Entity | XML parsers in sources |
-| CWE-639 | IDOR | Object references in ContentProvider |
-| CWE-749 | Exposed Dangerous Method | addJavascriptInterface |
-| CWE-78  | OS Command Injection | Runtime.getRuntime().exec() |
-| CWE-22  | Path Traversal | ZipSlip, ContentProvider openFile |
-| CWE-921 | Storage of Sensitive Data in Mechanism without Access Control | External storage |
-| CWE-926 | Improper Export of Android Application Component | exported=true components |
-| CWE-927 | Use of Implicit Intent for Sensitive Communication | Implicit broadcasts with tokens |
-
----
-
 ## Report Quality Checklist (Bug Bounty standard)
 
 - [ ] Title is specific (not "Hardcoded Secret" but "Hardcoded Stripe Live API Key Allows Unauthorized Payment Creation")

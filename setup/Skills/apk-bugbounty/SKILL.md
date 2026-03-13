@@ -1,230 +1,353 @@
 ---
 name: apk-bugbounty
-description: Android APK static analysis for bug bounty hunting. Analyzes decompiled APKs (Jadx/Apktool output) focusing on HIGH-IMPACT, EXPLOITABLE findings. Covers secrets, exported components, WebViews (with Taint Analysis), deep links, Firebase, Native Libs, and business logic flaws. Every finding MUST have concrete evidence and real exploit impact.
+description: Android APK static analysis for bug bounty hunting. Decompiles APKs with BOTH Jadx AND Apktool for maximum coverage. Analyzes secrets, exported components, WebViews (Taint Analysis), deep links, Firebase, Native Libs, IPC abuse, and business logic flaws. Every finding MUST have concrete evidence and real exploit impact.
 ---
 
 # Android APK Bug Bounty Analysis Skill
 
 Static analysis of decompiled Android APKs for bug bounty programs.
-**Rule #1: NO HALLUCINATION. Every finding MUST be backed by concrete code evidence (file path + line + snippet) and a clear, reproducible exploit path.**
-**Rule #2: No impact = not reported. Ignore theoretical issues without an attack vector.**
-**Rule #3: STRICT BRAIN DUMP MANDATE. Before listing any vulnerability, you MUST output a detailed "Brain Dump" documenting your logical thinking process, what you searched for and failed to find, and technical explanations for discarding false positives.**
 
-## Phase 0: Target Structure & Decompilation
+**Rule #1: NO HALLUCINATION.** Every finding MUST be backed by concrete code evidence (file path + line + snippet) and a clear, reproducible exploit path.
+**Rule #2: No impact = not reported.** Ignore theoretical issues without an attack vector.
+**Rule #3: BRAIN DUMP MANDATE.** Before listing vulnerabilities, output a Brain Dump documenting your reasoning, what you searched and failed to find, and why you discarded false positives.
+**Rule #4: DUAL DECOMPILATION.** ALWAYS run BOTH Jadx AND Apktool on every APK. Never skip one. Each tool reveals data the other misses.
 
-**Goal:** Ensure the target is properly decompiled for optimal analysis.
-*If the target is a raw `.apk` file, it MUST be decompiled before analysis:*
-1. **Java Source (Preferred for Business Logic):** `jadx -d out_jadx target.apk` (creates `sources/` folder)
-2. **Resources/Manifest (Fallback/Assets):** `apktool d target.apk` (creates `smali/`, `res/`, `assets/`)
+## Tool Usage
+
+Subagents MUST use Claude Code's dedicated tools for code analysis:
+- **Grep tool** for all text/pattern searches (NOT `grep` or `rg` via Bash)
+- **Glob tool** for file discovery (NOT `find` or `ls` via Bash)
+- **Read tool** for file reading (NOT `cat`/`head`/`tail` via Bash)
+- **Bash tool** ONLY for: `jadx`, `apktool`, `strings`, `openssl`, `curl`, `adb`, `mkdir`, `unzip`, `bundletool`
+
+---
+
+## Phase 0: Setup & Decompilation
+
+**Goal:** Validate tools, decompile with BOTH engines, create output directory, assess target.
+
+### Step 1: Validate Tools
+```bash
+which jadx && jadx --version || echo "FATAL: jadx not found in PATH"
+which apktool && apktool --version || echo "FATAL: apktool not found in PATH"
+```
+If either tool is missing, STOP and inform the user immediately.
+
+### Step 2: Handle Input Format
+
+| Input | Action |
+|---|---|
+| `.apk` | Proceed to Step 3 directly |
+| `.xapk` | `unzip target.xapk -d xapk_contents/` → locate `base.apk` and split APKs → decompile `base.apk` |
+| `.aab` | `bundletool build-apks --bundle=target.aab --output=target.apks` → `unzip target.apks` → decompile |
+| Split APKs | Identify `base.apk` → decompile it; note split configs for reference |
+| Already decompiled | Verify both Java sources AND `smali*/` exist. If only one, run the missing tool |
+
+### Step 3: Dual Decompilation (MANDATORY — NO EXCEPTIONS)
+```bash
+mkdir -p .apk-audit
+
+# ALWAYS run both tools
+jadx -d out_jadx "$APK_FILE" --no-res --threads-count 4 2>&1 | tail -5
+apktool d "$APK_FILE" -o out_apktool -f 2>&1 | tail -5
+```
+
+**Why both:**
+- **Jadx** → readable Java source in `out_jadx/sources/` — best for business logic, control flow, taint analysis
+- **Apktool** → faithful smali bytecode + properly decoded XML + raw assets in `out_apktool/` — catches obfuscated strings, resource values, and structures Jadx misses or decompiles incorrectly
+
+### Step 4: Map Target Structure
+```
+<workspace>/
+├── out_jadx/
+│   ├── sources/             ← Java source (PRIMARY for logic analysis)
+│   └── resources/           ← Jadx-extracted resources
+├── out_apktool/
+│   ├── AndroidManifest.xml  ← Properly decoded manifest (USE THIS ONE)
+│   ├── smali*/              ← Bytecode (catches what Jadx misses)
+│   ├── res/                 ← Decoded XML (strings.xml, network_security_config, file_paths)
+│   ├── assets/              ← Raw assets, configs, certs, proto files
+│   ├── lib/                 ← Native libraries (.so)
+│   └── unknown/             ← Proto schemas, build artifacts
+└── .apk-audit/
+    └── report.md            ← Final report
+```
+
+### Step 5: Initial Assessment
+Quickly determine using Grep/Read:
+1. **Package name, version, minSdk, targetSdk** from `out_apktool/AndroidManifest.xml`
+2. **Obfuscation level** — are class names readable or `a.b.c` style?
+3. **Component count** — how many activities, services, receivers, providers?
+
+**Search paths for ALL subsequent phases:** `out_jadx/sources/`, `out_apktool/smali*/`, `out_apktool/assets/`, `out_apktool/res/`, `out_apktool/unknown/`, `out_apktool/lib/`
+
+---
+
+## Subagent Orchestration
+
+Delegate to 3 parallel specialized subagents (balanced workload), then compile report.
 
 ```
-<apk_root>/
-├── AndroidManifest.xml     ← Entry point: exported components, permissions, deep links
-├── assets/                 ← Secrets, certs, configs, proto files
-├── res/                    ← xml/network_security_config.xml, strings.xml, xml/file_paths.xml
-├── sources/                ← Jadx Java code (PRIMARY SEARCH TARGET)
-├── smali*/                 ← Apktool bytecode (Fallback)
-├── lib/                    ← Native C/C++ libraries (.so files)
-└── unknown/                ← Bundled files, proto schemas, build artifacts
+Wave 1 (PARALLEL — launch all three in a single message):
+  ├── mobile-security agent     → Phases 1 + 4 (Manifest/Attack Surface + WebView/Taint)
+  ├── security-automation agent → Phases 2 + 3 + 5 (Secrets + Network + Data Storage)
+  └── pentest agent             → Phases 6 + 7 + 8 (IPC + Firebase + Business Logic/Native)
+
+Wave 2 (SEQUENTIAL — after Wave 1 completes):
+  └── report-writer agent → Phase 9: Compile all findings into .apk-audit/report.md
 ```
 
-**Note:** All subsequent search commands target `sources/` and `smali*/` to ensure coverage regardless of the decompilation tool used. Prioritize reading `.java` files from `sources/` over `.smali`.
+**Steps:**
+1. **Phase 0:** Run decompilation yourself (NOT delegated).
+2. **Wave 1:** Launch three `Agent` calls in parallel. Provide each with:
+   - Full phase instructions for their assigned phases
+   - APK root path and both decompiled directory paths (`out_jadx/`, `out_apktool/`)
+   - Phase 2 agent: reference `references/secret-patterns.md`
+   - Pentest agent: reference `references/frida-templates.md`
+3. **Wave 2:** After all Wave 1 agents finish, launch `report-writer` with all findings and `references/android-cwe-checklist.md`.
+4. Output the final report path.
+
+---
 
 ## Workflow Overview
 
-Execute phases in order.
 ```
-Phase 1: Manifest & Permissions   → exported components, deep links, dangerous permissions
-Phase 2: Secrets & Certificates   → hardcoded keys, certs, tokens in assets/sources/smali/lib
-Phase 3: Network Security         → cleartext, cert pinning, MITM surface
-Phase 4: WebView & Taint Analysis → JS enabled, file access, deep link → loadUrl (source to sink)
-Phase 5: Data Storage             → SharedPreferences, SQLite, files, external storage
-Phase 6: IPC & Component Abuse    → Intent injection, provider traversal, broadcast abuse
-Phase 7: Firebase & Cloud         → misconfig, exposed endpoints, hardcoded project IDs
-Phase 8: Business Logic & Native  → Command Injection, ZipSlip, Auth flows, Native Libs
-Phase 9: Report & PoC Generation  → Confirmed findings + Frida script hints
+Phase 1: Manifest & Attack Surface  → exports, deep links, permissions, Task Hijacking, tapjacking
+Phase 2: Secrets & Certificates     → keys, tokens, certs across ALL dirs (Jadx + Apktool)
+Phase 3: Network Security           → cleartext, cert pinning, MITM, WebSocket, TrustManager
+Phase 4: WebView & Taint Analysis   → JS bridges, file access, mandatory source-to-sink tracing
+Phase 5: Data Storage               → SharedPrefs, SQLite, logs, external storage, clipboard
+Phase 6: IPC & Component Abuse      → Intent injection, Provider traversal, FileProvider, PendingIntent
+Phase 7: Firebase & Cloud           → misconfig, exposed endpoints, unauthenticated access
+Phase 8: Business Logic & Native    → CmdInjection, ZipSlip, auth bypass, proto/gRPC, native libs
+Phase 9: Report & PoC Generation    → Confirmed findings with evidence + Frida scripts
 ```
 
 ---
 
-## Phase 1: Manifest & Permissions Analysis
+## Phase 1: Manifest & Attack Surface
 
-**Goal:** Map attack surface — what can an external app or user invoke?
+**Goal:** Map the full attack surface from the manifest and component configuration.
 
-**Search commands:**
-```bash
-# Find all exported components
-grep -n 'android:exported="true"' AndroidManifest.xml
-grep -n 'android:exported="true"' AndroidManifest.xml | grep -i "activity\|service\|receiver\|provider"
+**Use `out_apktool/AndroidManifest.xml` as the source of truth** (properly decoded by Apktool).
 
-# Deep links / custom schemes
-grep -n 'android:scheme\|android:host\|android:pathPrefix\|data android:' AndroidManifest.xml
+**Core checks:**
+1. **Exported components:** `android:exported="true"` — cross-reference with intent filters
+2. **Deep links:** `android:scheme=`, `android:host=`, `android:pathPrefix=`, `android:pathPattern=`
+3. **Dangerous permissions:** `uses-permission` — flag: CAMERA, LOCATION, CONTACTS, SMS, STORAGE, PHONE, READ_LOGS
+4. **Backup enabled:** `android:allowBackup`, `android:fullBackupContent`, `android:dataExtractionRules`
+5. **Debug flag:** `android:debuggable="true"`
+6. **Provider grants:** `android:grantUriPermissions`, `android:readPermission`, `android:writePermission`
 
-# Dangerous permissions
-grep -n 'uses-permission' AndroidManifest.xml
-
-# Backup enabled (data extraction)
-grep -n 'android:allowBackup\|android:fullBackupContent\|android:dataExtractionRules' AndroidManifest.xml
-
-# Debug flag
-grep -n 'android:debuggable' AndroidManifest.xml
-
-# Content providers with grants
-grep -n 'android:grantUriPermissions\|android:readPermission\|android:writePermission' AndroidManifest.xml
-```
+**Commonly missed checks:**
+7. **Task Hijacking:** `launchMode="singleTask"` + `taskAffinity` set to empty string or another package → phishing via activity overlay
+8. **Custom permission protectionLevel:** `<permission` with `protectionLevel="normal"` or `"dangerous"` without `"signature"` → any app can request it
+9. **Tapjacking:** Search source for `filterTouchesWhenObscured`. Exported activities with sensitive UI lacking this are vulnerable to overlay attacks
+10. **Broadcast receivers with priority:** `android:priority` in `<intent-filter>` — high priority on ordered broadcasts enables interception and abort
+11. **SDK versions:** `minSdkVersion < 28` → cleartext allowed by default. Low `targetSdkVersion` weakens many security defaults
 
 **For each exported component, document:**
-- Component name (full class name)
-- Type (Activity/Service/Receiver/Provider)
+- Full class name and type (Activity/Service/Receiver/Provider)
 - Intent filters / schemes / hosts
 - Permission protection (none = exploitable)
-- Attack scenario with PoC intent
+- Concrete attack scenario with PoC `adb` command
 
 ---
 
 ## Phase 2: Secrets & Certificates
 
-**Goal:** Find credentials, private keys, API tokens with actual access across Java, Smali, and Native Libs.
+**Goal:** Find credentials, keys, and tokens with actual access potential.
 
-**Search commands:**
+**Reference:** Read `references/secret-patterns.md` for comprehensive regex patterns by provider.
+
+**Search strategy (prioritized):**
+1. **Known config files first:** `BuildConfig.java`, `strings.xml`, `google-services.json`, any `.properties` files
+2. **High-value patterns:** Apply regex from `references/secret-patterns.md` across BOTH `out_jadx/sources/` AND `out_apktool/smali*/`
+3. **Assets directory:** Check all `.json`, `.xml`, `.properties`, `.cfg`, `.conf`, `.yaml` files in `out_apktool/assets/`
+4. **Native libraries:** Use Bash `strings` on each `.so` file in `out_apktool/lib/`, search for URLs, keys, tokens
+5. **Unknown directory:** Check `out_apktool/unknown/` for config files and build artifacts
+
+**Certificate analysis:**
 ```bash
-# High-entropy strings / API keys in Java/Smali
-grep -rn "const-string\|const-string/jumbo\|String " sources/ smali*/ 2>/dev/null | grep -iE "(api[_-]?key|secret|token|password|passwd|apikey|auth|bearer|private[_-]?key|access[_-]?key)" | head -50
-
-# Native Libraries (.so) string extraction
-find lib/ -name "*.so" -exec strings {} \; 2>/dev/null | grep -iE "(api[_-]?key|http://|https://|secret|token)" | head -30
-
-# AWS & Firebase
-grep -rn "AKIA\|ASIA\|AROA\|AIza[0-9A-Za-z_-]{35}" sources/ smali*/ assets/ res/ unknown/ 2>/dev/null
-
-# Firebase URLs
-grep -rn "firebaseio\.com\|firebase\.google\.com" sources/ smali*/ assets/ res/ unknown/ 2>/dev/null | head -20
-
-# Certificates and keystores
-find assets/ res/ -name "*.pfx" -o -name "*.p12" -o -name "*.keystore" -o -name "*.jks" -o -name "*.pem" -o -name "*.crt" -o -name "*.key" 2>/dev/null
-
-# JWT & OAuth
-grep -rn "eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*" sources/ smali*/ assets/ res/ 2>/dev/null | head -20
-grep -rn "client_secret\|client_id\|app_secret" sources/ smali*/ assets/ res/ unknown/ 2>/dev/null | head -20
-
-# Stripe / Payment keys
-grep -rn "sk_live\|pk_live\|sk_test\|pk_test\|rk_live" sources/ smali*/ assets/ res/ 2>/dev/null
-```
-
-**Certificate analysis (PFX/P12):**
-```bash
-# Check if password is empty, app name, or common default
-for pw in "" "password" "123456" "android" "changeit" "<target_company_name>"; do
-  openssl pkcs12 -in assets/Certificate.pfx -nokeys -passin "pass:$pw" 2>/dev/null && echo "PASSWORD: $pw" && break
+# Find cert files (use Glob: *.pfx, *.p12, *.keystore, *.jks, *.pem, *.crt, *.key)
+# Test common passwords
+for pw in "" "password" "123456" "android" "changeit"; do
+  openssl pkcs12 -in <cert_path> -nokeys -passin "pass:$pw" 2>/dev/null && echo "CRACKED: $pw" && break
 done
 ```
 
+**Validation for every secret found:**
+- Is it a live production key or test/example value?
+- What access does it grant externally?
+- Can it be exploited without device access?
+
 ---
 
-## Phase 3: Network Security Analysis
+## Phase 3: Network Security
 
-**Goal:** Identify MITM opportunities and cert pinning bypass surfaces.
+**Goal:** Identify MITM opportunities, cleartext exposure, and transport security flaws.
 
-**Search commands:**
-```bash
-# Network security config
-cat res/xml/network_security_config.xml 2>/dev/null || find res/ -name "network_security_config.xml" -exec cat {} \;
+**Checks:**
+1. **Network security config:** Read `out_apktool/res/xml/network_security_config.xml`
+   - If **absent** + `targetSdkVersion >= 28`: cleartext blocked by default (good)
+   - If **absent** + `targetSdkVersion < 28`: cleartext allowed by default (report it)
+   - If **present:** check `cleartextTrafficPermitted`, `<trust-anchors>`, user-installed CA trust, custom pins
 
-# Cleartext traffic allowed
-grep -n "cleartextTrafficPermitted\|usesCleartextTraffic" res/xml/network_security_config.xml AndroidManifest.xml 2>/dev/null
+2. **TrustAllCerts (CRITICAL):** Search for `X509TrustManager`, `checkServerTrusted`, `TrustManager` — empty method body = disabled validation
 
-# TrustAllCerts / disabled validation (CRITICAL)
-grep -rn "TrustManager\|X509TrustManager\|checkClientTrusted\|checkServerTrusted" sources/ smali*/ | grep -v "^Binary" | head -20
+3. **HostnameVerifier bypass:** Search for `HostnameVerifier`, `ALLOW_ALL_HOSTNAME_VERIFIER`, `verify` methods returning `true` unconditionally
 
-# HTTP URLs (not HTTPS)
-grep -rn "http://" sources/ smali*/ assets/ res/ lib/ | grep -v "schemas.android\|w3.org\|#\|localhost\|127.0.0.1\|comment" | head -30
-```
+4. **HTTP URLs:** Search for `http://` across sources and assets — exclude `schemas.android.com`, `www.w3.org`, `localhost`, `127.0.0.1`, `10.0.`
+
+5. **WebSocket without TLS:** Search for `ws://` (not `wss://`) — unencrypted WebSocket traffic
+
+6. **Certificate pinning implementation:** Search for `CertificatePinner`, `sha256/`, pin entries in network_security_config — note class names for Frida bypass PoC (see `references/frida-templates.md`)
 
 ---
 
 ## Phase 4: WebView & Taint Analysis
 
-**Goal:** Find XSS, arbitrary URL load, file access, JS bridge abuse by explicitly tracing from Source to Sink.
+**Goal:** Find XSS, arbitrary URL load, file access, and JS bridge abuse via source-to-sink tracing.
 
-**Search commands (Identify Sinks & Configs):**
-```bash
-# JavaScript enabled & JS bridges
-grep -rn "setJavaScriptEnabled\|addJavascriptInterface" sources/ smali*/ | head -20
+**Step 1 — Identify Sinks & Configs (search both Jadx and Apktool output):**
+- `setJavaScriptEnabled(true)` — JS execution enabled
+- `addJavascriptInterface` — JS-to-Java bridge (RCE on API < 17)
+- `setAllowFileAccess`, `setAllowFileAccessFromFileURLs`, `setAllowUniversalAccessFromFileURLs`
+- `loadUrl`, `loadData`, `loadDataWithBaseURL`, `evaluateJavascript` — URL loading sinks
 
-# File access
-grep -rn "setAllowFileAccess\|setAllowFileAccessFromFileURLs\|setAllowUniversalAccessFromFileURLs" sources/ smali*/ | head -20
+**Step 2 — Identify Sources:**
+- `getIntent().getData()`, `getIntent().getStringExtra()`
+- Deep link parameters from Phase 1
+- `getQueryParameter`, `getPathSegments`
+- Data from `SharedPreferences`, `ContentProvider` queries
 
-# URL Loading Sinks
-grep -rn "loadUrl\|loadData\|loadDataWithBaseURL\|evaluateJavascript" sources/ smali*/ | head -20
-```
+**Step 3 — MANDATORY Taint Analysis (for each sink found):**
+1. **Trace backward:** Where does the URL/data argument originate?
+2. **Check validation:** Does `shouldOverrideUrlLoading` filter domains? Is there a whitelist?
+3. **Check sanitization:** Is input validated/escaped before reaching the sink?
+4. **Determine exploitability:** Can an attacker control the input from an external app or deep link?
 
-**MANDATORY Taint Analysis Process:**
-1. **Source:** Identify where untrusted data enters (e.g., `getIntent().getData()`, `getIntent().getStringExtra()`).
-2. **Sink:** Identify the dangerous method (e.g., `webView.loadUrl(data)`).
-3. **Trace Flow:** You MUST verify that the data flows from Source to Sink WITHOUT proper validation or sanitization.
-4. **Validation:** If `shouldOverrideUrlLoading` blocks untrusted domains, it's NOT a vulnerability unless a bypass exists.
+**Only report if:** Untrusted data flows from Source → Sink WITHOUT adequate validation. Document the complete chain.
 
 ---
 
 ## Phase 5: Insecure Data Storage
 
-**Goal:** Find PII/secrets written to accessible locations.
+**Goal:** Find PII/secrets written to accessible or logged locations.
 
-**Search commands:**
-```bash
-grep -rn "getSharedPreferences\|getExternalStorage\|getExternalFilesDir\|openOrCreateDatabase" sources/ smali*/ | head -20
-grep -rn "Log\.d\|Log\.v\|Log\.i\|Log\.w\|Log\.e" sources/ smali*/ | grep -iE "token|password|secret|key|user|email|credit|card|cvv|pin" | head -20
-```
+**Checks:**
+1. **SharedPreferences with sensitive data:**
+   - Find `getSharedPreferences` → identify preference file names
+   - Trace `.putString`, `.putInt` in same class — flag tokens, passwords, PII stored without encryption (EncryptedSharedPreferences)
+
+2. **SQLite databases:**
+   - Search for `openOrCreateDatabase`, `SQLiteDatabase`, `SQLiteOpenHelper`
+   - Check if sensitive data is stored; check for SQLCipher encryption
+
+3. **External storage (world-readable):**
+   - `getExternalStorageDirectory`, `getExternalFilesDir`, `Environment.EXTERNAL_STORAGE`
+   - Any sensitive data here is readable by any app with STORAGE permission
+
+4. **Logging sensitive data:**
+   - Search for `Log.d`, `Log.v`, `Log.i`, `Log.w`, `Log.e` across sources
+   - Cross-reference with sensitive terms: token, password, secret, key, email, credit, card, session, auth
+
+5. **Clipboard exposure:**
+   - Search for `ClipboardManager`, `setPrimaryClip` — clipboard data is accessible to all apps
 
 ---
 
 ## Phase 6: IPC & Component Abuse
 
-**Goal:** Intent injection, ContentProvider path traversal, broadcast interception.
+**Goal:** Intent injection, ContentProvider path traversal, FileProvider abuse, broadcast interception.
 
-**Search commands:**
-```bash
-# ContentProvider file access (path traversal vector)
-grep -rn "openFile\|openAssetFile\|query\|ParcelFileDescriptor" sources/ smali*/ | head -20
+**Checks:**
+1. **ContentProvider path traversal:**
+   - Search for `openFile`, `openAssetFile`, `ParcelFileDescriptor` in sources
+   - Verify if `Uri` path is validated against `../` traversal
+   - Check `query` method for SQL injection potential
 
-# Intent handling (extras used unsafely)
-grep -rn "getIntent\|getStringExtra\|getIntExtra\|getBundleExtra\|getParcelableExtra" sources/ smali*/ | head -30
+2. **FileProvider paths (commonly missed, high impact):**
+   - Read `out_apktool/res/xml/file_paths.xml` and any `*_paths.xml` variants
+   - `<root-path name="root" path="/" />` → exposes entire filesystem
+   - `<external-path>` with broad patterns → exposes external storage
+   - Overly permissive paths combined with exported provider = file read/write
 
-# Pending intents (hijacking)
-grep -rn "PendingIntent\|FLAG_MUTABLE\|FLAG_IMMUTABLE" sources/ smali*/ | head -20
-```
+3. **Unsafe Intent handling:**
+   - Search for `getStringExtra`, `getIntExtra`, `getBundleExtra`, `getParcelableExtra`
+   - Trace how extras are used — flag if they reach `loadUrl`, SQL queries, file operations, `startActivity`
+   - Check for intent redirection: `startActivity(getIntent().getParcelableExtra("intent"))`
+
+4. **PendingIntent hijacking:**
+   - Search for `PendingIntent.getActivity`, `PendingIntent.getBroadcast`, `PendingIntent.getService`
+   - `FLAG_MUTABLE` on implicit PendingIntents → hijackable
+   - Empty base intents (`new Intent()`) in PendingIntent → attacker controls destination
+
+5. **Implicit intents leaking data:**
+   - `new Intent("action")` without explicit component → data visible to all apps
 
 ---
 
 ## Phase 7: Firebase & Cloud Misconfigurations
 
-**Search commands:**
+**Checks:**
+1. **google-services.json:** Use Glob to find, then Read — extract project_id, api_key, storage_bucket, database_url
+
+2. **Firebase/Cloud URLs:** Search for `firebaseio.com`, `appspot.com`, `storage.googleapis.com`, `cloudfunctions.net`
+
+3. **Unauthenticated access tests:**
 ```bash
-find . -name "google-services.json" 2>/dev/null | xargs cat 2>/dev/null
-grep -rn "firebaseio\.com\|appspot\.com\|storage\.googleapis\.com" sources/ smali*/ assets/ res/ unknown/ 2>/dev/null
+# Firebase Realtime Database
+curl -s "https://<project_id>.firebaseio.com/.json" | head -c 500
+
+# Cloud Storage bucket listing
+curl -s "https://storage.googleapis.com/<bucket_name>/" | head -c 500
+
+# Firestore documents
+curl -s "https://firestore.googleapis.com/v1/projects/<project_id>/databases/(default)/documents" | head -c 500
 ```
-*Note: Always test Firebase DB URLs for unauthenticated access (`curl https://<project>.firebaseio.com/.json`).*
+
+4. **API key restriction test:**
+```bash
+# Test if key works for Maps API (common unrestricted key)
+curl -s "https://maps.googleapis.com/maps/api/staticmap?center=0,0&zoom=1&size=100x100&key=<API_KEY>" -o /dev/null -w "%{http_code}"
+```
 
 ---
 
 ## Phase 8: Business Logic & Native
 
-**Goal:** Find logic flaws, payment bypass, OS command injection, and unsafe file extraction.
+**Goal:** Logic flaws, command injection, unsafe file handling, proto/gRPC leaks, native lib analysis.
 
-**Search commands:**
-```bash
-# OS Command Injection
-grep -rn "Runtime\.getRuntime()\.exec\|ProcessBuilder" sources/ smali*/ 
+**Checks:**
+1. **OS Command Injection:**
+   - `Runtime.getRuntime().exec(`, `ProcessBuilder` — trace if user input reaches command arguments
 
-# ZipSlip (Unsafe unzipping / Path Traversal)
-grep -rn "ZipEntry\|java\.util\.zip" sources/ smali*/ | grep -i "getName"
+2. **ZipSlip (Path Traversal via Zip):**
+   - `ZipEntry` + `getName()` — check if entry name is validated against `../` before extraction
 
-# Authentication & Payment logic
-grep -rn "isLoggedIn\|checkAuth\|verifyToken\|payment\|checkout\|order\|purchase\|price" sources/ smali*/ | head -30
+3. **Authentication & payment logic:**
+   - Search for `isLoggedIn`, `checkAuth`, `verifyToken`, `payment`, `checkout`, `purchase`, `price`
+   - Flag client-side-only validation (bypassable with Frida — note for PoC)
 
-# Root/emulator detection & Pinning bypass hints (Client-side controls)
-grep -rn "isRooted\|detectRoot\|RootBeer\|isEmulator\|disablePin\|bypassPin" sources/ smali*/ | head -20
-```
+4. **Root/emulator detection:**
+   - Search for `isRooted`, `detectRoot`, `RootBeer`, `isEmulator`, `SafetyNet`, `Play Integrity`
+   - Record class and method names for Frida bypass (see `references/frida-templates.md`)
+
+5. **Proto/gRPC schema files:**
+   - Use Glob: `**/*.proto` across `out_apktool/assets/`, `out_apktool/unknown/`, root
+   - These leak internal API structure, endpoints, message formats, and field names
+
+6. **Native library analysis:**
+   - List `.so` files with architectures in `out_apktool/lib/`
+   - `strings` on each `.so` → search for URLs, keys, hardcoded credentials
+   - Search for JNI registrations: `RegisterNatives`, `JNI_OnLoad`
+   - Note if known vulnerable libs are bundled (old OpenSSL, libcurl, etc.)
+
+7. **Obfuscation assessment:**
+   - Check for ProGuard/R8 mapping file presence
+   - Class naming pattern: readable = no obfuscation; `a.a.a` = obfuscated
+   - Document level in report (affects analysis confidence)
 
 ---
 
@@ -232,108 +355,82 @@ grep -rn "isRooted\|detectRoot\|RootBeer\|isEmulator\|disablePin\|bypassPin" sou
 
 **Output:** Write `.apk-audit/report.md`
 
+**References for report-writer agent:**
+- `references/android-cwe-checklist.md` — CWE mapping, CVSS scoring guide, attack chain escalations
+- `references/android-impact-matrix.md` — Attacker position, P0/P1/P2 priority triage, SDK vs App scope guidance, report quality checklist
+- `references/frida-templates.md` — Frida PoC scripts for client-side control bypasses
+
 **Only include confirmed findings with:**
-1. Exact location (file path + line + Java/Smali snippet)
-2. Reproduction steps
-3. **Taint Analysis Proof:** Clear explanation of how data flows from user input to the vulnerable function.
-4. Real-world impact & CVSS score.
+1. Exact location (file path + line + snippet — from BOTH Jadx and Apktool where relevant)
+2. Reproduction steps (adb commands, curl commands, or Frida scripts)
+3. **Taint Analysis Proof** for all data-flow vulnerabilities
+4. Real-world impact & CVSS 3.1 score
+5. Specific remediation with code example
 
-**Frida PoC Requirement:**
-If the vulnerability relies on bypassing a client-side control (e.g., Root detection, SSL Pinning, Biometric bypass, or specific method manipulation), you MUST provide a functional Frida script hint in the report to demonstrate exploitability.
+**Frida PoC Requirement:** For vulnerabilities involving client-side controls, MUST include a Frida script. See `references/frida-templates.md`.
 
-Example Frida Hint for bypass:
-```javascript
-Java.perform(function() {
-    var TargetClass = Java.use("com.target.app.SecurityCheck");
-    TargetClass.isRooted.implementation = function() {
-        console.log("[*] Bypassing root check!");
-        return false; // Force false
-    };
-});
-```
+**CWE Reference:** Use `references/android-cwe-checklist.md` for accurate CWE mapping and CVSS scoring.
 
-**Report template:**
+### Report Template
+
 ```markdown
-# 🧠 Brain Dump
+# Brain Dump
 
-## Reconnaissance
-- **Target:**
-- **Version:**
-- **Platform:** Android
-- **Tools Used:** Jadx-GUI, Apktool, adb, Frida, Burp Suite
+## Target Overview
+- **Package:** [from manifest]
+- **Version:** [versionName + versionCode]
+- **Min SDK:** X | **Target SDK:** Y
+- **Obfuscation:** [none / ProGuard / R8 — observed pattern]
+- **Decompilation:** Jadx [success/partial/failed] | Apktool [success/partial/failed]
 
-## Initial Analysis
-- Decompile APK with Jadx and Apktool.
-- Review AndroidManifest.xml for exported components, permissions, and interesting configurations.
-- Check for hardcoded strings (APIs, URLs, credentials) in decompiled source.
+## Attack Surface Summary
+- **Exported components:** N total (X without permission protection)
+- **Deep link schemes:** [list with hosts]
+- **Dangerous permissions:** [list]
+- **Native libraries:** [count and names]
+- **Firebase/Cloud:** [project ID if found]
 
-## Dynamic Analysis Setup
-- Set up Frida for runtime instrumentation.
-- Configure Burp Suite for proxying traffic.
-- Install APK on a rooted emulator/device.
+## Analysis Log
+- [Key decisions made during analysis and reasoning]
+- [Interesting patterns observed, potential attack chains identified]
 
-## Static Analysis Areas
-- **Secrets:** API keys, tokens, credentials, sensitive URLs.
-- **Exported Components:** Activities, Services, Broadcast Receivers, Content Providers.
-- **WebViews:** JavaScript interfaces, URL loading, potential RCE via `addJavascriptInterface`.
-- **Deep Links:** Schemes, hosts, paths, parameter handling.
-- **Firebase:** API keys, database URLs, storage buckets.
-- **Native Libraries:** JNI functions, potential vulnerabilities in native code.
-- **Business Logic:** How the app handles critical functions (auth, payments, data).
-
-## Dynamic Analysis Areas
-- **Network Traffic:** Intercept and analyze all HTTP/HTTPS requests and responses. Look for sensitive data, insecure endpoints, API flaws.
-- **Runtime Behavior:** Use Frida to hook into interesting functions, bypass SSL pinning, observe data flows, manipulate app logic.
-- **Input Validation:** Test all input fields for injection flaws (SQLi, XSS, RCE).
-- **Authorization:** Test for IDORs, privilege escalation.
-
-## Potential Vulnerability Categories
-- Hardcoded Secrets
-- Insecure Data Storage
-- Broken Authentication/Authorization
-- Insecure Communication (SSL Pinning bypass)
-- WebView Vulnerabilities (RCE, XSS)
-- Deep Link Exploitation
-- Exposed API Keys/Endpoints
-- Business Logic Flaws
-- Native Code Vulnerabilities
-- Tapjacking/Overlay Attacks
-- Side-channel Data Leakage
+## Dead Ends & False Positive Elimination
+- [Searches that returned no actionable results and why]
+- [Findings investigated and discarded — with specific reason]
+- [Expected patterns not present in this app]
 
 ---
 
-# APK Bug Bounty Report: [<app_package_name>]
+# APK Bug Bounty Report: [package_name]
 
 ## Executive Summary
-- Findings: [N] total | Critical: X | High: X | Medium: X | Low: X
+- **Findings:** N total | Critical: X | High: X | Medium: X | Low: X
+- **Scope:** Dual decompilation (Jadx + Apktool), [X] source files analyzed
 
 ---
 
 ## [VULN-001] Title — SEVERITY
 
-**CWE:** CWE-XXX
-**CVSS:** X.X (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
-**Impact:** [Concrete impact]
+**CWE:** CWE-XXX — [Title]
+**CVSS 3.1:** X.X (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
+**Impact:** [What an attacker concretely achieves]
 
 ### Evidence & Taint Analysis
-File: `sources/com/example/app/TargetClass.java:42`
-[Explain data flow from source to sink]
+**Jadx:** `out_jadx/sources/com/example/TargetClass.java:42`
 ```java
 [exact code snippet]
 ```
+**Apktool (corroboration):** `out_apktool/smali/com/example/TargetClass.smali:128`
+```smali
+[relevant smali if it adds context]
+```
+**Data flow:** [Source] → [intermediate] → [Sink]
 
-### Reproduction Steps / Frida PoC
+### Reproduction Steps
 ```bash
-# adb / curl / Frida script
+# Exact adb / curl / Frida commands
 ```
 
 ### Remediation
-[Specific fix]
-```
-
-## Output Directory
-```bash
-mkdir -p "$APK_ROOT/.apk-audit"
-```
-All reports go to `.apk-audit/` inside the APK root.
+[Specific fix with code example]
 ```
