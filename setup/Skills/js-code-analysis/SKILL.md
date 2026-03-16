@@ -143,10 +143,19 @@ Phase 7: Taint & Report        → Source-to-Sink validation + report generation
    - `axios\.(get|post|put|request)\(` with variable arguments
    - Parameters named: `url`, `target`, `path`, `endpoint`, `webhook`, `callback`, `redirect`, `proxy`, `dest`
 
-2. **postMessage vulnerabilities:**
-   - `addEventListener\(["']message["']` — find handlers
-   - Check: is `event.origin` validated? No check = any origin can send data
-   - `postMessage\(` — what data is sent? to what origin?
+2. **postMessage vulnerabilities (deep analysis):**
+   - `addEventListener\(["']message["']` — find ALL handlers, then for each:
+     - **Origin validation:** Is `event.origin` checked against a HARDCODED allowlist? Domain-only checks are insufficient
+     - **Inverted origin check:** `trusted.isSameOrigin(untrusted)` instead of `untrusted.isSameOrigin(trusted)` — when trusted has null fields (sandboxed iframe), all checks pass trivially
+     - **Regex domain bypass:** `/^https:\/\/.*facebook\.com$/` — unescaped dot allows `evilfacebook.com`. Check for `\.` before domain names
+     - **Origin stored as trusted:** `event.origin` stored to localStorage/variable then used to construct `script.src`, `iframe.src`, or `fetch()` URLs = critical
+     - **DOM injection from message:** `innerHTML`, `outerHTML`, `document.write()`, `.html()`, `form.action` set from `event.data` = DOM XSS even with valid origin
+     - **API/OAuth request construction:** Message body fields used to build server requests or OAuth parameters = parameter injection
+     - **Type confusion:** Value expected as String but Array/Object accepted — `typeof x === "string"` gate bypassed by arrays with malicious `.toString()`
+   - `postMessage\(.*,\s*['"]?\*['"]?\)` — wildcard targetOrigin with sensitive data (tokens, codes, blobs) = ALWAYS a bug
+   - `new MessageChannel` — after port sharing, verify subsequent messages on channel still authenticate; port reuse without re-validation = hijack
+   - `Math\.random\(\)` used to generate tokens, nonces, or shared secrets for cross-window auth — predictable via V8 PRNG state reconstruction (Z3 solver with 4+ sequential outputs)
+   - `window\.name` — persists across navigations; leaks data cross-origin if iframe navigated to attacker domain
 
 3. **WebSocket:**
    - `new WebSocket\(`, `io\(`, `io\.connect\(`, `socket\.on\(`
@@ -164,6 +173,15 @@ Phase 7: Taint & Report        → Source-to-Sink validation + report generation
 6. **Hidden/admin routes:**
    - `\/api\/(internal|admin|debug|test|_|health|metrics|graphql|graphiql)`
    - `window\.location\.(origin|href|hash)` — open redirect sources
+
+7. **Client-Side Path Traversal (CSPT2CSRF):**
+   - `fetch('/api/' + userInput + '/action')` — path traversal via `../` in userInput
+   - `` fetch(`/api/${param}/data`) `` — template literal URL path with unsanitized input
+   - `axios.get(baseUrl + variable + '/endpoint')` — concatenated path segments
+   - Sources: `location.hash`, `location.search`, `URLSearchParams.get()`, database-injected values
+   - Sinks: `fetch()`, `axios.*()`, `XMLHttpRequest.open()` with user input in URL path
+   - Impact: GET CSPT → data leak; POST/PUT/DELETE CSPT → state-changing CSRF (bypasses SameSite cookies since request is same-origin)
+   - Chain: GET CSPT leaks JSON with ID → that ID fed into POST CSPT for state change
 
 ---
 
@@ -207,6 +225,22 @@ Phase 7: Taint & Report        → Source-to-Sink validation + report generation
 7. **Password reset:**
    - Token: cryptographically random? sufficient length? expiry set?
    - Can same token be reused after password change?
+
+8. **OAuth redirect_uri bypass patterns:**
+   - `redirect_uri.startsWith(registeredCallback)` — bypassed with `../` path traversal (e.g., `/callback/../../open_redirect?next=evil.com`)
+   - `new URL(redirect_uri).hostname === allowedHost` without `.pathname` check — attacker uses path to open redirect on allowed domain
+   - `fallback_redirect_uri` or `base_uri` parameters with domain-only validation — path component not checked
+   - Redirect target read from cookie/storage: `res.redirect(req.cookies.redirect_url)` — attacker pre-sets cookie via CSRF
+   - `response_type=token` with redirect chains — token persists in URL fragment across HTTP redirects through subdomains
+   - **HTTP Parameter Pollution:** `param[0=value` overriding `param=value` server-side; test `redirect_uri[0=evil.com` alongside legitimate `redirect_uri`
+   - **Login CSRF as chain enabler:** Endpoints accepting session swap without CSRF token enable attack chains (force victim into attacker session, then exploit OAuth/linking flows)
+
+9. **GraphQL-specific authorization:**
+   - Multiple `doc_id` values for same resource type — edit/mutation doc_id may expose private fields (`linked_*`, `shadow_*`, `internal_*`) not visible in view doc_id
+   - `actor_id` or `user_id` in mutation variables NOT validated against the authenticated session — spoofable
+   - GraphQL error messages leaking internal type names: `"No such class: OBJECT_TYPE"` in production
+   - Batch API with result interpolation: `{result=NAME:$.field}` enables cross-request data exfiltration
+   - Mutations accepting `application/x-www-form-urlencoded` (form-submittable) = CSRF without token
 
 ---
 
@@ -281,6 +315,20 @@ Phase 7: Taint & Report        → Source-to-Sink validation + report generation
    - `res\.send\(.*req\.(body|query|params)` — unsanitized in response
    - Template engines rendering user input without escaping
 
+6. **Parser Differentials / MIME Confusion:**
+   - `Content-Type: application/json;,text/html` — server validator sees `application/json`, browser renders `text/html`
+   - "Validate then use original" anti-pattern: `if (parse(ct) === 'application/json') res.setHeader('Content-Type', ct)` — MUST use parsed value, not original
+   - Missing `X-Content-Type-Options: nosniff` + user-controlled Content-Type = MIME sniffing XSS
+   - `res.setHeader('Content-Type', req.headers['content-type'])` or `type` parameter reflected in response header
+   - API responses echoing user input in JSON values without HTML encoding + missing Content-Type header = XSS via MIME sniffing (IE/Edge)
+
+7. **HTML-to-PDF / Server-Side Rendering SSRF:**
+   - Libraries: `wkhtmltopdf`, `puppeteer`, `playwright`, `headless-chrome`, `phantom`, `pdf-lib` with HTML input
+   - User input in HTML passed to PDF converter → `<iframe src="file:///etc/passwd">` for LFI
+   - `<iframe src="http://169.254.169.254/...">` for SSRF to cloud metadata
+   - Double-decode vulnerability: input HTML-encoded at submission → HTML-decoded server-side before PDF render → sanitization undone
+   - Search: `pdf`, `render.*html`, `puppeteer`, `wkhtmltopdf`, `headless` in same code path as user input
+
 ---
 
 ## Phase 6: Logic Flaws, DOM XSS & Configuration
@@ -323,6 +371,25 @@ Phase 7: Taint & Report        → Source-to-Sink validation + report generation
    - Missing `await` on critical async operations
    - `Promise.all` on dependent operations that should be sequential
 
+7. **XS-Leaks (Cross-Site Information Leaks):**
+   - **CORB oracle:** Endpoint returns different Content-Type based on user state → `onload`/`onerror` difference in `<script>` tag reveals state
+   - **X-Frame-Options oracle:** Conditionally applied `X-Frame-Options: deny` based on user-supplied params (`__user`) → timing/behavioral difference reveals identity
+   - **Prototype pollution as XS-Leak gadget:** Globally-loaded scripts calling `export default { userId }` — pollute `Function.prototype.default`/`.__esModule` before script loads to intercept user ID
+   - **Error-vs-success oracle:** Same endpoint returning different HTTP status codes for "data exists" vs "no data" based on target object ID
+   - Detection: Look for any cross-origin-loadable resource whose behavior (load/error, timing, status) varies based on authentication state
+
+8. **Supply-chain XSS via shared scripts:**
+   - Analytics/pixel scripts (`fbevents.js`, `capig-events.js`) served across many domains
+   - User-controlled values string-concatenated into JavaScript code generation on the server = stored XSS on ALL sites loading the script
+   - Search: string builders/template literals producing `.js` file content with user-derived values
+   - Any gateway/config endpoint generating JavaScript from database values without escaping
+
+9. **Debug code in production:**
+   - `document.write` in OAuth callback scripts with debug flag enabled
+   - Debug endpoints (`/debug/`, `/_debug/`, `?debug=true`) returning sensitive data
+   - `console.log` with sensitive variables (tokens, passwords) in production builds
+   - Source maps (`*.map`) exposing original source
+
 ---
 
 ## Phase 7: Taint Analysis & Report Generation
@@ -338,6 +405,7 @@ Phase 7: Taint & Report        → Source-to-Sink validation + report generation
 - `references/cwe-checklist.md` for CWE mapping and CVSS scoring
 - `references/escalation-guide.md` for identifying attack chain escalations
 - `references/h1-examples.md` for real-world precedent
+- `references/writeup-insights.md` for real-world postMessage, OAuth, CSPT, parser differential, and XS-Leak patterns from Meta/Facebook bug bounty writeups
 
 **Output:** Write `.js-audit/report.md`
 

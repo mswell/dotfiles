@@ -214,6 +214,8 @@ done
 - `addJavascriptInterface` — JS-to-Java bridge (RCE on API < 17)
 - `setAllowFileAccess`, `setAllowFileAccessFromFileURLs`, `setAllowUniversalAccessFromFileURLs`
 - `loadUrl`, `loadData`, `loadDataWithBaseURL`, `evaluateJavascript` — URL loading sinks
+- `postMessage`, `onMessage`, `WebMessageListener` — JS-to-native bridge via postMessage
+- `shouldOverrideUrlLoading` returning `false` for unvalidated URLs — allows navigation to attacker-controlled pages
 
 **Step 2 — Identify Sources:**
 - `getIntent().getData()`, `getIntent().getStringExtra()`
@@ -286,6 +288,14 @@ done
 5. **Implicit intents leaking data:**
    - `new Intent("action")` without explicit component → data visible to all apps
 
+6. **OAuth / SSO redirect abuse (mobile-specific):**
+   - Search for OAuth redirect handling: `redirect_uri`, `callback`, `sso`, `oauth`, `authorize`
+   - Path traversal in SSO redirects: `extra_data.startsWith("/accounts_center/")` bypassed via double URL encoding (`%252F..%252F`)
+   - Login CSRF in mobile OAuth: endpoints accepting session tokens via URL/deep link parameters without CSRF protection
+   - Account-linking flows without user confirmation dialog: attacker generates valid nonce, crafts redirect URL → victim's external account linked to attacker's account
+   - `response_type=token` with app-specific redirect schemes — token in URL fragment readable by any app intercepting the custom scheme
+   - Check: Is OAuth `state` parameter generated and validated? Missing = CSRF in OAuth flow
+
 ---
 
 ## Phase 7: Firebase & Cloud Misconfigurations
@@ -348,6 +358,13 @@ curl -s "https://maps.googleapis.com/maps/api/staticmap?center=0,0&zoom=1&size=1
    - Check for ProGuard/R8 mapping file presence
    - Class naming pattern: readable = no obfuscation; `a.a.a` = obfuscated
    - Document level in report (affects analysis confidence)
+
+8. **PostMessage / WebView bridge security:**
+   - `postMessage` with `targetOrigin: '*'` in WebView bridges — tokens/codes sent to any origin
+   - `WebMessageListener` / `addWebMessageListener` without origin validation
+   - `window.name` persistence across WebView navigations — cross-origin data leakage
+   - `WebView.evaluateJavascript` called with data from untrusted Intent extras
+   - COOP bypass via `window.name` reuse in Android WebView (differs from Chrome browser behavior)
 
 ---
 

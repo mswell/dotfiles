@@ -154,12 +154,20 @@ For each STRIDE category, identify specific threats AND provide search patterns:
 - Session fixation: session ID regeneration after login?
 - Credential stuffing: rate limiting on login endpoints?
 - API key in URL: keys passed as query parameters (logged by proxies)?
+- PostMessage origin validation bypass: inverted isSameOrigin checks, regex with unescaped dots (`facebook.com` matches `evilfacebook.com`), domain-only checks without message structure validation
+- OAuth redirect_uri path traversal: `startsWith(registeredCallback)` bypassed with `../` sequences
+- OAuth redirect_uri domain-only validation: hostname checked but path not — allows path to open redirect on allowed domain
+- Login CSRF as chain enabler: force victim into attacker's session, then exploit OAuth/linking flows
+- `Math.random()` used as cross-window authentication secret — predictable via PRNG state reconstruction
 
 ### Tampering (Data Integrity)
 - SQL/NoSQL injection: raw queries with user input
 - Mass assignment: ORM create/update with raw request body
 - Path traversal: file operations with user-controlled paths
 - Prototype pollution: deep merge/assign with user objects
+- Client-Side Path Traversal (CSPT2CSRF): user input in fetch/XHR URL path enables `../` traversal to hit unintended API endpoints. Bypasses SameSite cookies (same-origin request). Search: `fetch('/api/' + variable`, `` fetch(`/api/${param}`) ``
+- HTTP Parameter Pollution: `param[0=value` overriding `param=value` server-side; test duplicate/bracket-suffix parameters on OAuth and state-changing endpoints
+- Parser differentials: server-side MIME validator sees one Content-Type, browser interprets another. `application/json;,text/html` parsed differently by server libs vs browsers
 
 ### Repudiation (Audit Trail)
 - Missing audit logging for critical actions (user creation, permission changes, payments)
@@ -172,6 +180,12 @@ For each STRIDE category, identify specific threats AND provide search patterns:
 - Hardcoded secrets: API keys, passwords, tokens in source (use Phase 0 scan results)
 - Directory listing: exposed static file serving configurations
 - GraphQL introspection enabled in production
+- GraphQL batch API result interpolation: `{result=NAME:$.field}` syntax enables cross-request data exfiltration
+- GraphQL error messages leak internal type/class names in production: `"No such class: INTERNAL_TYPE"`
+- Multiple GraphQL doc_ids for same resource with inconsistent ACLs — edit/mutation doc_id exposes private fields hidden from view doc_id
+- XS-Leaks: cross-origin-loadable resources whose behavior varies based on auth state (CORB oracle, X-Frame-Options conditional, error-vs-success differential)
+- PostMessage origin stored as trusted host then used to load scripts or construct API URLs — any origin can inject
+- `postMessage(data, '*')` with sensitive tokens/codes in the payload
 
 ### Denial of Service
 - ReDoS: complex regex with user-controlled input
@@ -183,6 +197,9 @@ For each STRIDE category, identify specific threats AND provide search patterns:
 - Client-side role checks only (bypassable)
 - JWT claim manipulation (role, permissions in token payload)
 - Insecure deserialization leading to code execution
+- GraphQL mutations with `actor_id`/`user_id` not validated against authenticated session — caller can spoof identity
+- Permission-modifying mutations callable from low-privilege accounts (enumerate group_ids via query, set via mutation)
+- OAuth proxy endpoints auto-injecting CSRF tokens: internal relay accepting `url=` parameter makes authenticated requests on user's behalf
 
 **Output:** Append threat hypotheses to `.security-audit/architecture.md`, ranked by risk.
 
@@ -206,6 +223,11 @@ Search for dangerous functions in the detected tech stack. Use Grep tool with pa
 - **Deserialization** (pickle, yaml.load, unserialize, ObjectInputStream)
 - **Template rendering** (render with user input — SSTI)
 - **Code evaluation** (eval, exec, Function, vm)
+- **PostMessage DOM sinks** (`innerHTML`, `document.write`, `form.action`, `script.src` set from `event.data` in message handlers)
+- **URL path construction** (`fetch('/api/' + userInput)`, template literal URL paths — Client-Side Path Traversal)
+- **HTML-to-PDF rendering** (wkhtmltopdf, puppeteer, playwright, headless Chrome receiving user HTML — SSRF/LFI via iframe/embed tags)
+- **Dynamic JS code generation** (server-side string concatenation/template producing `.js` file content with user-derived values — supply-chain stored XSS)
+- **Content-Type reflection** (`res.setHeader('Content-Type', userInput)` after validation — parser differential XSS)
 
 ### Step 2: Hunt for Sources
 Find where user input enters (from Phase 1 entry points):
@@ -255,17 +277,31 @@ Cross-reference Phase 0 scan_secrets.py results with manual inspection:
    - Origin reflection without validation?
    - Overly permissive allowed methods/headers?
 
-3. **Infrastructure configs (if present):**
+3. **PostMessage security (high-value target per writeups):**
+   - `addEventListener("message"` — verify `event.origin` checked against hardcoded allowlist
+   - `event.origin` used to construct URLs, load scripts, or build API requests = critical if not validated
+   - `postMessage(data, '*')` with tokens/codes in payload = always a bug
+   - `innerHTML`/`document.write` inside message handlers = DOM XSS even with origin check
+   - Message data used to construct server-side requests = parameter injection
+
+4. **OAuth/redirect security:**
+   - `redirect_uri` validation: must check full URL (scheme + host + path), not just hostname
+   - `startsWith` checks on redirect URIs vulnerable to path traversal (`../`)
+   - Redirect targets from cookies/storage: `res.redirect(req.cookies.redirect_url)` = open redirect
+   - `response_type=token` with redirect chains preserving fragment through HTTP redirects
+   - Login/logout endpoints without CSRF protection = login CSRF chain enabler
+
+5. **Infrastructure configs (if present):**
    - `Dockerfile` — running as root? multi-stage build? secrets in build args?
    - `docker-compose.yml` — exposed ports? hardcoded passwords?
    - `.github/workflows/*.yml` — secrets in env? untrusted input in `run:`? (action injection)
    - `terraform/`, `k8s/` — overly permissive IAM, public buckets, exposed services?
 
-4. **Environment files:**
+6. **Environment files:**
    - `.env*` files committed? Check `.gitignore`
    - Secrets in plaintext in config files?
 
-5. **Error handling:**
+7. **Error handling:**
    - Stack traces in production responses?
    - Database errors exposed to clients?
    - Debug mode enabled in production configs?
