@@ -1,29 +1,24 @@
-#!/bin/sh
+#!/bin/bash
+set -euo pipefail
+source "${DOTFILES}/setup/lib/common.sh"
 
-set -e
-
-export DOTFILES="$PWD"
 CONFIG_DIR="$HOME/.config"
-
-green=$(tput setaf 2)
-yellow=$(tput setaf 3)
-reset=$(tput sgr0)
 
 copy_file() {
     local source="$1"
     local destination="$2"
-    echo "${green}[+] Copiando $source => $destination${reset}"
+    echo "${green}[+] Copying $source => $destination${reset}"
     cp -f "$source" "$destination"
 }
 
 create_dir() {
     local dir="$1"
-    echo "${yellow}[+] Criando diretório $dir${reset}"
+    echo "${yellow}[+] Creating directory $dir${reset}"
     [ ! -d "$dir" ] && mkdir -p "$dir"
 }
 
 # zsh
-echo "${yellow}[+] Copiando dotfiles zsh${reset}"
+echo "${yellow}[+] Copying zsh dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/zsh"
 
@@ -34,7 +29,7 @@ copy_file "$DOTFILES/config/zsh/alias.zsh" "$CONFIG_DIR/zsh/"
 copy_file "$DOTFILES/config/zsh/functions.zsh" "$CONFIG_DIR/zsh/"
 
 # Copy modular functions directory
-echo "${green}[+] Copiando funções modulares${reset}"
+echo "${green}[+] Copying modular functions${reset}"
 create_dir "$CONFIG_DIR/zsh/functions"
 cp -rf "$DOTFILES/config/zsh/functions/"* "$CONFIG_DIR/zsh/functions/"
 
@@ -42,38 +37,38 @@ copy_file "$DOTFILES/config/zsh/.zprofile" "$HOME/.zprofile"
 copy_file "$DOTFILES/config/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
 
 # git
-echo "${yellow}[+] Copiando dotfiles git${reset}"
+echo "${yellow}[+] Copying git dotfiles${reset}"
 sleep 1
 copy_file "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
 copy_file "$DOTFILES/config/git/.catppuccin.gitconfig" "$HOME/.catppuccin.gitconfig"
 
 # bat
-echo "${yellow}[+] Copiando dotfiles bat${reset}"
+echo "${yellow}[+] Copying bat dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/bat"
 copy_file "$DOTFILES/config/bat/config" "$CONFIG_DIR/bat/config"
 
 # Ghostty
-echo "${yellow}[+] Copiando dotfiles Ghostty${reset}"
+echo "${yellow}[+] Copying Ghostty dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/ghostty"
 copy_file "$DOTFILES/config/Ghostty/config" "$CONFIG_DIR/ghostty/"
 
 # wezterm
-echo "${yellow}[+] Copiando dotfiles Wezterm${reset}"
+echo "${yellow}[+] Copying Wezterm dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/wezterm"
 copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
 copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
 
 # flameshot
-echo "${yellow}[+] Copiando dotfiles ${reset}"
+echo "${yellow}[+] Copying flameshot dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/flameshot"
 copy_file "$DOTFILES/config/flameshot/flameshot.ini" "$CONFIG_DIR/flameshot/"
 
 # tmux
-echo "${yellow}[+] Copiando tmux${reset}"
+echo "${yellow}[+] Copying tmux dotfiles${reset}"
 sleep 1
 create_dir "$HOME/.local/bin"
 copy_file "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"

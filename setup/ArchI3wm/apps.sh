@@ -1,60 +1,44 @@
-#!/bin/sh
-set -e
+#!/bin/bash
+set -euo pipefail
+source "${DOTFILES}/setup/lib/arch.sh"
 
-export DOTFILES="$PWD"
+# i3wm and display
+echo "Installing i3wm..."
+install_pacman i3-wm i3lock i3status i3blocks xss-lock xterm \
+    lightdm lightdm-gtk-greeter dmenu polkit-gnome dunst \
+    lxappearance qt5ct qt6ct kvantum nitrogen rofi npm zoxide jq
 
-# Function to install packages with pacman
-install_pacman() {
-    sudo pacman -S --noconfirm "$@"
-}
+mkdir -p "$HOME/.config/i3" && cp -r "$DOTFILES/config/i3" "$HOME/.config/"
+cp "$DOTFILES/config/.Xresources" "$HOME/"
+xrdb -merge "$HOME/.Xresources"
 
-# Function to install packages with yay
-install_yay() {
-    yay -S --noconfirm --needed "$@"
-}
+cp -r "$DOTFILES/config/dunst" "$HOME/.config/"
 
-# i3wm configuration
-echo "Install i3wm"
-install_pacman i3-wm i3lock i3status i3blocks xss-lock xterm lightdm lightdm-gtk-greeter dmenu
-mkdir -p $HOME/.config/i3 && cp -r $DOTFILES/config/i3 $HOME/.config/
-cp $DOTFILES/config/.Xresources $HOME/
-xrdb -merge $HOME/.Xresources
+echo "Installing apps..."
 
-install_pacman polkit-gnome npm dunst zoxide jq
-cp -r $DOTFILES/config/dunst $HOME/.config/
+# GUI apps and CLI tools
+install_yay picom mousepad arandr xdg-users-dirs libnotify tmux appimagelauncher-bin \
+    bat lsd wezterm librewolf-bin obsidian pavucontrol git-delta vlc unclutter \
+    bash-completion ctags lazygit ncurses zsh xclip autojump google-chrome \
+    meld discord openfortivpn fzf ghostty
 
-echo "Installing useful Apps"
+# File manager and media
+install_yay thunar thunar-volman thunar-archive-plugin tumbler dosfstools \
+    gvfs xarchiver ffmpegthumbnailer poppler-glib gvfs-mtp gvfs-nfs gvfs-smb
 
-# Software from 'normal' repositories
-install_yay picom mousepad arandr xdg-users-dirs rofi libnotify tmux appimagelauncher-bin
-install_yay bat lsd wezterm librewolf-bin obsidian pavucontrol
-install_yay git-delta vlc unclutter bash-completion
-install_yay ctags lazygit ncurses zsh xclip autojump google-chrome
-install_yay meld discord openfortivpn fzf ghostty
-install_yay thunar thunar-volman thunar-archive-plugin tumbler dosfstools lxappearance
-install_yay gvfs xarchiver ffmpegthumbnailer poppler-glib gvfs-mtp gvfs-nfs gvfs-smb unrar zip p7zip ntfs-3g
+# Compression
+install_yay unace unrar zip unzip sharutils uudeview arj cabextract p7zip ntfs-3g
 
-# Installation of zippers and unzippers
-install_yay unace unrar zip unzip sharutils uudeview arj cabextract
+# Development
+install_yay python python-setuptools neovim ripgrep docker docker-compose \
+    the_silver_searcher tree exa
 
-# Install Python and Neovim dependencies
-install_yay python python-setuptools neovim
+setup_nvim_dir
+setup_bat_theme
 
-# Create Neovim configuration directory, if it doesn't exist
-mkdir -p "$HOME/.config/nvim"
-
-# Instala pacotes base para desenvolvimento
-install_yay ripgrep fzf curl unzip neovim docker docker-compose the_silver_searcher tree exa
-
-# Bat config
-mkdir -p "$(bat --config-dir)/themes"
-wget -P "$(bat --config-dir)/themes" https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
-bat cache --build
-
-# Instalação de temas
-echo "Installing themes"
+# Themes
+echo "Installing themes..."
 install_yay kvantum-theme-catppuccin-git
-install_pacman lxappearance qt5ct qt6ct kvantum nitrogen rofi
 
-sudo tar -xvf $DOTFILES/config/themes/Catppuccin-Mocha.tar.xz -C /usr/share/themes/
-sudo tar -xvf $DOTFILES/config/icons/Tela-circle-dracula.tar.xz -C /usr/share/icons/
+sudo tar -xvf "$DOTFILES/config/themes/Catppuccin-Mocha.tar.xz" -C /usr/share/themes/
+sudo tar -xvf "$DOTFILES/config/icons/Tela-circle-dracula.tar.xz" -C /usr/share/icons/

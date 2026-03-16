@@ -1,15 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+source "${DOTFILES}/setup/lib/common.sh"
 
-set -euo pipefail  # Exit on error, undefined vars, and pipe failures
-
-red=`tput setaf 1`
-green=`tput setaf 2`
-yellow=`tput setaf 3`
-reset=`tput sgr0`
-
-
-echo "${yellow}[+] Install base-dev libs ... ${reset}"
-# Combined package installation (removed duplicates: build-essential, git)
+echo "${yellow}[+] Install base-dev libs...${reset}"
 sudo apt install -y \
 	build-essential \
 	git \
@@ -37,4 +30,4 @@ sudo apt install -y \
 	apt-transport-https \
 	xvfb \
 	prips ${DEBUG_STD:+$DEBUG_STD}
-echo "${yellow}[*] Done. ${reset}"
+echo "${yellow}[*] Done.${reset}"

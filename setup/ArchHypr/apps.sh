@@ -1,14 +1,8 @@
-#!/bin/sh
-set -e
+#!/bin/bash
+set -euo pipefail
+source "${DOTFILES}/setup/lib/arch.sh"
 
-export DOTFILES="$PWD"
-
-# Function to install packages with yay
-install_yay() {
-    yay -S --noconfirm --needed "$@"
-}
-
-# AUR and other packages (yay)
+# Hyprland packages
 yay_packages="
     tmux
     qt5-wayland
@@ -104,13 +98,10 @@ yay_packages="
     jq
 "
 
-# --- Installation ---
-
-echo "Installing packages from AUR and other sources..."
+echo "Installing Hyprland packages..."
 install_yay $yay_packages
 
-# --- Configuration ---
-
+# Configuration
 echo "Copying configuration files..."
 mkdir -p "$HOME/.config/hypr" && cp -r "$DOTFILES/config/hypr" "$HOME/.config/"
 mkdir -p "$HOME/.config/kitty" && cp -r "$DOTFILES/config/kitty" "$HOME/.config/"
@@ -136,20 +127,16 @@ cp "$DOTFILES/config/gtk-4.0/settings.ini" "$HOME/.config/gtk-4.0/"
 cp "$DOTFILES/config/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/"
 cp "$DOTFILES/config/.gtkrc-2.0" "$HOME/.gtkrc-2.0"
 
-# Cursor default
+# Default cursor
 mkdir -p "$HOME/.icons/default"
 cp "$DOTFILES/config/icons/default/index.theme" "$HOME/.icons/default/"
 
-# Aplicar tema via gsettings
+# Apply theme via gsettings
 gsettings set org.gnome.desktop.interface gtk-theme "Gruvbox-Material-Dark"
 gsettings set org.gnome.desktop.interface icon-theme "Gruvbox-Plus-Dark"
 gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic-Gruvbox"
 gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
 
-mkdir -p "$HOME/.config/nvim"
-
-echo "Configuring bat..."
-mkdir -p "$HOME/.config/bat"
-cp "$DOTFILES/config/bat/config" "$HOME/.config/bat/"
+setup_nvim_dir
 
 echo "Apps installation and configuration completed."

@@ -4,5 +4,5 @@ source "${DOTFILES}/setup/lib/arch.sh"
 
 arch_base_setup
 
-# I3wm-specific extras
+# DE-specific extras
 install_yay npm wezterm ghostty neovim tar lsb-release vim python-pip

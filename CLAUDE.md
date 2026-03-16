@@ -10,28 +10,40 @@ This is a comprehensive dotfiles management system for automated Linux developme
 
 ### Initial Setup
 ```bash
-./install.sh  # Interactive menu with 7 setup options
+./install.sh  # Interactive menu with 9 setup options
 ```
 
 **Menu Options:**
 - `[1]` - Ubuntu/Debian VPS (servers, web development)
-- `[2]` - Arch Linux + Hyprland (modern desktop, Wayland)
-- `[3]` - Install Hacktools (security testing, CTF, bug bounty)
-- `[4]` - Install Dev Environment (mise: Python + Node.js)
-- `[5]` - Arch Linux + i3wm (tiling window manager, X11)
-- `[6]` - Arch Linux WSL (Windows Subsystem for Linux)
-- `[7]` - Arch Linux DE (traditional desktop environment)
+- `[2]` - Arch Linux VPS (servers, CLI-only, no GUI)
+- `[3]` - Arch Linux + Hyprland (modern desktop, Wayland)
+- `[4]` - Install Hacktools (security testing, CTF, bug bounty)
+- `[5]` - Install Dev Environment (mise: Python + Node.js)
+- `[6]` - Arch Linux + i3wm (tiling window manager, X11)
+- `[7]` - Arch Linux WSL (Windows Subsystem for Linux)
+- `[8]` - Arch Linux DE (traditional desktop environment)
+- `[9]` - Claude for Bug Bounty (Skills + Agents + Caido AI)
 
 ### Dependency Chain
 
 **Critical:** Scripts must be run in the correct order:
-1. Run distro-specific setup first (option 1, 2, 5, 6, or 7) - installs system dependencies
-2. Run dev environment installation (option 4) - sets up Python + Node.js via mise
-3. Run hacktools installation (option 3) - installs security tools
+1. Run distro-specific setup first (option 1, 2, 3, 6, 7, or 8) - installs system dependencies
+2. Run dev environment installation (option 5) - sets up Python + Node.js via mise
+3. Run hacktools installation (option 4) - installs security tools
 
 **Do not run devenv or hacktools before system setup** - they depend on system packages being installed first.
 
 ## Architecture
+
+### Shared Libraries (`setup/lib/`)
+
+Common functionality is extracted into shared libraries to eliminate duplication:
+
+- `common.sh` - Universal library (all variants): DOTFILES detection, colors, `source_script()`
+- `arch.sh` - Arch-specific library: `install_pacman()`, `install_yay()`, `ensure_yay()`, `arch_base_setup()`, `setup_bat_theme()`, `setup_nvim_dir()`, `install_fonts()`
+- `shell_utils.sh` - Shell management: `change_shell_to_zsh()`
+- `logging.sh` - Structured logging system (used by `install.sh`)
+- `preflight.sh` - Pre-flight validation checks (used by `install.sh`)
 
 ### Modular Design
 
@@ -41,15 +53,17 @@ Each distribution has its own setup directory with specialized scripts:
 - `setup.sh` - Orchestrator that sources all other scripts
 - `base.sh` - System dependencies (build-essential, git, curl, etc.)
 - `devel.sh` - Development tools (neovim, virtualenvwrapper)
-- `apps.sh` - Applications (python-setuptools, etc.)
-- `terminal.sh` - Terminal configuration
+- `apps.sh` - Applications (Docker, cargo tools, etc.)
 
-**Arch Linux** (`setup/ArchHypr/`, `setup/ArchI3wm/`, `setup/ArchWSL/`, `setup/ArchDE/`):
-- `setup.sh` - Orchestrator
-- `base.sh` - Base system + yay (AUR helper)
-- `apps.sh` - Pacman/yay installations
-- `fonts.sh` - Font installations
-- `terminal.sh` - Terminal configuration
+**Arch Linux** (`setup/ArchHypr/`, `setup/ArchI3wm/`, `setup/ArchWSL/`, `setup/ArchDE/`, `setup/ArchVPS/`):
+- `setup.sh` - Orchestrator (sources `lib/common.sh` for `source_script()`)
+- `base.sh` - Base system via `arch_base_setup()` + variant-specific extras
+- `apps.sh` - Variant-specific packages (uses shared `install_yay()`/`install_pacman()`)
+- `fonts.sh` - Font installation via shared `install_fonts()` (Hypr/I3wm only)
+
+**Shared scripts** (used by all variants):
+- `setup/terminal.sh` - TPM installation + shell change to zsh
+- `setup/copy_dots.sh` - Copies config files to home directory
 
 ### Environment Variables (config/zsh/env.zsh)
 
@@ -237,9 +251,11 @@ bypass4xx
 ### Adding New Distribution
 
 1. Create directory: `setup/<NewDistro>/`
-2. Create scripts: `setup.sh`, `base.sh`, `apps.sh`, `terminal.sh`
-3. Add menu option to `install.sh`
-4. Ensure `setup.sh` sources `copy_dots.sh` at the end
+2. Create `setup.sh` with `SCRIPT_DIR`/`DOTFILES` detection + `source lib/common.sh`
+3. Create `base.sh` sourcing `lib/arch.sh` (Arch) or `lib/common.sh` (other)
+4. Create `apps.sh` with variant-specific packages
+5. Add menu option to `install.sh`
+6. Ensure `setup.sh` sources `setup/terminal.sh` and `setup/copy_dots.sh` at the end
 
 ## Key Architectural Principles
 
@@ -254,6 +270,8 @@ bypass4xx
 - `install.sh` - Main entry point (menu-driven installer)
 - `config/zsh/env.zsh` - **Central path configuration** (source of truth)
 - `config/zsh/functions.zsh` - Bug bounty workflow functions
+- `setup/lib/common.sh` - **Shared library** (colors, DOTFILES detection, source_script)
+- `setup/lib/arch.sh` - **Arch shared library** (pacman/yay helpers, base setup, fonts)
 - `setup/install_hacktools.sh` - Security tools installation
 - `setup/devenv_install.sh` - Dev environment setup (mise: Python + Node.js)
 - `setup/copy_dots.sh` - Copies config files to home directory

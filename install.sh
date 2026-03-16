@@ -72,13 +72,14 @@ run_setup() {
 Menu() {
     while true; do
         echo "[1] - Ubuntu/Debian VPS"
-        echo "[2] - Archlinux with Hyprland"
-        echo "[3] - Install Hacktools"
-        echo "[4] - Install Dev Environment (mise: Python + Node.js)"
-        echo "[5] - Archlinux with i3wm"
-        echo "[6] - Archlinux WSL"
-        echo "[7] - Archlinux DE"
-        echo "[8] - Claude for Bug Bounty (Skills + Agents + Caido AI)"
+        echo "[2] - Archlinux VPS"
+        echo "[3] - Archlinux with Hyprland"
+        echo "[4] - Install Hacktools"
+        echo "[5] - Install Dev Environment (mise: Python + Node.js)"
+        echo "[6] - Archlinux with i3wm"
+        echo "[7] - Archlinux WSL"
+        echo "[8] - Archlinux DE"
+        echo "[9] - Claude for Bug Bounty (Skills + Agents + Caido AI)"
         echo "[0] - Exit"
         echo
         echo -n "Choose your distro: "
@@ -86,13 +87,14 @@ Menu() {
         
         case $option in
             1) run_setup "setup/ubuntu/setup.sh"; break ;;
-            2) run_setup "setup/ArchHypr/setup.sh"; break ;;
-            3) run_setup "setup/install_hacktools.sh"; break ;;
-            4) run_setup "setup/devenv_install.sh"; break ;;
-            5) run_setup "setup/ArchI3wm/setup.sh"; break ;;
-            6) run_setup "setup/ArchWSL/setup.sh"; break ;;
-            7) run_setup "setup/ArchDE/setup.sh"; break ;;
-            8) run_setup "setup/install_skills.sh"; break ;;
+            2) run_setup "setup/ArchVPS/setup.sh"; break ;;
+            3) run_setup "setup/ArchHypr/setup.sh"; break ;;
+            4) run_setup "setup/install_hacktools.sh"; break ;;
+            5) run_setup "setup/devenv_install.sh"; break ;;
+            6) run_setup "setup/ArchI3wm/setup.sh"; break ;;
+            7) run_setup "setup/ArchWSL/setup.sh"; break ;;
+            8) run_setup "setup/ArchDE/setup.sh"; break ;;
+            9) run_setup "setup/install_skills.sh"; break ;;
             0) exit 0 ;;
             *) echo "${red}Unknown option. Please try again.${reset}";;
         esac
