@@ -63,9 +63,6 @@ alias dualhome="xlayoutdisplay -p HDMI-A-0 -o HDMI-A-0 -o eDP"
 alias unlock="sudo rm /var/lib/pacman/db.lck"
 alias rmpacmanlock="sudo rm /var/lib/pacman/db.lck"
 
-# Caido MCP token renewal (guest token expires ~7 days)
-alias caido-renew='curl -sf -X POST http://127.0.0.1:8080/graphql -H "Content-Type: application/json" -d "{\"query\":\"mutation { loginAsGuest { token { accessToken expiresAt } } }\"}" | python3 -c "import json,sys; t=json.load(sys.stdin)[\"data\"][\"loginAsGuest\"][\"token\"]; open(\"$HOME/.caido-mcp/token.json\",\"w\").write(json.dumps({\"accessToken\":t[\"accessToken\"],\"refreshToken\":\"\",\"expiresAt\":t[\"expiresAt\"]},indent=2)); print(\"Token renovado, expira:\", t[\"expiresAt\"])"'
-
 # Tmux aliases
 alias ta='tmux attach -t'
 alias tad='tmux attach -d -t'

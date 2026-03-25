@@ -25,7 +25,7 @@ log_info() { echo "${cyan}[*]${reset} $*"; }
 echo ""
 echo "${bold}${green}╔══════════════════════════════════════════════════╗${reset}"
 echo "${bold}${green}║         Claude for Bug Bounty — Setup            ║${reset}"
-echo "${bold}${green}║  Local Skills  +  Agents  +  Caido AI (MCP)     ║${reset}"
+echo "${bold}${green}║    Local Skills  +  Agents  +  Caido Skills     ║${reset}"
 echo "${bold}${green}╚══════════════════════════════════════════════════╝${reset}"
 echo ""
 
@@ -87,9 +87,9 @@ if [[ -f "$agents_setup" ]]; then
     echo ""
 fi
 
-# ── Fase 2: Caido AI (skills + MCP server) ────────────────────────────────────
+# ── Fase 2: Caido Skills (official) ──────────────────────────────────────────
 echo "${bold}${green}────────────────────────────────────────────────────${reset}"
-log_info "Fase 2/2 — Instalando Caido AI (skills + MCP server)..."
+log_info "Fase 2/2 — Instalando Caido Skills (oficial)..."
 echo ""
 
 CAIDO_INSTALLER="$SCRIPT_DIR/install_caido_ai.sh"
@@ -119,8 +119,6 @@ echo "  Skills instaladas  : ${green}$install_count${reset}"
 echo ""
 echo "  ${cyan}Skills dir :${reset} $SKILLS_DIR"
 echo "  ${cyan}Agents dir :${reset} $HOME/.claude/agents"
-echo "  ${cyan}MCP binary :${reset} $HOME/.local/bin/caido-mcp-server"
-echo "  ${cyan}Claude cfg :${reset} $HOME/.claude.json"
 echo ""
 echo "${yellow}Próximos passos:${reset}"
 echo "  1. Abra o Caido e capture requests do alvo"
