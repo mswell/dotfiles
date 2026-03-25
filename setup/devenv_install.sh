@@ -18,7 +18,7 @@ reset=$(tput sgr0 2>/dev/null || echo "")
 #  CONFIGURATION - Edit versions here
 # =============================================
 PYTHON_VERSION="3.12.7"
-NODE_VERSION="22"  # LTS version (mise will get latest 22.x)
+NODE_VERSION="latest"
 
 # Python tools to install globally
 PYTHON_TOOLS_ARRAY=("poetry" "ipython" "pytest" "black" "ruff" "mypy" "requests" "colorama" "pipx")
@@ -235,19 +235,14 @@ install_python() {
 #  INSTALL NODE.JS
 # =============================================
 install_nodejs() {
-    log_info "Installing Node.js $NODE_VERSION via mise..."
+    log_info "Installing Node.js (latest) via mise..."
 
-    # Check if already installed
-    if mise list node 2>/dev/null | grep -q "^node.*$NODE_VERSION"; then
-        log_warning "Node.js $NODE_VERSION already installed"
-    else
-        mise install node@$NODE_VERSION
-        log_success "Node.js $NODE_VERSION installed"
-    fi
+    mise install node@latest
+    mise use --global node@latest
 
-    # Set as global default
-    mise use --global node@$NODE_VERSION
-    log_success "Node.js $NODE_VERSION set as global default"
+    local installed_version
+    installed_version=$(mise list node --current 2>/dev/null | awk '{print $2}' | head -1)
+    log_success "Node.js $installed_version installed and set as global default"
 }
 
 # =============================================
