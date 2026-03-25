@@ -215,3 +215,13 @@ done
 
 printf "${bblue} Adding my gf templates ${reset}\n"
 cp -r "$TOOLS_PATH"/MSwellDOTS/config/home/.gf/*.json "$HOME"/.gf/
+
+# Generate recursive.txt for ffuf recursive fuzzing (dirsearch + raft-large combined)
+RECURSIVE_LIST="$LISTS_PATH/recursive.txt"
+if [ -f "$TOOLS_PATH/Dirsearch/db/dicc.txt" ] && [ -f "$LISTS_PATH/raft-large-directories-lowercase.txt" ]; then
+    printf "${bblue} Generating recursive.txt wordlist ${reset}\n"
+    cat "$TOOLS_PATH/Dirsearch/db/dicc.txt" "$LISTS_PATH/raft-large-directories-lowercase.txt" | sort -u > "$RECURSIVE_LIST"
+    printf "${green} recursive.txt generated: $(wc -l < "$RECURSIVE_LIST") entries${reset}\n"
+else
+    printf "${yellow} Could not generate recursive.txt — missing dirsearch or raft-large wordlist${reset}\n"
+fi

@@ -77,3 +77,43 @@ screenshot() {
   if [ ! -s "ALLHTTP" ]; then echo "${red}[-] ALLHTTP file not found or empty.${reset}"; return 1; fi
   cat ALLHTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports xlarge
 }
+
+# Recursive directory fuzzing with ffuf (CSV output)
+# Usage: ffuf_recursive <url> [wordlist] [threads] [extra_flags]
+# Outputs: recursive/recursive_<domain>.csv
+ffuf_recursive() {
+  if [ -z "$1" ]; then echo "${red}[-] Usage: ffuf_recursive <url> [wordlist] [threads] [extra_flags]${reset}"; return 1; fi
+  echo "${yellow}[+] Input URL: $1${reset}"
+  mkdir -p recursive
+  local dom wordlist thread
+  dom=$(echo "$1" | unfurl format %s%d%p | sed 's/\///g')
+  wordlist=${2:-$RECURSIVE_LIST}
+  thread=${3:-30}
+  ffuf -c -v -u "$1/FUZZ" -w "$wordlist" \
+    -H "User-Agent: Mozilla Firefox Mozilla/5.0 X-Bug-bounty: w3llpunk" \
+    -H "X-Bug-Bounty: w3llpunk" \
+    -recursion -recursion-depth 10 \
+    -t "$thread" \
+    -mc all -ac -fc 400 \
+    -o "recursive/recursive_${dom}.csv" -of csv $4
+}
+
+# Recursive directory fuzzing with ffuf (JSON output)
+# Usage: ffuf_recursive_json <url> [wordlist] [threads] [extra_flags]
+# Outputs: recursive/recursive_<domain>.json
+ffuf_recursive_json() {
+  if [ -z "$1" ]; then echo "${red}[-] Usage: ffuf_recursive_json <url> [wordlist] [threads] [extra_flags]${reset}"; return 1; fi
+  echo "${yellow}[+] Input URL: $1${reset}"
+  mkdir -p recursive
+  local dom wordlist thread
+  dom=$(echo "$1" | unfurl format %s%d%p | sed 's/\///g')
+  wordlist=${2:-$RECURSIVE_LIST}
+  thread=${3:-30}
+  ffuf -c -v -u "$1/FUZZ" -w "$wordlist" \
+    -H "User-Agent: Mozilla Firefox Mozilla/5.0 X-Bug-bounty: w3llpunk" \
+    -H "X-Bug-Bounty: w3llpunk" \
+    -recursion -recursion-depth 10 \
+    -t "$thread" \
+    -mc all -ac -fc 400 \
+    -o "recursive/recursive_${dom}.json" -of json $4
+}
