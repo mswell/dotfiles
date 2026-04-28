@@ -123,7 +123,6 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Shell integrations
 eval "$(fzf --zsh)"
-eval "$(zoxide init --cmd cd zsh)"
 
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
   --highlight-line \
@@ -160,3 +159,6 @@ export PATH=$PATH:/home/mswell/.pdtm/go/bin
 
 # opencode
 export PATH=/home/mswell/.opencode/bin:$PATH
+
+# zoxide — must be last
+eval "$(zoxide init --cmd cd zsh)"
