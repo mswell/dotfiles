@@ -1,0 +1,10 @@
+/* White theme — based on basecamp/omarchy */
+@define-color bg      #ffffff;
+@define-color fg      #000000;
+@define-color muted   #6e6e6e;
+@define-color accent  #3a3a3a;
+@define-color hover   #1a1a1a;
+@define-color urgent  #1a1a1a;
+@define-color warning #3a3a3a;
+@define-color success #2e2e2e;
+@define-color special #4a4a4a;
