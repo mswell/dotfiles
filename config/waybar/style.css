@@ -1,3 +1,5 @@
+@import "themes/current.css";
+
 * {
   font-family: JetbrainsMono Nerd Font;
   font-size: 14px;
@@ -9,35 +11,35 @@
 
 #waybar {
   background: transparent;
-  color: #bdae93;
+  color: @fg;
   margin: 2px 2px;
 }
 
 #workspaces {
   border-radius: 5px;
   margin: 5px;
-  background: #282828;
+  background: @bg;
   margin-left: 1rem;
 }
 
 #workspaces button {
-  color: #928374;
+  color: @muted;
   border-radius: 5px;
   padding: 0.4rem;
 }
 
 #workspaces button.active {
-  color: #83a598;
+  color: @accent;
   border-radius: 5px;
 }
 
 #workspaces button:hover {
-  color: #b8bb26;
+  color: @hover;
   border-radius: 5px;
 }
 
 #workspaces button.urgent {
-  color: #fb4934;
+  color: @urgent;
   border-radius: 5px;
 }
 
@@ -52,29 +54,29 @@
 #memory,
 #custom-lock,
 #custom-power {
-  background-color: #282828;
+  background-color: @bg;
   padding: 0.5rem 1rem;
   margin: 5px 0;
   border-radius: 0px 5px 5px 0px;
 }
 
 #custom-stream_status {
-  background-color: #282828;
+  background-color: @bg;
   padding: 0.5rem 1rem;
   margin: 5px 0;
   border-radius: 0px 5px 5px 0px;
 }
 
 #custom-stream_status.up {
-  color: #b8bb26;
+  color: @success;
 }
 
 #custom-stream_status.warning {
-  color: #fabd2f;
+  color: @warning;
 }
 
 #custom-stream_status.down {
-  color: #fb4934;
+  color: @urgent;
 }
 
 #memory {
@@ -82,25 +84,25 @@
 }
 
 #clock {
-  color: #83a598;
+  color: @accent;
   border-radius: 5px;
   margin-right: 1rem;
 }
 
 #battery {
-  color: #b8bb26;
+  color: @success;
 }
 
 #battery.charging {
-  color: #b8bb26;
+  color: @success;
 }
 
 #battery.warning:not(.charging) {
-  color: #fb4934;
+  color: @urgent;
 }
 
 #backlight {
-  color: #fabd2f;
+  color: @warning;
 }
 
 #backlight,
@@ -109,25 +111,25 @@
 }
 
 #pulseaudio {
-  color: #d3869b;
+  color: @special;
   border-radius: 5px 0px 0px 5%;
   margin-left: 1rem;
 }
 
 #custom-music {
-  color: #83a598;
+  color: @accent;
   border-radius: 5px;
 }
 
 #custom-lock {
   border-radius: 5px 0px 0px 5px;
-  color: #bdae93;
+  color: @fg;
 }
 
 #custom-power {
   margin-right: 1rem;
   border-radius: 0px 5px 5px 0px;
-  color: #fb4934;
+  color: @urgent;
 }
 
 #tray {
