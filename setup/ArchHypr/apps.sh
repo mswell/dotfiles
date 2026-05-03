@@ -126,6 +126,9 @@ ln -sf "$HOME/.config/rofi/colors/vantablack.rasi" "$HOME/.config/rofi/colors/cu
 mkdir -p "$HOME/.config/tmux/themes"
 cp -r "$DOTFILES/config/tmux/themes/." "$HOME/.config/tmux/themes/"
 ln -sf "$HOME/.config/tmux/themes/vantablack.conf" "$HOME/.config/tmux/current-theme.conf"
+mkdir -p "$HOME/.config/fzf/themes"
+cp -r "$DOTFILES/config/fzf/themes/." "$HOME/.config/fzf/themes/"
+ln -sf "$HOME/.config/fzf/themes/vantablack.sh" "$HOME/.config/fzf/current-theme.sh"
 echo "vantablack" > "$HOME/.config/hypr/current-theme"
 chmod +x "$HOME/.config/hypr/scripts/theme-switch.sh"
 

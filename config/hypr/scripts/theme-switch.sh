@@ -7,6 +7,7 @@ WAYBAR_THEMES="$HOME/.config/waybar/themes"
 KITTY_THEMES="$HOME/.config/kitty/themes"
 ROFI_COLORS="$HOME/.config/rofi/colors"
 TMUX_THEMES="$HOME/.config/tmux/themes"
+FZF_THEMES="$HOME/.config/fzf/themes"
 CURRENT_FILE="$HOME/.config/hypr/current-theme"
 BG_DIR="$HOME/.config/backgrounds"
 
@@ -43,6 +44,10 @@ fi
 # Tmux
 ln -sf "$TMUX_THEMES/$THEME.conf" "$HOME/.config/tmux/current-theme.conf"
 tmux source-file ~/.tmux.conf 2>/dev/null
+
+# fzf — new shells will pick up the theme via .zshrc sourcing current-theme.sh
+mkdir -p "$HOME/.config/fzf"
+ln -sf "$FZF_THEMES/$THEME.sh" "$HOME/.config/fzf/current-theme.sh"
 
 # Wallpaper via wpaperd — update config and restart daemon
 WALLPAPER=$(ls "$BG_DIR/$THEME/"*.{png,jpg,jpeg} 2>/dev/null | shuf -n 1)

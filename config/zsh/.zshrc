@@ -124,29 +124,7 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # Shell integrations
 eval "$(fzf --zsh)"
 
-export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-  --highlight-line \
-  --info=inline-right \
-  --ansi \
-  --layout=reverse \
-  --border=none \
-  --color=bg+:#3c3836 \
-  --color=bg:#282828 \
-  --color=border:#8ec07c \
-  --color=fg:#ebdbb2 \
-  --color=gutter:#282828 \
-  --color=header:#fe8019 \
-  --color=hl+:#fabd2f \
-  --color=hl:#fabd2f \
-  --color=info:#928374 \
-  --color=marker:#fb4934 \
-  --color=pointer:#fb4934 \
-  --color=prompt:#8ec07c \
-  --color=query:#ebdbb2:regular \
-  --color=scrollbar:#8ec07c \
-  --color=separator:#fe8019 \
-  --color=spinner:#fb4934 \
-"
+[[ -f ~/.config/fzf/current-theme.sh ]] && source ~/.config/fzf/current-theme.sh
 
 zstyle ':fzf-tab:*' fzf-flags $(echo $FZF_DEFAULT_OPTS)
 export WORKON_HOME="/home/mswell/.ve"
