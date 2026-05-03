@@ -25,14 +25,19 @@ ln -sf "$HYPR_THEMES/$THEME.conf" "$HOME/.config/hypr/colors.conf"
 # Waybar CSS
 ln -sf "$WAYBAR_THEMES/$THEME.css" "$HOME/.config/waybar/themes/current.css"
 
-# Kitty
-ln -sf "$KITTY_THEMES/$THEME.conf" "$HOME/.config/kitty/theme.conf"
+# Kitty — symlink must match the include name in kitty.conf
+ln -sf "$KITTY_THEMES/$THEME.conf" "$HOME/.config/kitty/current-theme.conf"
+kill -SIGUSR1 $(pgrep -x kitty) 2>/dev/null
 
-# Wallpaper via hyprpaper
+# Wallpaper via wpaperd — update config and restart daemon
 WALLPAPER=$(ls "$BG_DIR/$THEME/"*.{png,jpg,jpeg} 2>/dev/null | shuf -n 1)
 if [[ -n "$WALLPAPER" ]]; then
-    hyprpaper preload "$WALLPAPER"
-    hyprpaper wallpaper ",$WALLPAPER"
+    printf '[default]\npath = "%s"\nduration = "30m"\nmode = "fit"\nsorting = "random"\n' \
+        "$BG_DIR/$THEME" > "$HOME/.config/wpaperd/wallpaper.toml"
+    pkill wpaperd 2>/dev/null
+    sleep 0.3
+    rm -f "$HOME/.local/state/wpaperd/wallpapers/"* 2>/dev/null
+    wpaperd -d
 fi
 
 # Reload Hyprland (picks up colors.conf)
