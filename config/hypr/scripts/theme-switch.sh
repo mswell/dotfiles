@@ -31,8 +31,14 @@ ln -sf "$WAYBAR_THEMES/$THEME.css" "$HOME/.config/waybar/themes/current.css"
 ln -sf "$KITTY_THEMES/$THEME.conf" "$HOME/.config/kitty/current-theme.conf"
 kill -SIGUSR1 $(pgrep -x kitty) 2>/dev/null
 
-# Rofi
+# Rofi (kept as fallback)
 ln -sf "$ROFI_COLORS/$THEME.rasi" "$HOME/.config/rofi/colors/current.rasi"
+
+# Walker
+WALKER_CFG="$HOME/.config/walker/config.toml"
+if [[ -f "$WALKER_CFG" ]]; then
+    sed -i "s/^theme = .*/theme = \"$THEME\"/" "$WALKER_CFG"
+fi
 
 # Tmux
 ln -sf "$TMUX_THEMES/$THEME.conf" "$HOME/.config/tmux/current-theme.conf"

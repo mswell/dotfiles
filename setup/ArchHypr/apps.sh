@@ -95,6 +95,7 @@ yay_packages="
     bibata-cursor-gruvbox-git
     kvantum-theme-gruvbox-git
     rofi
+    walker
     jq
 "
 
@@ -106,6 +107,7 @@ echo "Copying configuration files..."
 mkdir -p "$HOME/.config/hypr" && cp -r "$DOTFILES/config/hypr" "$HOME/.config/"
 mkdir -p "$HOME/.config/kitty" && cp -r "$DOTFILES/config/kitty" "$HOME/.config/"
 cp -r "$DOTFILES/config/dunst" "$HOME/.config/"
+mkdir -p "$HOME/.config/walker" && cp -r "$DOTFILES/config/walker/." "$HOME/.config/walker/"
 cp -r "$DOTFILES/config/wpaperd" "$HOME/.config/"
 cp -r "$DOTFILES/config/waybar" "$HOME/.config/"
 cp -r "$DOTFILES/config/tofi" "$HOME/.config/"

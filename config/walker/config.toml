@@ -1,0 +1,43 @@
+force_keyboard_focus = true
+close_when_open = true
+click_to_close = true
+single_click_activation = true
+selection_wrap = true
+hide_action_hints = true
+hide_return_action = true
+theme = "vantablack"
+
+[shell]
+layer = "overlay"
+anchor_top = true
+anchor_bottom = true
+anchor_left = true
+anchor_right = true
+
+[placeholders]
+"default" = { input = " Search...", list = "No Results" }
+
+[keybinds]
+quick_activate = []
+
+[columns]
+symbols = 1
+
+[providers]
+max_results = 128
+default = [
+  "desktopapplications",
+  "websearch",
+]
+
+[[providers.prefixes]]
+prefix = "."
+provider = "files"
+
+[[providers.prefixes]]
+prefix = "="
+provider = "calc"
+
+[[providers.prefixes]]
+prefix = "$"
+provider = "clipboard"
