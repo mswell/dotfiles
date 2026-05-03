@@ -1,0 +1,9 @@
+/* White theme — based on basecamp/omarchy */
+* {
+    background:     #ffffffff;
+    background-alt: #f0f0f0FF;
+    foreground:     #000000FF;
+    selected:       #6e6e6eFF;
+    active:         #3a3a3aFF;
+    urgent:         #1a1a1aFF;
+}

@@ -120,6 +120,10 @@ mkdir -p "$HOME/.config/hypr/themes" "$HOME/.config/kitty/themes" "$HOME/.config
 ln -sf "$HOME/.config/hypr/themes/vantablack.conf" "$HOME/.config/hypr/colors.conf"
 ln -sf "$HOME/.config/kitty/themes/vantablack.conf" "$HOME/.config/kitty/current-theme.conf"
 ln -sf "$HOME/.config/waybar/themes/vantablack.css" "$HOME/.config/waybar/themes/current.css"
+ln -sf "$HOME/.config/rofi/colors/vantablack.rasi" "$HOME/.config/rofi/colors/current.rasi"
+mkdir -p "$HOME/.config/tmux/themes"
+cp -r "$DOTFILES/config/tmux/themes/." "$HOME/.config/tmux/themes/"
+ln -sf "$HOME/.config/tmux/themes/vantablack.conf" "$HOME/.config/tmux/current-theme.conf"
 echo "vantablack" > "$HOME/.config/hypr/current-theme"
 chmod +x "$HOME/.config/hypr/scripts/theme-switch.sh"
 

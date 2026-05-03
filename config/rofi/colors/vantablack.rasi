@@ -1,0 +1,9 @@
+/* Vantablack theme — based on basecamp/omarchy */
+* {
+    background:     #000000FF;
+    background-alt: #1a1a1aFF;
+    foreground:     #ffffffff;
+    selected:       #8d8d8dFF;
+    active:         #cececeFF;
+    urgent:         #a4a4a4FF;
+}

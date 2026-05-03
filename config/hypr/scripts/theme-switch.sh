@@ -5,6 +5,8 @@
 HYPR_THEMES="$HOME/.config/hypr/themes"
 WAYBAR_THEMES="$HOME/.config/waybar/themes"
 KITTY_THEMES="$HOME/.config/kitty/themes"
+ROFI_COLORS="$HOME/.config/rofi/colors"
+TMUX_THEMES="$HOME/.config/tmux/themes"
 CURRENT_FILE="$HOME/.config/hypr/current-theme"
 BG_DIR="$HOME/.config/backgrounds"
 
@@ -28,6 +30,13 @@ ln -sf "$WAYBAR_THEMES/$THEME.css" "$HOME/.config/waybar/themes/current.css"
 # Kitty — symlink must match the include name in kitty.conf
 ln -sf "$KITTY_THEMES/$THEME.conf" "$HOME/.config/kitty/current-theme.conf"
 kill -SIGUSR1 $(pgrep -x kitty) 2>/dev/null
+
+# Rofi
+ln -sf "$ROFI_COLORS/$THEME.rasi" "$HOME/.config/rofi/colors/current.rasi"
+
+# Tmux
+ln -sf "$TMUX_THEMES/$THEME.conf" "$HOME/.config/tmux/current-theme.conf"
+tmux source-file ~/.tmux.conf 2>/dev/null
 
 # Wallpaper via wpaperd — update config and restart daemon
 WALLPAPER=$(ls "$BG_DIR/$THEME/"*.{png,jpg,jpeg} 2>/dev/null | shuf -n 1)
