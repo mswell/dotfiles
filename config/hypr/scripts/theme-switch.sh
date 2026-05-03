@@ -32,7 +32,7 @@ kill -SIGUSR1 $(pgrep -x kitty) 2>/dev/null
 # Wallpaper via wpaperd — update config and restart daemon
 WALLPAPER=$(ls "$BG_DIR/$THEME/"*.{png,jpg,jpeg} 2>/dev/null | shuf -n 1)
 if [[ -n "$WALLPAPER" ]]; then
-    printf '[default]\npath = "%s"\nduration = "30m"\nmode = "fit"\nsorting = "random"\n' \
+    printf '[default]\npath = "%s"\nduration = "30m"\nmode = "stretch"\nsorting = "random"\n' \
         "$BG_DIR/$THEME" > "$HOME/.config/wpaperd/wallpaper.toml"
     pkill wpaperd 2>/dev/null
     sleep 0.3

@@ -1,5 +1,5 @@
 [default]
-path = "~/Pictures/backgrounds"
+path = "~/.config/backgrounds/vantablack"
 duration = "30m"
-mode = "center"
+mode = "stretch"
 sorting = "random"
