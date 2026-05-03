@@ -9,6 +9,11 @@
   font-size: 14px;
 }
 
+window,
+.window {
+  background-color: transparent;
+}
+
 scrollbar { opacity: 0; }
 
 .box-wrapper {
