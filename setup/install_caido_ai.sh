@@ -40,44 +40,49 @@ check_cmd() {
 
 check_cmd git
 check_cmd node
+check_cmd npm
 
-# pnpm ou npx como fallback
+# pnpm preferido para instalar deps; npm como fallback
 if command -v pnpm &>/dev/null; then
-    PKG_RUNNER="pnpm dlx"
+    PKG_INSTALL="pnpm install --frozen-lockfile"
     success "pnpm encontrado"
-elif command -v npx &>/dev/null; then
-    PKG_RUNNER="npx"
-    warn "pnpm não encontrado, usando npx como fallback"
+elif command -v npm &>/dev/null; then
+    PKG_INSTALL="npm install"
+    warn "pnpm não encontrado, usando npm como fallback"
 else
-    die "Nem pnpm nem npx encontrados. Instale Node.js/pnpm."
+    die "Nem pnpm nem npm encontrados. Instale Node.js."
 fi
 
 echo ""
 
 # ── 2. caido/skills (Claude Code Agent Skills) ────────────────────────────────
+# O CLI `skills add` instala em .agents/skills/ relativo ao CWD, ignorando
+# qualquer path customizado. Por isso usamos git clone direto no destino certo.
 info "Instalando caido/skills para Claude Code..."
 
 SKILLS_TARGET="$HOME/.claude/skills"
+CAIDO_TARGET="$SKILLS_TARGET/caido-mode"
 mkdir -p "$SKILLS_TARGET"
 
-# Usa pnpx/npx para instalar via CLI do Agent Skills
-if $PKG_RUNNER skills add caido/skills --skill='*' 2>&1 | tee /tmp/skills_install.log; then
-    success "caido/skills instalado com sucesso"
-else
-    # Fallback: clone manual e copia os arquivos
-    warn "CLI do skills falhou, tentando instalação manual..."
+TMP_SKILLS=$(mktemp -d)
+trap 'rm -rf "$TMP_SKILLS"' EXIT
 
-    TMP_SKILLS=$(mktemp -d)
-    git clone --depth=1 https://github.com/caido/skills.git "$TMP_SKILLS" 2>/dev/null \
-        || die "Falha ao clonar caido/skills"
+info "Clonando caido/skills..."
+git clone --depth=1 https://github.com/caido/skills.git "$TMP_SKILLS" \
+    || die "Falha ao clonar caido/skills"
 
-    if [ -d "$TMP_SKILLS/skills/caido-mode" ]; then
-        cp -r "$TMP_SKILLS/skills/caido-mode" "$SKILLS_TARGET/"
-        success "caido-mode copiado para $SKILLS_TARGET"
-    else
-        warn "Estrutura inesperada no repo. Verifique $TMP_SKILLS manualmente."
-    fi
-    rm -rf "$TMP_SKILLS"
+if [ ! -d "$TMP_SKILLS/skills/caido-mode" ]; then
+    die "Estrutura inesperada no repo caido/skills (skills/caido-mode não encontrado)"
 fi
+
+rm -rf "$CAIDO_TARGET"
+cp -r "$TMP_SKILLS/skills/caido-mode" "$CAIDO_TARGET"
+success "caido-mode copiado para $CAIDO_TARGET"
+
+info "Instalando dependências Node.js..."
+(cd "$CAIDO_TARGET" && $PKG_INSTALL) \
+    || die "Falha ao instalar dependências em $CAIDO_TARGET"
+
+success "caido/skills instalado com sucesso em $CAIDO_TARGET"
 
 echo ""
