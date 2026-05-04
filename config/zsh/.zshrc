@@ -90,6 +90,9 @@ zinit cdreplay -q
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# ZSH theme colors (p10k + autosuggest) — synced with Hyprland theme
+[[ -f ~/.config/zsh/current-theme.zsh ]] && source ~/.config/zsh/current-theme.zsh
+
 # Keybindings
 bindkey -e
 bindkey '^p' history-search-backward

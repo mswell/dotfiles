@@ -33,6 +33,11 @@ echo "${green}[+] Copying modular functions${reset}"
 create_dir "$CONFIG_DIR/zsh/functions"
 cp -rf "$DOTFILES/config/zsh/functions/"* "$CONFIG_DIR/zsh/functions/"
 
+# Copy zsh theme files (p10k + autosuggest colors per theme)
+echo "${green}[+] Copying zsh themes${reset}"
+create_dir "$CONFIG_DIR/zsh/themes"
+cp -rf "$DOTFILES/config/zsh/themes/." "$CONFIG_DIR/zsh/themes/"
+
 copy_file "$DOTFILES/config/zsh/.zprofile" "$HOME/.zprofile"
 copy_file "$DOTFILES/config/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
 
@@ -72,14 +77,6 @@ echo "${yellow}[+] Copying mako dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/mako"
 copy_file "$DOTFILES/config/mako/config" "$CONFIG_DIR/mako/"
-
-# wlogout themes
-echo "${yellow}[+] Copying wlogout themes${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/wlogout/themes"
-copy_file "$DOTFILES/config/wlogout/vantablack.css" "$CONFIG_DIR/wlogout/themes/"
-copy_file "$DOTFILES/config/wlogout/white.css" "$CONFIG_DIR/wlogout/themes/"
-copy_file "$DOTFILES/config/wlogout/layout" "$CONFIG_DIR/wlogout/"
 
 # flameshot
 echo "${yellow}[+] Copying flameshot dotfiles${reset}"

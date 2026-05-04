@@ -8,7 +8,7 @@ KITTY_THEMES="$HOME/.config/kitty/themes"
 ROFI_COLORS="$HOME/.config/rofi/colors"
 TMUX_THEMES="$HOME/.config/tmux/themes"
 FZF_THEMES="$HOME/.config/fzf/themes"
-WLOGOUT_THEMES="$HOME/.config/wlogout/themes"
+ZSH_THEMES="$HOME/.config/zsh/themes"
 CURRENT_FILE="$HOME/.config/hypr/current-theme"
 BG_DIR="$HOME/.config/backgrounds"
 
@@ -49,6 +49,10 @@ tmux source-file ~/.tmux.conf 2>/dev/null
 # fzf — new shells will pick up the theme via .zshrc sourcing current-theme.sh
 mkdir -p "$HOME/.config/fzf"
 ln -sf "$FZF_THEMES/$THEME.sh" "$HOME/.config/fzf/current-theme.sh"
+
+# ZSH — p10k + autosuggestions colors (new shells pick up via .zshrc)
+mkdir -p "$HOME/.config/zsh/themes"
+ln -sf "$ZSH_THEMES/$THEME.zsh" "$HOME/.config/zsh/current-theme.zsh"
 
 # Wallpaper via wpaperd — set theme folder, no auto-rotation (cycle manually with wpaperctl next)
 if [[ -d "$BG_DIR/$THEME" ]]; then
@@ -136,9 +140,6 @@ if command -v mako &>/dev/null; then
     sed -i "s/^background-color=.*/background-color=$MAKO_BG/" "$MAKO_CFG"
     makoctl reload 2>/dev/null
 fi
-
-# Wlogout — symlink theme CSS (read on next open, no restart needed)
-ln -sf "$WLOGOUT_THEMES/$THEME.css" "$HOME/.config/wlogout/style.css"
 
 # Persist current theme
 echo "$THEME" > "$CURRENT_FILE"
