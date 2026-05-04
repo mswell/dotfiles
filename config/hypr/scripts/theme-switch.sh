@@ -8,6 +8,7 @@ KITTY_THEMES="$HOME/.config/kitty/themes"
 ROFI_COLORS="$HOME/.config/rofi/colors"
 TMUX_THEMES="$HOME/.config/tmux/themes"
 FZF_THEMES="$HOME/.config/fzf/themes"
+WLOGOUT_THEMES="$HOME/.config/wlogout/themes"
 CURRENT_FILE="$HOME/.config/hypr/current-theme"
 BG_DIR="$HOME/.config/backgrounds"
 
@@ -49,10 +50,9 @@ tmux source-file ~/.tmux.conf 2>/dev/null
 mkdir -p "$HOME/.config/fzf"
 ln -sf "$FZF_THEMES/$THEME.sh" "$HOME/.config/fzf/current-theme.sh"
 
-# Wallpaper via wpaperd — update config and restart daemon
-WALLPAPER=$(ls "$BG_DIR/$THEME/"*.{png,jpg,jpeg} 2>/dev/null | shuf -n 1)
-if [[ -n "$WALLPAPER" ]]; then
-    printf '[default]\npath = "%s"\nduration = "30m"\nmode = "stretch"\nsorting = "random"\n' \
+# Wallpaper via wpaperd — set theme folder, no auto-rotation (cycle manually with wpaperctl next)
+if [[ -d "$BG_DIR/$THEME" ]]; then
+    printf '[default]\npath = "%s"\nmode = "stretch"\n' \
         "$BG_DIR/$THEME" > "$HOME/.config/wpaperd/wallpaper.toml"
     pkill wpaperd 2>/dev/null
     sleep 0.3
@@ -70,6 +70,75 @@ if ! pkill -SIGUSR2 waybar 2>/dev/null; then
     sleep 0.2
     waybar &
 fi
+
+# GTK + icon + cursor theme sync
+# gsettings → propagates to running GTK4/libadwaita apps via xdg-desktop-portal-gtk
+# settings.ini → applies at launch for GTK3 apps without a settings daemon
+if [[ "$THEME" == "white" ]]; then
+    GTK_THEME_NAME="Adwaita"
+    GTK_DARK="0"
+    GTK_COLOR_SCHEME="prefer-light"
+    GTK_ICONS="Papirus-Light"
+    GTK_CURSOR="Bibata-Modern-Ice"
+else
+    GTK_THEME_NAME="Gruvbox-Material-Dark"
+    GTK_DARK="1"
+    GTK_COLOR_SCHEME="prefer-dark"
+    GTK_ICONS="Papirus-Dark"
+    GTK_CURSOR="Bibata-Modern-Classic-Gruvbox"
+fi
+
+# Write GTK3 settings.ini (read at app launch; no daemon needed)
+mkdir -p "$HOME/.config/gtk-3.0"
+cat > "$HOME/.config/gtk-3.0/settings.ini" <<EOF
+[Settings]
+gtk-theme-name=$GTK_THEME_NAME
+gtk-icon-theme-name=$GTK_ICONS
+gtk-cursor-theme-name=$GTK_CURSOR
+gtk-cursor-theme-size=24
+gtk-font-name=Adwaita Sans 11
+gtk-application-prefer-dark-theme=$GTK_DARK
+EOF
+
+# Write GTK4 settings.ini (libadwaita dark/light toggle)
+mkdir -p "$HOME/.config/gtk-4.0"
+cat > "$HOME/.config/gtk-4.0/settings.ini" <<EOF
+[Settings]
+gtk-application-prefer-dark-theme=$GTK_DARK
+gtk-icon-theme-name=$GTK_ICONS
+gtk-cursor-theme-name=$GTK_CURSOR
+gtk-cursor-theme-size=24
+EOF
+
+# Notify running GTK apps via dconf/xdg-desktop-portal-gtk
+gsettings set org.gnome.desktop.interface color-scheme   "$GTK_COLOR_SCHEME"
+gsettings set org.gnome.desktop.interface gtk-theme      "$GTK_THEME_NAME"
+gsettings set org.gnome.desktop.interface icon-theme     "$GTK_ICONS"
+gsettings set org.gnome.desktop.interface cursor-theme   "$GTK_CURSOR"
+gsettings set org.gnome.desktop.interface cursor-size    24
+
+# Apply cursor live in Hyprland (compositor + all new X/Wayland clients)
+hyprctl setcursor "$GTK_CURSOR" 24
+
+# Quit Nautilus completely (including daemon) so it reloads icon theme on next open
+nautilus -q 2>/dev/null
+
+# Mako — update colors and reload (Omarchy pattern: text/border/background from theme)
+if command -v mako &>/dev/null; then
+    MAKO_CFG="$HOME/.config/mako/config"
+    if [[ "$THEME" == "white" ]]; then
+        MAKO_TEXT="#000000"; MAKO_BORDER="#6e6e6e"; MAKO_BG="#ffffff"
+    else
+        MAKO_TEXT="#ffffff"; MAKO_BORDER="#8d8d8d"; MAKO_BG="#000000"
+    fi
+    sed -i "s/^text-color=.*/text-color=$MAKO_TEXT/" "$MAKO_CFG"
+    sed -i "s/^border-color=.*/border-color=$MAKO_BORDER/" "$MAKO_CFG"
+    sed -i "s/^background-color=.*/background-color=$MAKO_BG/" "$MAKO_CFG"
+    makoctl reload 2>/dev/null
+fi
+
+# Wlogout — symlink theme CSS (read on next open, no restart needed)
+ln -sf "$WLOGOUT_THEMES/$THEME.css" "$HOME/.config/wlogout/style.css"
 
 # Persist current theme
 echo "$THEME" > "$CURRENT_FILE"

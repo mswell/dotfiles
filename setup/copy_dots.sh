@@ -61,6 +61,26 @@ create_dir "$CONFIG_DIR/wezterm"
 copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
 copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
 
+# waypaper
+echo "${yellow}[+] Copying waypaper dotfiles${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/waypaper"
+copy_file "$DOTFILES/config/waypaper/config.ini" "$CONFIG_DIR/waypaper/"
+
+# mako
+echo "${yellow}[+] Copying mako dotfiles${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/mako"
+copy_file "$DOTFILES/config/mako/config" "$CONFIG_DIR/mako/"
+
+# wlogout themes
+echo "${yellow}[+] Copying wlogout themes${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/wlogout/themes"
+copy_file "$DOTFILES/config/wlogout/vantablack.css" "$CONFIG_DIR/wlogout/themes/"
+copy_file "$DOTFILES/config/wlogout/white.css" "$CONFIG_DIR/wlogout/themes/"
+copy_file "$DOTFILES/config/wlogout/layout" "$CONFIG_DIR/wlogout/"
+
 # flameshot
 echo "${yellow}[+] Copying flameshot dotfiles${reset}"
 sleep 1
