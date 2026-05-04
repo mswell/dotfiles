@@ -1,0 +1,1 @@
+-- Additional autocmds beyond LazyVim defaults

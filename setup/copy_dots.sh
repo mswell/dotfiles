@@ -53,6 +53,12 @@ sleep 1
 create_dir "$CONFIG_DIR/bat"
 copy_file "$DOTFILES/config/bat/config" "$CONFIG_DIR/bat/config"
 
+# neovim (LazyVim + Omarchy theme integration)
+echo "${yellow}[+] Copying neovim dotfiles${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/nvim"
+cp -rf "$DOTFILES/config/nvim/." "$CONFIG_DIR/nvim/"
+
 # Ghostty
 echo "${yellow}[+] Copying Ghostty dotfiles${reset}"
 sleep 1

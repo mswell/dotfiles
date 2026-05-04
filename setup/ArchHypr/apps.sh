@@ -105,6 +105,9 @@ cp -r "$DOTFILES/config/hypr/backgrounds/white" "$HOME/.config/backgrounds/"
 mkdir -p "$HOME/Pictures/backgrounds" && cp -r "$DOTFILES/config/backgrounds/." "$HOME/Pictures/backgrounds/"
 mkdir -p "$HOME/.config/waypaper" && cp "$DOTFILES/config/waypaper/config.ini" "$HOME/.config/waypaper/"
 
+# Neovim — LazyVim base + Omarchy-style theme integration
+mkdir -p "$HOME/.config/nvim" && cp -r "$DOTFILES/config/nvim/." "$HOME/.config/nvim/"
+
 # Theme system — create initial symlinks (default: vantablack)
 mkdir -p "$HOME/.config/hypr/themes" "$HOME/.config/kitty/themes" "$HOME/.config/waybar/themes"
 ln -sf "$HOME/.config/hypr/themes/vantablack.conf" "$HOME/.config/hypr/colors.conf"
