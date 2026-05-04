@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# theme-switch.sh — Switch between vantablack and white themes
-# Usage: theme-switch.sh [vantablack|white|toggle]
+# theme-switch.sh — Cycle or set desktop theme
+# Usage: theme-switch.sh [vantablack|white|tokyonight|next]
 
 HYPR_THEMES="$HOME/.config/hypr/themes"
 WAYBAR_THEMES="$HOME/.config/waybar/themes"
@@ -12,14 +12,22 @@ ZSH_THEMES="$HOME/.config/zsh/themes"
 CURRENT_FILE="$HOME/.config/hypr/current-theme"
 BG_DIR="$HOME/.config/backgrounds"
 
+THEMES=(vantablack white tokyonight)
+
 # Determine target theme
-if [[ "$1" == "toggle" ]]; then
+if [[ "$1" == "next" || "$1" == "toggle" ]]; then
     current=$(cat "$CURRENT_FILE" 2>/dev/null || echo "vantablack")
-    [[ "$current" == "vantablack" ]] && THEME="white" || THEME="vantablack"
-elif [[ "$1" == "white" || "$1" == "vantablack" ]]; then
+    for i in "${!THEMES[@]}"; do
+        if [[ "${THEMES[$i]}" == "$current" ]]; then
+            THEME="${THEMES[$(( (i + 1) % ${#THEMES[@]} ))]}"
+            break
+        fi
+    done
+    THEME="${THEME:-vantablack}"
+elif [[ "$1" == "vantablack" || "$1" == "white" || "$1" == "tokyonight" ]]; then
     THEME="$1"
 else
-    echo "Usage: theme-switch.sh [vantablack|white|toggle]"
+    echo "Usage: theme-switch.sh [vantablack|white|tokyonight|next]"
     exit 1
 fi
 
@@ -132,6 +140,8 @@ if command -v mako &>/dev/null; then
     MAKO_CFG="$HOME/.config/mako/config"
     if [[ "$THEME" == "white" ]]; then
         MAKO_TEXT="#000000"; MAKO_BORDER="#6e6e6e"; MAKO_BG="#ffffff"
+    elif [[ "$THEME" == "tokyonight" ]]; then
+        MAKO_TEXT="#c0caf5"; MAKO_BORDER="#7aa2f7"; MAKO_BG="#1a1b26"
     else
         MAKO_TEXT="#ffffff"; MAKO_BORDER="#8d8d8d"; MAKO_BG="#000000"
     fi

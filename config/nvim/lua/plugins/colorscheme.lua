@@ -10,11 +10,19 @@ end
 
 local theme = current_theme()
 
+-- map theme names to nvim colorscheme names
+local colorscheme = ({
+  vantablack = "vantablack",
+  white      = "white",
+  tokyonight = "tokyonight",
+})[theme] or "vantablack"
+
 return {
-  { "bjarneo/vantablack.nvim", priority = 1000 },
-  { "bjarneo/white.nvim",      priority = 1000 },
+  { "bjarneo/vantablack.nvim",                priority = 1000 },
+  { "bjarneo/white.nvim",                     priority = 1000 },
+  { "folke/tokyonight.nvim",                  priority = 1000 },
   {
     "LazyVim/LazyVim",
-    opts = { colorscheme = theme },
+    opts = { colorscheme = colorscheme },
   },
 }

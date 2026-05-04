@@ -1,0 +1,9 @@
+/* Tokyo Night theme */
+* {
+    background:     #1a1b26FF;
+    background-alt: #292e42FF;
+    foreground:     #c0caf5FF;
+    selected:       #7aa2f7FF;
+    active:         #bb9af7FF;
+    urgent:         #f7768eFF;
+}
