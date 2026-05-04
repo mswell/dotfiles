@@ -44,10 +44,13 @@ kill -SIGUSR1 $(pgrep -x kitty) 2>/dev/null
 # Rofi (kept as fallback)
 ln -sf "$ROFI_COLORS/$THEME.rasi" "$HOME/.config/rofi/colors/current.rasi"
 
-# Walker
+# Walker — update theme and restart service so it reloads config
 WALKER_CFG="$HOME/.config/walker/config.toml"
 if [[ -f "$WALKER_CFG" ]]; then
     sed -i "s/^theme = .*/theme = \"$THEME\"/" "$WALKER_CFG"
+    pkill -x walker 2>/dev/null
+    sleep 0.2
+    walker --gapplication-service &
 fi
 
 # Tmux
