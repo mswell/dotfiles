@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a comprehensive dotfiles management system for automated Linux development environment setup. It supports multiple Linux distributions (Ubuntu, Arch Linux), window managers (Hyprland, i3wm, Qtile), and includes security/pentesting tools for bug bounty hunting and security research.
+This is a comprehensive dotfiles management system for automated Linux development environment setup. It supports multiple Linux distributions (Ubuntu, Arch Linux), window managers (Hyprland, i3wm), and includes security/pentesting tools for bug bounty hunting and security research.
 
 ## Core Commands
 
@@ -182,6 +182,45 @@ mise use python@3.11         # Set project-local version
 
 All functions expect files like `domains`, `clean.subdomains`, `ALLHTTP` in current directory.
 
+### Desktop Theme System (Hyprland only)
+
+Three themes — **vantablack**, **white**, **tokyonight** — cycle via `SUPER+SHIFT+T`. All components read a single source of truth and switch atomically.
+
+**How it works:**
+- `~/.config/hypr/current-theme` — plain text file holding the active theme name
+- `theme-switch.sh` — updates the file and creates symlinks/restarts services for each component
+- Each component has a `themes/` directory with one file per theme; a `current-*` symlink points at the active one
+
+**Per-component integration:**
+
+| Component | Mechanism |
+|-----------|-----------|
+| Hyprland / Hyprlock | `ln -sf themes/$THEME.conf colors.conf` → `source colors.conf` |
+| Kitty | `ln -sf themes/$THEME.conf current-theme.conf` + `kill -SIGUSR1` |
+| Waybar | `ln -sf themes/$THEME.css themes/current.css` + `pkill -SIGUSR2` |
+| Walker | `sed -i` config.toml + service restart |
+| tmux | `ln -sf themes/$THEME.conf current-theme.conf` + `tmux source-file` |
+| fzf | `ln -sf themes/$THEME.sh current-theme.sh` (sourced by .zshrc) |
+| ZSH / p10k | `ln -sf themes/$THEME.zsh current-theme.zsh` (sourced after p10k) |
+| Neovim | Reads `current-theme` at startup in `colorscheme.lua` |
+| Mako | `sed -i` config directly + `makoctl reload` |
+| GTK 3/4 | `settings.ini` overwrite + `gsettings` + `hyprctl setcursor` |
+| Wallpaper | `wpaperd` pointed at `backgrounds/$THEME/` |
+
+**Adding a new theme:**
+1. Create `config/hypr/themes/<name>.conf` (Hyprland/Hyprlock color vars)
+2. Create `config/kitty/themes/<name>.conf`
+3. Create `config/waybar/themes/<name>.css`
+4. Create `config/walker/themes/<name>/style.css`
+5. Create `config/tmux/themes/<name>.conf`
+6. Create `config/fzf/themes/<name>.sh`
+7. Create `config/zsh/themes/<name>.zsh` (p10k + autosuggestion colors)
+8. Add wallpapers to `config/hypr/backgrounds/<name>/`
+9. Add the theme name to the `THEMES` array in `theme-switch.sh`
+10. Add the name to the `colorscheme` map in `config/nvim/lua/plugins/colorscheme.lua`
+
+**Power menu** (`SUPER+ESC`): `config/hypr/scripts/power-menu.sh` pipes options to `walker --dmenu` (Lock / Suspend / Logout / Restart / Shutdown). Walker has no built-in power provider; this is the correct Omarchy pattern.
+
 ## Configuration Structure
 
 ```
@@ -190,14 +229,25 @@ config/
 │   ├── env.zsh           # Central path configuration (source of truth)
 │   ├── functions.zsh     # Bug bounty workflow functions
 │   ├── alias.zsh         # Shell aliases
-│   └── custom.zsh        # Custom workflows
-├── nvim/                 # Neovim config (Lua-based)
-├── kitty/                # Kitty terminal themes
-├── wezterm/              # WezTerm config
-├── hypr/                 # Hyprland config (Wayland compositor)
+│   ├── custom.zsh        # Custom workflows
+│   └── themes/           # p10k + autosuggestion colors per theme
+├── nvim/
+│   └── lua/plugins/
+│       └── colorscheme.lua  # reads current-theme at startup
+├── hypr/
+│   ├── hyprland.conf
+│   ├── hyprlock.conf     # Omarchy style: blurred screenshot, centered input only
+│   ├── themes/           # vantablack.conf, white.conf, tokyonight.conf
+│   ├── backgrounds/      # per-theme wallpaper directories
+│   └── scripts/
+│       ├── theme-switch.sh  # syncs all components on theme change
+│       └── power-menu.sh    # walker dmenu power menu
+├── kitty/themes/
+├── waybar/themes/
+├── walker/themes/
+├── tmux/themes/
+├── fzf/themes/
 ├── i3/                   # i3wm config (X11 tiling WM)
-├── qtile/                # Qtile config (Python-based WM)
-├── themes/               # Color schemes (Catppuccin, Tokyo Night, etc.)
 ├── home/.gf/             # GF patterns for grep
 └── agents/               # Claude Code agent configurations
 ```
@@ -270,6 +320,9 @@ bypass4xx
 - `install.sh` - Main entry point (menu-driven installer)
 - `config/zsh/env.zsh` - **Central path configuration** (source of truth)
 - `config/zsh/functions.zsh` - Bug bounty workflow functions
+- `config/hypr/scripts/theme-switch.sh` - **Theme system orchestrator** (syncs all components)
+- `config/hypr/scripts/power-menu.sh` - Walker dmenu power menu
+- `config/nvim/lua/plugins/colorscheme.lua` - Dynamic Neovim colorscheme (reads current-theme)
 - `setup/lib/common.sh` - **Shared library** (colors, DOTFILES detection, source_script)
 - `setup/lib/arch.sh` - **Arch shared library** (pacman/yay helpers, base setup, fonts)
 - `setup/install_hacktools.sh` - Security tools installation

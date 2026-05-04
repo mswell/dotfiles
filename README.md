@@ -11,7 +11,7 @@ Personal development environment for Arch Linux + Hyprland, focused on security 
 Automated setup for a minimal, consistent Linux environment with:
 
 - **Arch Linux + Hyprland** as the primary desktop target
-- **Vantablack / White** dual-theme system synced across all components
+- **Vantablack / White / Tokyo Night** three-theme system synced across all components
 - **LazyVim** with Omarchy-style dynamic colorschemes
 - **Bug bounty toolkit** with full automated recon workflow
 - Support for Ubuntu VPS, i3wm, WSL, and headless Arch variants
@@ -44,7 +44,7 @@ cd dotfiles
 
 Minimal Wayland setup inspired by [Omarchy](https://github.com/basecamp/omarchy):
 
-- **Theme**: `SUPER+SHIFT+T` toggles vantablack ↔ white, syncing Hyprland, Kitty, Waybar, Walker, tmux, fzf, ZSH prompt, and Neovim
+- **Theme**: `SUPER+SHIFT+T` cycles vantablack → white → tokyonight, syncing Hyprland, Kitty, Waybar, Walker, tmux, fzf, ZSH prompt, and Neovim
 - **Launcher**: Walker (`SUPER+A`)
 - **Power menu**: Walker dmenu (`SUPER+ESC`) — Lock / Suspend / Logout / Restart / Shutdown
 - **Lock screen**: Hyprlock — blurred screenshot background, minimal centered input field
@@ -60,14 +60,14 @@ Minimal Wayland setup inspired by [Omarchy](https://github.com/basecamp/omarchy)
 | `SUPER+A` | App launcher (Walker) |
 | `SUPER+ESC` | Power menu |
 | `SUPER+SHIFT+L` | Lock screen |
-| `SUPER+SHIFT+T` | Toggle theme |
+| `SUPER+SHIFT+T` | Cycle theme (vantablack → white → tokyonight) |
 | `SUPER+CTRL+W` | Next wallpaper |
 | `SUPER+V` | Clipboard history |
 
 ## Shell & Editor
 
 - **ZSH** with Powerlevel10k — prompt and autosuggestion colors sync with the active theme
-- **Neovim** with LazyVim — loads `vantablack.nvim` or `white.nvim` based on the current theme
+- **Neovim** with LazyVim — loads `vantablack.nvim`, `white.nvim`, or `tokyonight.nvim` based on the current theme
 - **tmux** with theme-synced status bar
 - **fzf** with per-theme color config
 
@@ -122,13 +122,13 @@ config/
 ├── hypr/
 │   ├── hyprland.conf
 │   ├── hyprlock.conf
-│   ├── themes/              # vantablack.conf + white.conf
+│   ├── themes/              # vantablack.conf + white.conf + tokyonight.conf
 │   └── scripts/
 │       ├── theme-switch.sh  # syncs all components on theme change
 │       └── power-menu.sh    # walker dmenu power menu
 ├── nvim/
 │   └── lua/plugins/
-│       └── colorscheme.lua  # reads current-theme → vantablack or white
+│       └── colorscheme.lua  # reads current-theme → vantablack, white, or tokyonight
 ├── kitty/themes/
 ├── waybar/themes/
 ├── walker/
