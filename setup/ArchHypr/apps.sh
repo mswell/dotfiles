@@ -127,6 +127,7 @@ echo "vantablack" > "$HOME/.config/hypr/current-theme"
 chmod +x "$HOME/.config/hypr/scripts/theme-switch.sh"
 chmod +x "$HOME/.config/hypr/scripts/bg-set.sh"
 chmod +x "$HOME/.config/hypr/scripts/power-menu.sh"
+chmod +x "$HOME/.config/hypr/scripts/screenshot-area.sh"
 
 mkdir -p "$HOME/.config/rofi/colors"
 mkdir -p "$HOME/.config/rofi/launchers/type-2/shared"
