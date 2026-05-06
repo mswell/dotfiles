@@ -90,6 +90,12 @@ sleep 1
 create_dir "$CONFIG_DIR/flameshot"
 copy_file "$DOTFILES/config/flameshot/flameshot.ini" "$CONFIG_DIR/flameshot/"
 
+# swappy
+echo "${yellow}[+] Copying swappy dotfiles${reset}"
+sleep 1
+create_dir "$CONFIG_DIR/swappy"
+copy_file "$DOTFILES/config/swappy/config" "$CONFIG_DIR/swappy/"
+
 # tmux
 echo "${yellow}[+] Copying tmux dotfiles${reset}"
 sleep 1
