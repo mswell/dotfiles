@@ -47,6 +47,12 @@ sleep 1
 copy_file "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
 copy_file "$DOTFILES/config/git/.catppuccin.gitconfig" "$HOME/.catppuccin.gitconfig"
 
+# git hooks (global — applies to all repos via core.hooksPath)
+echo "${green}[+] Installing git hooks${reset}"
+create_dir "$CONFIG_DIR/git/hooks"
+cp -f "$DOTFILES/config/git/hooks/pre-commit" "$CONFIG_DIR/git/hooks/pre-commit"
+chmod +x "$CONFIG_DIR/git/hooks/pre-commit"
+
 # bat
 echo "${yellow}[+] Copying bat dotfiles${reset}"
 sleep 1
@@ -105,5 +111,10 @@ copy_file "$DOTFILES/config/tmux/.tmux-cht-command" "$HOME/.tmux-cht-command"
 copy_file "$DOTFILES/config/tmux/.tmux-cht-languages" "$HOME/.tmux-cht-languages"
 copy_file "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
 copy_file "$DOTFILES/config/tmux/tmux-cht.sh" "$HOME/.local/bin"
+
+# Pi coding agent themes
+echo "${yellow}[+] Copying Pi themes${reset}"
+create_dir "$HOME/.pi/agent/themes"
+cp -rf "$DOTFILES/config/pi/agent/themes/." "$HOME/.pi/agent/themes/"
 
 echo "${yellow}[+] Done.${reset}"

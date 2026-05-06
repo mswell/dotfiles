@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# pre-commit: block secrets and sensitive data from being committed
+
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
+
+ERRORS=0
+WARNINGS=0
+
+err()  { echo -e "${RED}[BLOCKED]${RESET} $*"; ((ERRORS++)); }
+warn() { echo -e "${YELLOW}[WARN]${RESET}   $*"; ((WARNINGS++)); }
+info() { echo -e "${CYAN}[INFO]${RESET}    $*"; }
+
+# ---------------------------------------------------------------------------
+# 1. Blocked filenames — never commit these
+# ---------------------------------------------------------------------------
+BLOCKED_FILES=(
+    '\.env$'
+    '\.env\.'
+    'auth\.json$'
+    'credentials\.json$'
+    'secrets\.json$'
+    'id_rsa$'
+    'id_dsa$'
+    'id_ecdsa$'
+    'id_ed25519$'
+    '\.pem$'
+    '\.p12$'
+    '\.pfx$'
+    '\.key$'
+    'client_secret.*\.json$'
+    'service.account.*\.json$'
+    'gcloud.*\.json$'
+    'kubeconfig$'
+    '\.kube/config$'
+)
+
+while IFS= read -r -d '' file; do
+    for pattern in "${BLOCKED_FILES[@]}"; do
+        if echo "$file" | grep -qiE "$pattern"; then
+            err "Sensitive filename: $file  (matches: $pattern)"
+        fi
+    done
+done < <(git diff --cached --name-only -z)
+
+# ---------------------------------------------------------------------------
+# 2. Content patterns — scan staged file contents
+# ---------------------------------------------------------------------------
+
+# Pattern format: "LABEL|||REGEX"
+PATTERNS=(
+    # Private keys
+    "Private key header|||-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"
+
+    # AWS
+    "AWS Access Key ID|||AKIA[0-9A-Z]{16}"
+    "AWS Secret Access Key|||(aws_secret_access_key|AWS_SECRET_ACCESS_KEY)\s*[=:]\s*[A-Za-z0-9+/]{40}"
+
+    # Generic high-entropy secrets (value must be 20+ non-space chars)
+    "API key assignment|||(api[_-]?key|apikey)\s*[=:]\s*[\"']?[A-Za-z0-9_\-\.]{20,}"
+    "Secret assignment|||(secret[_-]?key|client_secret|app_secret)\s*[=:]\s*[\"']?[A-Za-z0-9_\-\.+/]{20,}"
+    "Password assignment|||(password|passwd)\s*[=:]\s*[\"'][^\"']{8,}[\"']"
+    "Token assignment|||(access_token|auth_token|bearer_token|refresh_token|api_token)\s*[=:]\s*[\"']?[A-Za-z0-9_\-\.]{20,}"
+
+    # Provider-specific tokens
+    "GitHub token|||gh[ps]_[A-Za-z0-9]{36}"
+    "GitHub fine-grained token|||github_pat_[A-Za-z0-9_]{82}"
+    "Slack token|||xox[baprs]-[A-Za-z0-9\-]+"
+    "Stripe key|||sk_(live|test)_[A-Za-z0-9]{24,}"
+    "SendGrid key|||SG\.[A-Za-z0-9_\-]{22}\.[A-Za-z0-9_\-]{43}"
+    "Twilio SID|||AC[a-f0-9]{32}"
+    "HackerOne token|||[Hh]1[_-]?token\s*[=:]\s*[A-Za-z0-9_\-\.]{20,}"
+    "Google API key|||AIza[0-9A-Za-z\-_]{35}"
+    "Heroku key|||[Hh]eroku[_-]?(api[_-]?)?key\s*[=:]\s*[\"']?[a-f0-9\-]{36,}"
+
+    # JWT (only flag if it looks like a real one, 3 base64url parts)
+    "JWT token|||eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
+
+    # Pi / Claude / AI provider keys
+    "Anthropic API key|||sk-ant-[A-Za-z0-9_\-]{40,}"
+    "OpenAI API key|||sk-[A-Za-z0-9]{48}"
+)
+
+# Files to skip scanning (binary, compiled, known-safe patterns)
+SKIP_EXTENSIONS='^\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|mp3|pdf|zip|tar|gz|bz2|xz|exe|bin|so|a|o|pyc|class)$'
+
+while IFS= read -r -d '' file; do
+    # Skip deleted files
+    git diff --cached --diff-filter=D --name-only -z | grep -qzF "$file" && continue
+
+    # Skip by extension
+    ext=".${file##*.}"
+    echo "$ext" | grep -qiE "$SKIP_EXTENSIONS" && continue
+
+    # Skip GF grep pattern files (they contain regex fragments, not real secrets)
+    echo "$file" | grep -q '\.gf/' && continue
+
+    # Get staged content
+    content=$(git show ":$file" 2>/dev/null) || continue
+
+    for entry in "${PATTERNS[@]}"; do
+        label="${entry%%|||*}"
+        regex="${entry##*|||}"
+
+        # grep with line numbers; suppress errors for binary files
+        matches=$(echo "$content" | grep -inE "$regex" 2>/dev/null) || continue
+        if [[ -n "$matches" ]]; then
+            while IFS= read -r match; do
+                lineno=$(echo "$match" | cut -d: -f1)
+                err "$label in ${CYAN}$file:$lineno${RESET}"
+                echo "         $(echo "$match" | cut -d: -f2- | sed 's/^\s*//' | head -c 120)"
+            done <<< "$matches"
+        fi
+    done
+done < <(git diff --cached --name-only -z)
+
+# ---------------------------------------------------------------------------
+# 3. Result
+# ---------------------------------------------------------------------------
+echo ""
+if [[ $ERRORS -gt 0 ]]; then
+    echo -e "${RED}╔══════════════════════════════════════════════╗${RESET}"
+    echo -e "${RED}║  Commit blocked: $ERRORS secret(s) detected        ║${RESET}"
+    echo -e "${RED}╚══════════════════════════════════════════════╝${RESET}"
+    echo ""
+    echo -e "  Fix the issues above, then commit again."
+    echo -e "  If this is a false positive, use:  ${YELLOW}git commit --no-verify${RESET}"
+    echo ""
+    exit 1
+fi
+
+if [[ $WARNINGS -gt 0 ]]; then
+    info "$WARNINGS warning(s) found — review before pushing."
+fi
+
+exit 0

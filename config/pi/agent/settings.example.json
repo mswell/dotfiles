@@ -1,0 +1,13 @@
+{
+  "lastChangelogVersion": "0.73.0",
+  "theme": "dark",
+  "defaultProvider": "github-copilot",
+  "defaultModel": "gpt-5.5",
+  "defaultThinkingLevel": "medium",
+  "packages": [
+    "npm:pi-mcp-adapter",
+    "npm:pi-web-access",
+    "npm:@aliou/pi-guardrails",
+    "npm:pi-context"
+  ]
+}

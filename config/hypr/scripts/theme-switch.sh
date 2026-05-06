@@ -154,6 +154,22 @@ if command -v mako &>/dev/null; then
     makoctl reload 2>/dev/null
 fi
 
+# Pi coding agent — use named theme if installed, fallback to dark/light
+PI_SETTINGS="$HOME/.pi/agent/settings.json"
+if [[ -f "$PI_SETTINGS" ]]; then
+    if [[ -f "$HOME/.pi/agent/themes/$THEME.json" ]]; then
+        PI_THEME="$THEME"
+    else
+        PI_THEME=$([[ "$THEME" == "white" ]] && echo "light" || echo "dark")
+    fi
+    if command -v jq &>/dev/null; then
+        tmp=$(mktemp)
+        jq --arg t "$PI_THEME" '.theme = $t' "$PI_SETTINGS" > "$tmp" && mv "$tmp" "$PI_SETTINGS"
+    else
+        sed -i "s/\"theme\": \"[^\"]*\"/\"theme\": \"$PI_THEME\"/" "$PI_SETTINGS"
+    fi
+fi
+
 # Persist current theme
 echo "$THEME" > "$CURRENT_FILE"
 

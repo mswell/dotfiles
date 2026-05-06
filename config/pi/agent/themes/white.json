@@ -1,0 +1,80 @@
+{
+  "$schema": "https://raw.githubusercontent.com/badlogic/pi-mono/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "name": "white",
+  "vars": {
+    "accent":   "#6e6e6e",
+    "accent2":  "#3a3a3a",
+    "border":   "#c0c0c0",
+    "surface":  "#e0e0e0",
+    "surface2": "#f0f0f0",
+    "dim":      "#9a9a9a",
+    "green":    "#2d7a2d",
+    "red":      "#c0392b",
+    "yellow":   "#8b6914",
+    "blue":     "#2c5fb3"
+  },
+  "colors": {
+    "accent":             "accent",
+    "border":             "accent",
+    "borderAccent":       "accent2",
+    "borderMuted":        "border",
+    "success":            "green",
+    "error":              "red",
+    "warning":            "yellow",
+    "muted":              "accent",
+    "dim":                "dim",
+    "text":               "",
+    "thinkingText":       "accent",
+
+    "selectedBg":         "surface",
+    "userMessageBg":      "surface2",
+    "userMessageText":    "",
+    "customMessageBg":    "#ede7f6",
+    "customMessageText":  "",
+    "customMessageLabel": "accent2",
+    "toolPendingBg":      "#f5f5f5",
+    "toolSuccessBg":      "#f0f5f0",
+    "toolErrorBg":        "#f5f0f0",
+    "toolTitle":          "",
+    "toolOutput":         "accent",
+
+    "mdHeading":          "accent2",
+    "mdLink":             "blue",
+    "mdLinkUrl":          "accent",
+    "mdCode":             "#5a3e8a",
+    "mdCodeBlock":        "green",
+    "mdCodeBlockBorder":  "border",
+    "mdQuote":            "accent",
+    "mdQuoteBorder":      "border",
+    "mdHr":               "border",
+    "mdListBullet":       "accent",
+
+    "toolDiffAdded":      "green",
+    "toolDiffRemoved":    "red",
+    "toolDiffContext":    "accent",
+
+    "syntaxComment":      "#008000",
+    "syntaxKeyword":      "#0000ff",
+    "syntaxFunction":     "#795e26",
+    "syntaxVariable":     "#001080",
+    "syntaxString":       "#a31515",
+    "syntaxNumber":       "#098658",
+    "syntaxType":         "#267f99",
+    "syntaxOperator":     "#000000",
+    "syntaxPunctuation":  "#000000",
+
+    "thinkingOff":        "surface",
+    "thinkingMinimal":    "border",
+    "thinkingLow":        "dim",
+    "thinkingMedium":     "accent",
+    "thinkingHigh":       "#9370db",
+    "thinkingXhigh":      "#8b008b",
+
+    "bashMode":           "green"
+  },
+  "export": {
+    "pageBg":  "#f8f8f8",
+    "cardBg":  "#ffffff",
+    "infoBg":  "#fffae6"
+  }
+}

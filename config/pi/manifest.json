@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "createdAt": "2026-05-06T19:02:41.416Z",
+  "source": {
+    "piAgentDir": "/home/mswell/.pi/agent"
+  },
+  "redaction": {
+    "skipsSessions": true,
+    "skipsPackageCaches": true,
+    "skipsSensitiveFilenames": true,
+    "redactsSensitiveKeysAndTokenPatterns": true
+  },
+  "filesWritten": [
+    "agent/settings.example.json",
+    "agent/extensions/guardrails.json",
+    "agent/extensions/pi-config-backup/README.md",
+    "agent/extensions/pi-config-backup/index.ts",
+    "agent/extensions/pi-harness/README.md",
+    "agent/extensions/pi-harness/index.ts",
+    "README.md"
+  ],
+  "filesSkipped": []
+}
