@@ -10,3 +10,6 @@ mongodb/__pycache__/
 mongodb/resume.cfg
 .vscode
 *.pyc
+node_modules/
+**/node_modules/
+.pi/

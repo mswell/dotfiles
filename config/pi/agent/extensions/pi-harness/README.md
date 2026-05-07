@@ -19,10 +19,13 @@ Project data is stored per repository in:
 ```text
 /harness init
 /harness status
+/harness tasks [all]
 /harness context
 /harness task <title>
 /harness phase <P|R|E|V|C>
 /harness advance
+/harness done [note]
+/harness close <task-id> [note]
 /harness decision <text>
 /harness evidence <text>
 /harness report [note]

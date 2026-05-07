@@ -47,10 +47,13 @@ interface TaskState {
 const HarnessParams = Type.Object({
 	action: Type.Union([
 		Type.Literal("status"),
+		Type.Literal("tasks"),
 		Type.Literal("init"),
 		Type.Literal("startTask"),
 		Type.Literal("setPhase"),
 		Type.Literal("advancePhase"),
+		Type.Literal("completeTask"),
+		Type.Literal("closeTask"),
 		Type.Literal("recordDecision"),
 		Type.Literal("recordEvidence"),
 		Type.Literal("readContext"),
@@ -208,7 +211,11 @@ async function saveTask(root: string, task: TaskState): Promise<void> {
 	const existing = index.tasks.findIndex((item) => item.id === task.id);
 	if (existing >= 0) index.tasks[existing] = summary;
 	else index.tasks.unshift(summary);
-	index.activeTaskId = task.id;
+	if (task.status === "done") {
+		if (index.activeTaskId === task.id) delete index.activeTaskId;
+	} else {
+		index.activeTaskId = task.id;
+	}
 	await saveIndex(root, index);
 }
 
@@ -249,11 +256,51 @@ async function advancePhase(root: string): Promise<TaskState> {
 	const current = PHASES.indexOf(task.phase);
 	const next = PHASES[Math.min(current + 1, PHASES.length - 1)];
 	task.phase = next;
-	if (next === "C" && task.phase === "C") task.status = "active";
 	task.updatedAt = now();
 	await saveTask(root, task);
 	await appendTrace(root, { type: "phase_advance", taskId: task.id, phase: next });
 	return task;
+}
+
+async function completeTask(root: string, note?: string): Promise<TaskState> {
+	const task = await getActiveTask(root);
+	if (!task) throw new Error("No active task. Use startTask first.");
+	return await completeTaskState(root, task, note);
+}
+
+async function findTask(root: string, selector: string): Promise<TaskState | undefined> {
+	const index = await loadIndex(root);
+	const normalized = selector.trim().toLowerCase();
+	const summary = index.tasks.find((task) =>
+		task.id === normalized ||
+		`${task.id}-${task.slug}` === normalized ||
+		task.slug === normalized ||
+		task.title.toLowerCase() === normalized ||
+		task.id.startsWith(normalized),
+	);
+	if (!summary) return undefined;
+	const statePath = path.join(taskDir(root, summary), "state.json");
+	return (await readJson<TaskState>(statePath)) ?? summary;
+}
+
+async function completeTaskState(root: string, task: TaskState, note?: string): Promise<TaskState> {
+	if (note) {
+		await appendText(path.join(taskDir(root, task), "evidence.md"), `\n## ${now()}\n\n${note}\n`);
+	}
+	task.phase = "C";
+	task.status = "done";
+	task.updatedAt = now();
+	await appendTrace(root, { type: "task_done", taskId: task.id, title: task.title });
+	await saveTask(root, task);
+	return task;
+}
+
+async function closeTask(root: string, text?: string): Promise<TaskState> {
+	const [selector, ...noteParts] = (text ?? "").trim().split(/\s+/);
+	if (!selector) throw new Error("Task id/title is required. Use /harness tasks to list tasks.");
+	const task = await findTask(root, selector);
+	if (!task) throw new Error(`Task not found: ${selector}`);
+	return await completeTaskState(root, task, noteParts.join(" ").trim() || undefined);
 }
 
 async function appendTrace(root: string, event: Record<string, unknown>): Promise<void> {
@@ -329,9 +376,38 @@ async function buildStatus(root: string): Promise<string> {
 	}
 	const index = await loadIndex(root);
 	const active = await getActiveTask(root);
-	const lines = [`pi-harness v${VERSION}`, `Root: ${root}`, `Tasks: ${index.tasks.length}`];
-	if (active) lines.push(`Active: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}] ${active.status}`);
-	else lines.push("Active: none");
+	const openTasks = index.tasks.filter((task) => task.status !== "done");
+	const doneTasks = index.tasks.length - openTasks.length;
+	const lines = [`pi-harness v${VERSION}`, `Root: ${root}`, `Open tasks: ${openTasks.length}${doneTasks ? ` (done: ${doneTasks})` : ""}`];
+	if (active) lines.push(`Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]`);
+	else lines.push("Active task: none");
+	lines.push("", "Use /harness tasks to list open tasks or /harness tasks all to include done tasks.");
+	return lines.join("\n");
+}
+
+async function buildTaskList(root: string, includeDone = false): Promise<string> {
+	if (!(await exists(path.join(harnessPath(root), "index.json")))) {
+		return `pi-harness is not initialized in ${root}. Run /harness init or call harness({ action: "init" }).`;
+	}
+	const index = await loadIndex(root);
+	const tasks = includeDone ? index.tasks : index.tasks.filter((task) => task.status !== "done");
+	const doneCount = index.tasks.filter((task) => task.status === "done").length;
+	const lines = [
+		includeDone ? `pi-harness tasks: ${tasks.length}` : `pi-harness open tasks: ${tasks.length}`,
+		`Root: ${root}`,
+	];
+	if (doneCount && !includeDone) lines.push(`Done tasks hidden: ${doneCount} (use /harness tasks all)`);
+	if (!tasks.length) {
+		lines.push("No tasks found.");
+		return lines.join("\n");
+	}
+	lines.push("");
+	for (const task of tasks) {
+		const marker = task.id === index.activeTaskId ? "*" : "-";
+		lines.push(`${marker} ${task.title}`);
+		lines.push(`  id: ${task.id}-${task.slug}`);
+		lines.push(`  phase: ${task.phase} ${PHASE_LABELS[task.phase]} | status: ${task.status}`);
+	}
 	return lines.join("\n");
 }
 
@@ -359,6 +435,8 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			return await buildStatus(root);
 		case "status":
 			return await buildStatus(root);
+		case "tasks":
+			return await buildTaskList(root, params.text === "all");
 		case "startTask": {
 			if (!params.title) throw new Error("title is required for startTask");
 			const task = await startTask(root, params.title);
@@ -372,6 +450,14 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 		case "advancePhase": {
 			const task = await advancePhase(root);
 			return `Advanced to ${task.phase} (${PHASE_LABELS[task.phase]}).`;
+		}
+		case "completeTask": {
+			const task = await completeTask(root, params.text);
+			return `Completed task ${task.id}-${task.slug}.`;
+		}
+		case "closeTask": {
+			const task = await closeTask(root, params.text);
+			return `Closed task ${task.id}-${task.slug}.`;
 		}
 		case "recordDecision":
 			if (!params.text) throw new Error("text is required for recordDecision");
@@ -409,10 +495,13 @@ function commandHelp(): string {
 		"Commands:",
 		"  init                         initialize .pi/harness in this project",
 		"  status                       show harness status",
+		"  tasks [all]                  list open tasks; use all to include done tasks",
 		"  context                      show injected context summary",
 		"  task <title>                 start a task in phase P",
 		"  phase <P|R|E|V|C>            set active task phase",
 		"  advance                      advance active task phase",
+		"  done [note]                  mark active task as done and hide it from open list",
+		"  close <task-id> [note]        mark any task as done by id/slug/title",
 		"  decision <text>              record durable decision",
 		"  evidence <text>              record validation evidence",
 		"  report [note]                generate active task report",
@@ -437,6 +526,9 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 			case "status":
 				output = await handleHarness(root, { action: "status" } as HarnessParamsType);
 				break;
+			case "tasks":
+				output = await handleHarness(root, { action: "tasks", text: rest } as HarnessParamsType);
+				break;
 			case "context":
 				output = await handleHarness(root, { action: "readContext" } as HarnessParamsType);
 				break;
@@ -448,6 +540,12 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				break;
 			case "advance":
 				output = await handleHarness(root, { action: "advancePhase" } as HarnessParamsType);
+				break;
+			case "done":
+				output = await handleHarness(root, { action: "completeTask", text: rest || undefined } as HarnessParamsType);
+				break;
+			case "close":
+				output = await handleHarness(root, { action: "closeTask", text: rest } as HarnessParamsType);
 				break;
 			case "decision":
 				output = await handleHarness(root, { action: "recordDecision", text: rest } as HarnessParamsType);
@@ -473,7 +571,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerCommand("harness", {
 		description: "Project harness: durable context, PREVC tasks, evidence, and reports",
 		getArgumentCompletions: (prefix) => {
-			const commands = ["init", "status", "context", "task", "phase", "advance", "decision", "evidence", "report", "help"];
+			const commands = ["init", "status", "tasks", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "report", "help"];
 			const filtered = commands.filter((cmd) => cmd.startsWith(prefix.trim()));
 			return filtered.length ? filtered.map((cmd) => ({ value: cmd, label: cmd })) : null;
 		},

@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-06T19:02:41.416Z",
+  "createdAt": "2026-05-07T16:31:41.020Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -17,6 +17,9 @@
     "agent/extensions/pi-config-backup/index.ts",
     "agent/extensions/pi-harness/README.md",
     "agent/extensions/pi-harness/index.ts",
+    "agent/themes/tokyonight.json",
+    "agent/themes/vantablack.json",
+    "agent/themes/white.json",
     "README.md"
   ],
   "filesSkipped": []

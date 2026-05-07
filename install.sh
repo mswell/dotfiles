@@ -80,6 +80,7 @@ Menu() {
         echo "[7] - Archlinux WSL"
         echo "[8] - Archlinux DE"
         echo "[9] - Claude for Bug Bounty (Skills + Agents + Caido AI)"
+        echo "[10] - Install Pi Coding Agent + Restore Pi Config"
         echo "[0] - Exit"
         echo
         echo -n "Choose your distro: "
@@ -95,6 +96,7 @@ Menu() {
             7) run_setup "setup/ArchWSL/setup.sh"; break ;;
             8) run_setup "setup/ArchDE/setup.sh"; break ;;
             9) run_setup "setup/install_skills.sh"; break ;;
+            10) run_setup "setup/install_pi.sh"; break ;;
             0) exit 0 ;;
             *) echo "${red}Unknown option. Please try again.${reset}";;
         esac

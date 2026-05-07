@@ -7,6 +7,10 @@ on:
     branches: [ master, main ]
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   shellcheck:
     name: ShellCheck - Script Validation
@@ -52,7 +56,7 @@ jobs:
           bash -n setup/ubuntu/base.sh
           bash -n setup/ubuntu/devel.sh
           bash -n setup/ubuntu/apps.sh
-          bash -n setup/ubuntu/terminal.sh
+          bash -n setup/terminal.sh
 
       - name: Verify modular functions structure
         run: |
@@ -210,7 +214,7 @@ jobs:
 
       - name: Test in Docker container
         run: |
-          docker run --rm -e CI=true -e GITHUB_ACTIONS=true -v $PWD:/dotfiles -w /dotfiles ${{ matrix.os }} bash -c "
+          docker run --rm -e CI=true -e GITHUB_ACTIONS=true -v "$PWD:/dotfiles" -w /dotfiles ${{ matrix.os }} bash -c "
             apt-get update && apt-get install -y git curl wget
             export DOTFILES=/dotfiles
             bash setup/lib/preflight.sh
