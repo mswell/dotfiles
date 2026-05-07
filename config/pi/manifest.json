@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-07T17:04:19.423Z",
+  "createdAt": "2026-05-07T23:03:32.247Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -14,6 +14,7 @@
     "agent/settings.example.json",
     "agent/extensions/guardrails.json",
     "agent/extensions/pi-config-backup/README.md",
+    "agent/extensions/pi-config-backup/index.js",
     "agent/extensions/pi-config-backup/index.ts",
     "agent/extensions/pi-harness/README.md",
     "agent/extensions/pi-harness/index.ts",
@@ -22,5 +23,10 @@
     "agent/themes/white.json",
     "README.md"
   ],
-  "filesSkipped": []
+  "filesSkipped": [
+    {
+      "path": "/home/mswell/.pi/agent/skills/bbhunter",
+      "reason": "not a regular file or directory"
+    }
+  ]
 }

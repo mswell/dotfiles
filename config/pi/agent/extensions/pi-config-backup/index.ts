@@ -142,6 +142,46 @@ async function copySanitizedDir(source: string, destination: string, result: Bac
 	}
 }
 
+async function restorePiConfig(params: { source?: string, dryRun?: boolean } = {}): Promise<BackupResult> {
+	const sourceDir = path.resolve(expandHome(params.source || DEFAULT_DESTINATION));
+	const destination = path.resolve(expandHome("~/.pi/agent"));
+	const result: BackupResult = { destination, filesWritten: [], filesSkipped: [], dryRun: Boolean(params.dryRun) };
+
+	if (!(await exists(sourceDir))) {
+		throw new Error(`Source directory ${sourceDir} does not exist`);
+	}
+
+	const agentSrcDir = path.join(sourceDir, "agent");
+	if (!(await exists(agentSrcDir))) {
+		throw new Error(`Invalid backup: missing agent directory at ${agentSrcDir}`);
+	}
+
+	await ensureDir(destination, result.dryRun);
+
+	const settingsExamplePath = path.join(agentSrcDir, "settings.example.json");
+	const settingsDstPath = path.join(destination, "settings.json");
+	
+	if (await exists(settingsExamplePath)) {
+		if (await exists(settingsDstPath)) {
+			result.filesSkipped.push({ path: settingsExamplePath, reason: "settings.json already exists in destination" });
+		} else {
+			const content = await fs.readFile(settingsExamplePath, "utf8");
+			await writeText(settingsDstPath, content, result);
+		}
+	}
+
+	for (const dirName of ["extensions", "skills", "prompts", "themes"]) {
+		const srcDir = path.join(agentSrcDir, dirName);
+		const dstDir = path.join(destination, dirName);
+		
+		if (await exists(srcDir)) {
+			await copySanitizedDir(srcDir, dstDir, result);
+		}
+	}
+
+	return result;
+}
+
 async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResult> {
 	const destination = path.resolve(expandHome(params.destination || DEFAULT_DESTINATION));
 	const result: BackupResult = { destination, filesWritten: [], filesSkipped: [], dryRun: Boolean(params.dryRun) };
@@ -240,6 +280,22 @@ function formatCompactResult(result: BackupResult): string {
 }
 
 export default function piConfigBackup(pi: ExtensionAPI) {
+	pi.registerCommand("pi-restore", {
+		description: "Restore Pi configuration from dotfiles",
+		handler: async (args, ctx) => {
+			const parts = args.trim().split(/\s+/).filter(Boolean);
+			const dryRun = parts.includes("--dry-run");
+			const source = parts.find((part) => !part.startsWith("--"));
+			try {
+				const result = await restorePiConfig({ source, dryRun });
+				ctx.ui.setWidget("pi-restore", undefined);
+				ctx.ui.notify(`Pi config restore ${dryRun ? "dry-run " : ""}complete: ${result.filesWritten.length} files written`, "info");
+			} catch (error) {
+				ctx.ui.notify(`pi-restore failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+			}
+		},
+	});
+
 	pi.registerCommand("pi-backup", {
 		description: "Back up sanitized Pi configuration to dotfiles",
 		handler: async (args, ctx) => {
@@ -250,9 +306,35 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 			try {
 				const result = await backupPiConfig({ destination, dryRun, includeAgentsSkills });
 				ctx.ui.setWidget("pi-backup", undefined);
-				ctx.ui.notify(formatCompactResult(result), dryRun ? "info" : "success");
+				ctx.ui.notify(formatCompactResult(result), "info");
 			} catch (error) {
 				ctx.ui.notify(`pi-backup failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+			}
+		},
+	});
+
+	pi.registerTool({
+		name: "pi_config_restore",
+		label: "Pi Config Restore",
+		description: "Restore Pi configuration files from dotfiles backup.",
+		promptSnippet: "Restore Pi configuration from dotfiles",
+		promptGuidelines: [
+			"Use pi_config_restore to load backup configurations into the local Pi agent directory.",
+		],
+		parameters: Type.Object({
+			source: Type.Optional(Type.String({ description: `Source directory. Defaults to ${DEFAULT_DESTINATION}.` })),
+			dryRun: Type.Optional(Type.Boolean({ description: "Preview what would be copied without writing files." }))
+		}),
+		async execute(_toolCallId, params: { source?: string, dryRun?: boolean }) {
+			try {
+				const result = await restorePiConfig(params);
+				return { content: [{ type: "text", text: `Pi config restore ${params.dryRun ? "dry-run " : ""}complete: ${result.filesWritten.length} files written` }], details: result };
+			} catch (error) {
+				return {
+					content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+					details: { error: String(error) },
+					isError: true,
+				};
 			}
 		},
 	});
@@ -267,7 +349,7 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 			"pi_config_backup must not copy sessions, API keys, tokens, cookies, OAuth material, private keys, or auth files.",
 		],
 		parameters: BackupParams,
-		async execute(_toolCallId, params: BackupParamsType) {
+		async execute(_toolCallId, params: BackupParamsType): Promise<any> {
 			try {
 				const result = await backupPiConfig(params);
 				return { content: [{ type: "text", text: formatCompactResult(result) }], details: result };
