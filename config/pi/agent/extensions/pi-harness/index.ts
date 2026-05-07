@@ -3,8 +3,12 @@ import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const HARNESS_DIR = path.join(".pi", "harness");
+const EVENTS_FILE = "events.jsonl";
+const SUMMARY_FILE = "summary.md";
+const TRACE_RECENT_LIMIT = 25;
+const WIDGET_MODE: "off" | "compact" = "off";
 const PHASES = ["P", "R", "E", "V", "C"] as const;
 const PHASE_LABELS: Record<Phase, string> = {
 	P: "Planning",
@@ -56,13 +60,19 @@ const HarnessParams = Type.Object({
 		Type.Literal("closeTask"),
 		Type.Literal("recordDecision"),
 		Type.Literal("recordEvidence"),
+		Type.Literal("recordNote"),
+		Type.Literal("appendIdea"),
 		Type.Literal("readContext"),
 		Type.Literal("writeProjectContext"),
 		Type.Literal("writePolicy"),
+		Type.Literal("updateContract"),
+		Type.Literal("updatePlan"),
+		Type.Literal("summary"),
+		Type.Literal("rebuildSummary"),
 		Type.Literal("report"),
 	], { description: "Harness action to run." }),
 	title: Type.Optional(Type.String({ description: "Task title for startTask." })),
-	text: Type.Optional(Type.String({ description: "Text for decisions, evidence, project context, policy, or report note." })),
+	text: Type.Optional(Type.String({ description: "Text for decisions, evidence, notes, ideas, project context, policy, contract, plan, or report note." })),
 	phase: Type.Optional(Type.Union(PHASES.map((p) => Type.Literal(p)) as any, { description: "PREVC phase: P, R, E, V, C." })),
 });
 
@@ -122,6 +132,12 @@ async function writeText(filePath: string, content: string): Promise<void> {
 async function appendText(filePath: string, content: string): Promise<void> {
 	await fs.mkdir(path.dirname(filePath), { recursive: true });
 	await fs.appendFile(filePath, content.endsWith("\n") ? content : `${content}\n`, "utf8");
+}
+
+async function recentLines(filePath: string, limit: number): Promise<string[]> {
+	const content = await readText(filePath);
+	if (!content.trim()) return [];
+	return content.trimEnd().split("\n").slice(-limit);
 }
 
 async function readJson<T>(filePath: string): Promise<T | undefined> {
@@ -236,6 +252,8 @@ async function startTask(root: string, title: string): Promise<TaskState> {
 	await writeText(path.join(dir, "contract.md"), `# Task Contract: ${title}\n\n## Goal\n\n## Scope\n\n## Non-goals\n\n## Constraints\n\n## Done Criteria\n`);
 	await writeText(path.join(dir, "plan.md"), `# Plan: ${title}\n\n- [ ] Planning\n- [ ] Review\n- [ ] Execution\n- [ ] Validation\n- [ ] Confirmation\n`);
 	await writeText(path.join(dir, "evidence.md"), `# Evidence: ${title}\n`);
+	await writeText(path.join(dir, "journal.md"), `# Journal: ${title}\n\nOperational notes, handoffs, and lessons that are not decisions or validation evidence.\n`);
+	await writeText(path.join(dir, "ideas.md"), `# Ideas: ${title}\n\nPromising follow-up ideas/backlog items.\n`);
 	await appendTrace(root, { type: "task_start", taskId: task.id, title });
 	return task;
 }
@@ -303,8 +321,15 @@ async function closeTask(root: string, text?: string): Promise<TaskState> {
 	return await completeTaskState(root, task, noteParts.join(" ").trim() || undefined);
 }
 
+async function appendEvent(root: string, event: Record<string, unknown>): Promise<void> {
+	await appendText(path.join(harnessPath(root), EVENTS_FILE), JSON.stringify({ ts: now(), ...event }));
+}
+
 async function appendTrace(root: string, event: Record<string, unknown>): Promise<void> {
-	const task = await getActiveTask(root);
+	await appendEvent(root, event);
+	let task: TaskState | undefined;
+	if (typeof event.taskId === "string") task = await findTask(root, event.taskId);
+	if (!task) task = await getActiveTask(root);
 	if (!task && event.type !== "task_start") return;
 	const traceTask = task ?? { id: String(event.taskId), slug: slugify(String(event.title ?? "task")) };
 	await appendText(path.join(taskDir(root, traceTask), "trace.jsonl"), JSON.stringify({ ts: now(), ...event }));
@@ -338,8 +363,32 @@ async function recordEvidence(root: string, text: string): Promise<void> {
 	await appendTrace(root, { type: "evidence", text: redact(text) });
 }
 
+async function recordNote(root: string, text: string): Promise<void> {
+	const task = await getActiveTask(root);
+	if (!task) throw new Error("No active task. Use startTask first.");
+	await appendText(path.join(taskDir(root, task), "journal.md"), `\n## ${now()}\n\n${text}\n`);
+	await appendTrace(root, { type: "note", text: redact(text) });
+}
+
+async function appendIdea(root: string, text: string): Promise<void> {
+	const task = await getActiveTask(root);
+	if (!task) throw new Error("No active task. Use startTask first.");
+	const idea = text.trim().startsWith("-") ? text.trim() : `- ${text.trim()}`;
+	await appendText(path.join(taskDir(root, task), "ideas.md"), idea);
+	await appendTrace(root, { type: "idea", text: redact(text) });
+}
+
 function truncate(value: string, max = 4000): string {
 	return value.length <= max ? value : `${value.slice(0, max)}\n\n[truncated ${value.length - max} chars]`;
+}
+
+async function recentTraceSection(root: string, task?: TaskState): Promise<string> {
+	const tracePath = task
+		? path.join(taskDir(root, task), "trace.jsonl")
+		: path.join(harnessPath(root), EVENTS_FILE);
+	const lines = await recentLines(tracePath, TRACE_RECENT_LIMIT);
+	if (!lines.length) return "";
+	return [`# Recent Harness Trace (last ${lines.length})`, ...lines].join("\n");
 }
 
 async function buildContext(root: string): Promise<string> {
@@ -349,6 +398,7 @@ async function buildContext(root: string): Promise<string> {
 	const project = truncate(await readText(path.join(dir, "project.md")), 2500);
 	const policies = truncate(await readText(path.join(dir, "policies.md")), 2000);
 	const decisions = truncate(await readText(path.join(dir, "decisions.md")), 2500);
+	const persistedSummary = truncate(await readText(path.join(dir, SUMMARY_FILE)), 2500);
 	let taskFiles = "";
 	if (active) {
 		const dir = taskDir(root, active);
@@ -357,12 +407,16 @@ async function buildContext(root: string): Promise<string> {
 			truncate(await readText(path.join(dir, "contract.md")), 2000),
 			truncate(await readText(path.join(dir, "plan.md")), 2000),
 			truncate(await readText(path.join(dir, "evidence.md")), 2000),
+			truncate(await readText(path.join(dir, "journal.md")), 1600),
+			truncate(await readText(path.join(dir, "ideas.md")), 1200),
+			truncate(await recentTraceSection(root, active), 2500),
 		].filter(Boolean).join("\n\n");
 	}
 	return [
 		`pi-harness v${VERSION}`,
 		`Root: ${root}`,
 		`Tasks: ${index.tasks.length}`,
+		persistedSummary,
 		project,
 		policies,
 		decisions,
@@ -383,6 +437,21 @@ async function buildStatus(root: string): Promise<string> {
 	else lines.push("Active task: none");
 	lines.push("", "Use /harness tasks to list open tasks or /harness tasks all to include done tasks.");
 	return lines.join("\n");
+}
+
+async function buildCompactStatus(root: string): Promise<string> {
+	if (!(await exists(path.join(harnessPath(root), "index.json")))) return "harness:off";
+	const index = await loadIndex(root);
+	const active = await getActiveTask(root);
+	const openTasks = index.tasks.filter((task) => task.status !== "done");
+	if (!active) return `harness:on · ${openTasks.length} open · no active task`;
+	return `harness:on · ${active.phase} · ${active.title.slice(0, 48)}${active.title.length > 48 ? "…" : ""}`;
+}
+
+async function refreshHarnessUi(ctx: ExtensionContext, root: string): Promise<void> {
+	ctx.ui.setStatus("pi-harness", await buildCompactStatus(root));
+	if (WIDGET_MODE === "compact") ctx.ui.setWidget("pi-harness", [await buildCompactStatus(root)]);
+	else ctx.ui.setWidget("pi-harness", undefined);
 }
 
 async function buildTaskList(root: string, includeDone = false): Promise<string> {
@@ -411,6 +480,68 @@ async function buildTaskList(root: string, includeDone = false): Promise<string>
 	return lines.join("\n");
 }
 
+async function buildHarnessSummary(root: string): Promise<string> {
+	await ensureHarness(root);
+	const index = await loadIndex(root);
+	const active = await getActiveTask(root);
+	const openTasks = index.tasks.filter((task) => task.status !== "done");
+	const lines = [
+		"# Harness Summary",
+		"",
+		`Generated: ${now()}`,
+		`Root: ${root}`,
+		`Version: ${VERSION}`,
+		`Tasks: ${index.tasks.length} total, ${openTasks.length} open`,
+	];
+	if (active) {
+		const dir = taskDir(root, active);
+		lines.push(
+			"",
+			"## Active Task",
+			`- Title: ${active.title}`,
+			`- ID: ${active.id}-${active.slug}`,
+			`- Phase: ${active.phase} (${PHASE_LABELS[active.phase]})`,
+			`- Status: ${active.status}`,
+			"",
+			"### Contract",
+			truncate(await readText(path.join(dir, "contract.md")), 1800),
+			"",
+			"### Plan",
+			truncate(await readText(path.join(dir, "plan.md")), 1800),
+			"",
+			"### Latest Evidence",
+			truncate((await recentLines(path.join(dir, "evidence.md"), 30)).join("\n"), 1600),
+			"",
+			"### Latest Journal",
+			truncate((await recentLines(path.join(dir, "journal.md"), 30)).join("\n"), 1600),
+			"",
+			"### Ideas Backlog",
+			truncate(await readText(path.join(dir, "ideas.md")), 1200),
+			"",
+			"### Recent Trace",
+			truncate(await recentTraceSection(root, active), 1800),
+		);
+	} else {
+		lines.push("", "## Active Task", "none");
+	}
+	lines.push(
+		"",
+		"## Durable Context",
+		truncate(await readText(path.join(harnessPath(root), "project.md")), 1200),
+		"",
+		"## Recent Decisions",
+		truncate((await recentLines(path.join(harnessPath(root), "decisions.md"), 40)).join("\n"), 1800),
+	);
+	return lines.filter((line) => line !== undefined).join("\n");
+}
+
+async function rebuildSummary(root: string): Promise<string> {
+	const summary = await buildHarnessSummary(root);
+	await writeText(path.join(harnessPath(root), SUMMARY_FILE), summary);
+	await appendTrace(root, { type: "summary_rebuild" });
+	return summary;
+}
+
 async function generateReport(root: string, note?: string): Promise<string> {
 	const task = await getActiveTask(root);
 	const status = await buildStatus(root);
@@ -421,6 +552,9 @@ async function generateReport(root: string, note?: string): Promise<string> {
 		report.push("## Contract", "", truncate(await readText(path.join(dir, "contract.md")), 3000), "");
 		report.push("## Plan", "", truncate(await readText(path.join(dir, "plan.md")), 3000), "");
 		report.push("## Evidence", "", truncate(await readText(path.join(dir, "evidence.md")), 3000), "");
+		report.push("## Journal", "", truncate(await readText(path.join(dir, "journal.md")), 3000), "");
+		report.push("## Ideas", "", truncate(await readText(path.join(dir, "ideas.md")), 2000), "");
+		report.push("## Recent Trace", "", truncate(await recentTraceSection(root, task), 3000), "");
 		const output = report.join("\n");
 		await writeText(path.join(dir, "report.md"), output);
 		return output;
@@ -467,6 +601,14 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			if (!params.text) throw new Error("text is required for recordEvidence");
 			await recordEvidence(root, params.text);
 			return "Evidence recorded.";
+		case "recordNote":
+			if (!params.text) throw new Error("text is required for recordNote");
+			await recordNote(root, params.text);
+			return "Note recorded.";
+		case "appendIdea":
+			if (!params.text) throw new Error("text is required for appendIdea");
+			await appendIdea(root, params.text);
+			return "Idea appended.";
 		case "readContext":
 			await ensureHarness(root);
 			return await buildContext(root);
@@ -474,12 +616,34 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			if (!params.text) throw new Error("text is required for writeProjectContext");
 			await ensureHarness(root);
 			await writeText(path.join(harnessPath(root), "project.md"), params.text);
+			await appendTrace(root, { type: "project_context_update" });
 			return "Project context updated.";
 		case "writePolicy":
 			if (!params.text) throw new Error("text is required for writePolicy");
 			await ensureHarness(root);
 			await writeText(path.join(harnessPath(root), "policies.md"), params.text);
+			await appendTrace(root, { type: "policy_update" });
 			return "Policies updated.";
+		case "updateContract": {
+			if (!params.text) throw new Error("text is required for updateContract");
+			const task = await getActiveTask(root);
+			if (!task) throw new Error("No active task. Use startTask first.");
+			await writeText(path.join(taskDir(root, task), "contract.md"), params.text);
+			await appendTrace(root, { type: "contract_update", taskId: task.id });
+			return "Task contract updated.";
+		}
+		case "updatePlan": {
+			if (!params.text) throw new Error("text is required for updatePlan");
+			const task = await getActiveTask(root);
+			if (!task) throw new Error("No active task. Use startTask first.");
+			await writeText(path.join(taskDir(root, task), "plan.md"), params.text);
+			await appendTrace(root, { type: "plan_update", taskId: task.id });
+			return "Task plan updated.";
+		}
+		case "summary":
+			return await buildHarnessSummary(root);
+		case "rebuildSummary":
+			return await rebuildSummary(root);
 		case "report":
 			await ensureHarness(root);
 			return await generateReport(root, params.text);
@@ -504,6 +668,12 @@ function commandHelp(): string {
 		"  close <task-id> [note]        mark any task as done by id/slug/title",
 		"  decision <text>              record durable decision",
 		"  evidence <text>              record validation evidence",
+		"  note <text>                  append an operational task journal note",
+		"  idea <text>                  append a task idea/backlog item",
+		"  contract <markdown>          replace active task contract",
+		"  plan <markdown>              replace active task plan",
+		"  summary                      show deterministic harness summary",
+		"  rebuild-summary              write .pi/harness/summary.md from current state",
 		"  report [note]                generate active task report",
 	].join("\n");
 }
@@ -553,13 +723,31 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 			case "evidence":
 				output = await handleHarness(root, { action: "recordEvidence", text: rest } as HarnessParamsType);
 				break;
+			case "note":
+				output = await handleHarness(root, { action: "recordNote", text: rest } as HarnessParamsType);
+				break;
+			case "idea":
+				output = await handleHarness(root, { action: "appendIdea", text: rest } as HarnessParamsType);
+				break;
+			case "contract":
+				output = await handleHarness(root, { action: "updateContract", text: rest } as HarnessParamsType);
+				break;
+			case "plan":
+				output = await handleHarness(root, { action: "updatePlan", text: rest } as HarnessParamsType);
+				break;
+			case "summary":
+				output = await handleHarness(root, { action: "summary" } as HarnessParamsType);
+				break;
+			case "rebuild-summary":
+				output = await handleHarness(root, { action: "rebuildSummary" } as HarnessParamsType);
+				break;
 			case "report":
 				output = await handleHarness(root, { action: "report", text: rest || undefined } as HarnessParamsType);
 				break;
 			default:
 				output = commandHelp();
 		}
-		ctx.ui.setWidget("pi-harness", output.split("\n").slice(0, 80));
+		if (await exists(path.join(harnessPath(root), "index.json"))) await refreshHarnessUi(ctx, root);
 		ctx.ui.notify(`pi-harness: ${cmd}`, "info");
 		pi.sendMessage({ customType: "pi-harness", content: output, display: true }, { deliverAs: "nextTurn" });
 	} catch (error) {
@@ -571,7 +759,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerCommand("harness", {
 		description: "Project harness: durable context, PREVC tasks, evidence, and reports",
 		getArgumentCompletions: (prefix) => {
-			const commands = ["init", "status", "tasks", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "report", "help"];
+			const commands = ["init", "status", "tasks", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "note", "idea", "contract", "plan", "summary", "rebuild-summary", "report", "help"];
 			const filtered = commands.filter((cmd) => cmd.startsWith(prefix.trim()));
 			return filtered.length ? filtered.map((cmd) => ({ value: cmd, label: cmd })) : null;
 		},
@@ -581,10 +769,11 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "harness",
 		label: "Harness",
-		description: "Manage project-local pi-harness files: context, PREVC workflow, decisions, evidence, and reports.",
+		description: "Manage project-local pi-harness files: context, PREVC workflow, decisions, evidence, notes, ideas, summaries, and reports.",
 		promptSnippet: "Manage durable project context and PREVC task workflow via .pi/harness",
 		promptGuidelines: [
-			"Use harness for non-trivial tasks to create or inspect project context, start a task, track PREVC phase, record decisions, and record validation evidence.",
+			"Use harness for non-trivial tasks to create or inspect project context, start a task, track PREVC phase, record decisions, update plans/contracts, and record validation evidence.",
+			"Use harness recordNote for operational handoffs/lessons and appendIdea for promising follow-up ideas that should survive context resets.",
 			"Never put API keys, tokens, passwords, cookies, OAuth material, or authentication secrets into harness records.",
 		],
 		parameters: HarnessParams,
@@ -593,6 +782,7 @@ export default function piHarness(pi: ExtensionAPI) {
 			const root = await resolveProjectRoot(ctx.cwd);
 			try {
 				const output = await handleHarness(root, params);
+				if (await exists(path.join(harnessPath(root), "index.json"))) await refreshHarnessUi(ctx, root);
 				return { content: [{ type: "text", text: output }], details: { root, action: params.action } };
 			} catch (error) {
 				return {
@@ -606,11 +796,7 @@ export default function piHarness(pi: ExtensionAPI) {
 
 	pi.on("session_start", async (_event, ctx) => {
 		const root = await resolveProjectRoot(ctx.cwd);
-		if (await exists(path.join(harnessPath(root), "index.json"))) {
-			ctx.ui.setStatus("pi-harness", "harness:on");
-			const status = await buildStatus(root);
-			ctx.ui.setWidget("pi-harness", status.split("\n"));
-		}
+		if (await exists(path.join(harnessPath(root), "index.json"))) await refreshHarnessUi(ctx, root);
 	});
 
 	pi.on("session_shutdown", async (_event, ctx) => {
@@ -618,12 +804,18 @@ export default function piHarness(pi: ExtensionAPI) {
 		ctx.ui.setWidget("pi-harness", undefined);
 	});
 
+	pi.on("session_before_compact", async (_event, ctx) => {
+		const root = await resolveProjectRoot(ctx.cwd);
+		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
+		await rebuildSummary(root);
+	});
+
 	pi.on("before_agent_start", async (event, ctx) => {
 		const root = await resolveProjectRoot(ctx.cwd);
 		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
 		const context = truncate(await buildContext(root), 9000);
 		return {
-			systemPrompt: `${event.systemPrompt}\n\n# pi-harness project context\n\n${context}\n\n# pi-harness operating rules\n\n- Treat .pi/harness as durable, project-local memory and workflow state.\n- For non-trivial tasks, ensure there is an active harness task before major edits.\n- Record important decisions with harness({ action: "recordDecision", text: ... }).\n- Record validation evidence with harness({ action: "recordEvidence", text: ... }) before final confirmation.\n- Do not store secrets or authentication data in harness files.`,
+			systemPrompt: `${event.systemPrompt}\n\n# pi-harness project context\n\n${context}\n\n# pi-harness operating rules\n\n- Treat .pi/harness as durable, project-local memory and workflow state.\n- For non-trivial tasks, ensure there is an active harness task before major edits.\n- Record important decisions with harness({ action: "recordDecision", text: ... }).\n- Keep task plans/contracts current with harness({ action: "updatePlan" | "updateContract", text: ... }) when scope changes.\n- Use harness({ action: "recordNote", text: ... }) for handoffs/lessons and harness({ action: "appendIdea", text: ... }) for deferred ideas.\n- Record validation evidence with harness({ action: "recordEvidence", text: ... }) before final confirmation.\n- Do not store secrets or authentication data in harness files.`,
 		};
 	});
 

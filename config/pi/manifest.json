@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-07T16:31:41.020Z",
+  "createdAt": "2026-05-07T16:54:53.325Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -22,5 +22,10 @@
     "agent/themes/white.json",
     "README.md"
   ],
-  "filesSkipped": []
+  "filesSkipped": [
+    {
+      "path": "/home/mswell/.pi/agent/extensions/pi-harness/index.ts.bak-20260507134435",
+      "reason": "non-text file"
+    }
+  ]
 }

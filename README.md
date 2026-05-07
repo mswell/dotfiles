@@ -71,6 +71,47 @@ Minimal Wayland setup inspired by [Omarchy](https://github.com/basecamp/omarchy)
 - **tmux** with theme-synced status bar
 - **fzf** with per-theme color config
 
+## Pi Coding Agent Harness
+
+This repo also backs up my sanitized Pi Coding Agent configuration, including a custom `pi-harness` extension.
+
+`pi-harness` is a project-local memory and workflow layer for Pi. It stores durable state in `.pi/harness/` inside each project so the agent does not depend only on the live conversation context.
+
+It helps Pi:
+
+- keep stable project context across restarts and compaction;
+- create and track active tasks;
+- follow the **PREVC** workflow: Planning, Review, Execution, Validation, Confirmation;
+- record durable decisions and validation evidence;
+- maintain task contracts and plans;
+- keep operational notes, handoffs, and future ideas/backlog;
+- write append-only JSONL traces for auditability;
+- generate a deterministic `summary.md` before Pi compaction.
+
+Useful commands:
+
+```text
+/harness status
+/harness task <title>
+/harness phase <P|R|E|V|C>
+/harness decision <text>
+/harness evidence <text>
+/harness note <text>
+/harness idea <text>
+/harness summary
+/harness done
+```
+
+The harness is general-purpose engineering workflow support. It complements experiment-focused tools like `pi-autoresearch`, but it is meant for any refactor, bugfix, research task, or implementation session.
+
+Sanitized Pi files live under:
+
+```text
+config/pi/
+```
+
+Secrets, sessions, tokens, cookies, OAuth material, and authentication files are intentionally excluded.
+
 ## Bug Bounty Toolkit
 
 ZSH functions for automated recon. Each step produces files consumed by the next.
