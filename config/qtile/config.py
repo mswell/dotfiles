@@ -217,7 +217,7 @@ for i in groups:
         ]
     )
 
-colors = colors.GruvboxDark
+colors = colors.TokyoNight
 
 layout_theme = {"border_width": 2,
                 "margin": 8,

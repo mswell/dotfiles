@@ -21,11 +21,11 @@
   side-by-side = true
   line-numbers = true
 
+[include]
+  path = ~/.config/git/current-theme.gitconfig
+
 [delta "interactive"]
   keep-plus-minus-markers = false
-
-[delta "decorations"]
-  syntax-theme = tokyonight_night
 
 [merge]
 	tool = vimdiff

@@ -204,7 +204,10 @@ Three themes — **vantablack**, **white**, **tokyonight** — cycle via `SUPER+
 | ZSH / p10k | `ln -sf themes/$THEME.zsh current-theme.zsh` (sourced after p10k) |
 | Neovim | Reads `current-theme` at startup in `colorscheme.lua` |
 | Mako | `sed -i` config directly + `makoctl reload` |
-| GTK 3/4 | `settings.ini` overwrite + `gsettings` + `hyprctl setcursor` |
+| GTK 2/3/4 | `.gtkrc-2.0` + `settings.ini` overwrite + `gsettings` + `hyprctl setcursor` |
+| Kvantum | `ln -sf themes/$THEME.kvconfig kvantum.kvconfig` |
+| bat | `ln -sf themes/$THEME.conf config` |
+| git-delta | `ln -sf themes/$THEME.gitconfig current-theme.gitconfig` via `.gitconfig` include |
 | Wallpaper | `wpaperd` pointed at `backgrounds/$THEME/` |
 
 **Adding a new theme:**
@@ -215,9 +218,11 @@ Three themes — **vantablack**, **white**, **tokyonight** — cycle via `SUPER+
 5. Create `config/tmux/themes/<name>.conf`
 6. Create `config/fzf/themes/<name>.sh`
 7. Create `config/zsh/themes/<name>.zsh` (p10k + autosuggestion colors)
-8. Add wallpapers to `config/hypr/backgrounds/<name>/`
-9. Add the theme name to the `THEMES` array in `theme-switch.sh`
-10. Add the name to the `colorscheme` map in `config/nvim/lua/plugins/colorscheme.lua`
+8. Create `config/Kvantum/themes/<name>.kvconfig`
+9. Create `config/bat/themes/<name>.conf` and `config/git/themes/<name>.gitconfig`
+10. Add wallpapers to `config/hypr/backgrounds/<name>/`
+11. Add the theme name to the `THEMES` array in `theme-switch.sh`
+12. Add the name to the `colorscheme` map in `config/nvim/lua/plugins/colorscheme.lua`
 
 **Power menu** (`SUPER+ESC`): `config/hypr/scripts/power-menu.sh` pipes options to `walker --dmenu` (Lock / Suspend / Logout / Restart / Shutdown). Walker has no built-in power provider; this is the correct Omarchy pattern.
 

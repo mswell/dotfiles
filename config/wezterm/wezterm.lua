@@ -102,27 +102,27 @@ config.window_padding = {
 config.window_frame = {
 	font = wezterm.font({ family = "SF Mono" }),
 	-- font = wezterm.font({ family = "Geist Mono" }),
-	active_titlebar_bg = "#1d2021",
-	inactive_titlebar_bg = "#1d2021",
+	active_titlebar_bg = "#1a1b26",
+	inactive_titlebar_bg = "#1a1b26",
 	font_size = 15.0,
 }
 
 config.color_schemes = {
-	["GruvboxCustom"] = {
-		foreground = "#ebdbb2",
-		background = "#282828",
-		cursor_bg = "#ebdbb2",
-		cursor_fg = "#282828",
-		cursor_border = "#ebdbb2",
-		selection_fg = "#282828",
-		selection_bg = "#ebdbb2",
-		scrollbar_thumb = "#3c3836",
-		split = "#3c3836",
-		ansi = { "#282828", "#cc241d", "#98971a", "#d79921", "#458588", "#b16286", "#689d6a", "#a89984" },
-		brights = { "#928374", "#fb4934", "#b8bb26", "#fabd2f", "#83a598", "#d3869b", "#8ec07c", "#ebdbb2" },
+	["TokyoNightCustom"] = {
+		foreground = "#c0caf5",
+		background = "#1a1b26",
+		cursor_bg = "#c0caf5",
+		cursor_fg = "#1a1b26",
+		cursor_border = "#c0caf5",
+		selection_fg = "#c0caf5",
+		selection_bg = "#283457",
+		scrollbar_thumb = "#292e42",
+		split = "#7aa2f7",
+		ansi = { "#15161e", "#f7768e", "#9ece6a", "#e0af68", "#7aa2f7", "#bb9af7", "#7dcfff", "#a9b1d6" },
+		brights = { "#414868", "#ff899d", "#9fe044", "#faba4a", "#8db0ff", "#c7a9ff", "#a4daff", "#c0caf5" },
 	},
 }
-config.color_scheme = "GruvboxCustom"
+config.color_scheme = "TokyoNightCustom"
 -- local act = wezterm.action
 config.window_background_opacity = 0.97
 

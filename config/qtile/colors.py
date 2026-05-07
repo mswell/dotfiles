@@ -26,16 +26,16 @@ Dracula  = [
     ["#9aedfe", "#9aedfe"]  # color15
     ]
 
-GruvboxDark  = [
-    ["#282828", "#282828"], # bg
-    ["#ebdbb2", "#ebdbb2"], # fg
-    ["#000000", "#000000"], # color01
-    ["#fb4934", "#fb4934"], # color02
-    ["#98971a", "#98971a"], # color03
-    ["#d79921", "#d79921"], # color04
-    ["#83a598", "#83a598"], # color05
-    ["#d3869b", "#d3869b"], # color06
-    ["#b8bb26", "#b8bb26"], # color11
+TokyoNight = [
+    ["#1a1b26", "#1a1b26"], # bg
+    ["#c0caf5", "#c0caf5"], # fg
+    ["#15161e", "#15161e"], # color01
+    ["#f7768e", "#f7768e"], # color02
+    ["#9ece6a", "#9ece6a"], # color03
+    ["#e0af68", "#e0af68"], # color04
+    ["#7aa2f7", "#7aa2f7"], # color05
+    ["#bb9af7", "#bb9af7"], # color06
+    ["#414868", "#414868"], # color11
     ]
 MonokaiPro = [
     ["#2D2A2E", "#2D2A2E"], # bg

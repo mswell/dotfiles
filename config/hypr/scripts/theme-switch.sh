@@ -9,6 +9,9 @@ ROFI_COLORS="$HOME/.config/rofi/colors"
 TMUX_THEMES="$HOME/.config/tmux/themes"
 FZF_THEMES="$HOME/.config/fzf/themes"
 ZSH_THEMES="$HOME/.config/zsh/themes"
+KVANTUM_THEMES="$HOME/.config/Kvantum/themes"
+BAT_THEMES="$HOME/.config/bat/themes"
+GIT_THEMES="$HOME/.config/git/themes"
 CURRENT_FILE="$HOME/.config/hypr/current-theme"
 BG_DIR="$HOME/.config/backgrounds"
 
@@ -81,6 +84,24 @@ killall -SIGUSR1 zsh 2>/dev/null || true
 mkdir -p "$HOME/.config/zsh/themes"
 ln -sf "$ZSH_THEMES/$THEME.zsh" "$HOME/.config/zsh/current-theme.zsh"
 
+# Kvantum / Qt apps — keep Qt in the same theme flow
+if [[ -d "$KVANTUM_THEMES" ]]; then
+    mkdir -p "$HOME/.config/Kvantum"
+    ln -sf "$KVANTUM_THEMES/$THEME.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
+fi
+
+# bat — theme selected via symlinked config file
+if [[ -d "$BAT_THEMES" ]]; then
+    mkdir -p "$HOME/.config/bat"
+    ln -sf "$BAT_THEMES/$THEME.conf" "$HOME/.config/bat/config"
+fi
+
+# git-delta — include a theme-specific gitconfig fragment
+if [[ -d "$GIT_THEMES" ]]; then
+    mkdir -p "$HOME/.config/git"
+    ln -sf "$GIT_THEMES/$THEME.gitconfig" "$HOME/.config/git/current-theme.gitconfig"
+fi
+
 # Wallpaper via wpaperd — set theme folder, no auto-rotation (cycle manually with wpaperctl next)
 if [[ -d "$BG_DIR/$THEME" ]]; then
     printf '[default]\npath = "%s"\nmode = "stretch"\n' \
@@ -112,11 +133,11 @@ if [[ "$THEME" == "white" ]]; then
     GTK_ICONS="Papirus-Light"
     GTK_CURSOR="Bibata-Modern-Ice"
 else
-    GTK_THEME_NAME="Gruvbox-Material-Dark"
+    GTK_THEME_NAME="Adwaita-dark"
     GTK_DARK="1"
     GTK_COLOR_SCHEME="prefer-dark"
     GTK_ICONS="Papirus-Dark"
-    GTK_CURSOR="Bibata-Modern-Classic-Gruvbox"
+    GTK_CURSOR="Bibata-Modern-Classic"
 fi
 
 # Write GTK3 settings.ini (read at app launch; no daemon needed)
@@ -139,6 +160,33 @@ gtk-application-prefer-dark-theme=$GTK_DARK
 gtk-icon-theme-name=$GTK_ICONS
 gtk-cursor-theme-name=$GTK_CURSOR
 gtk-cursor-theme-size=24
+EOF
+
+# Write GTK2 gtkrc for older apps
+cat > "$HOME/.gtkrc-2.0" <<EOF
+# Managed by ~/.config/hypr/scripts/theme-switch.sh
+gtk-theme-name="$GTK_THEME_NAME"
+gtk-icon-theme-name="$GTK_ICONS"
+gtk-font-name="Adwaita Sans 11"
+gtk-cursor-theme-name="$GTK_CURSOR"
+gtk-cursor-theme-size=24
+gtk-toolbar-style=GTK_TOOLBAR_ICONS
+gtk-toolbar-icon-size=GTK_ICON_SIZE_LARGE_TOOLBAR
+gtk-button-images=0
+gtk-menu-images=0
+gtk-enable-event-sounds=1
+gtk-enable-input-feedback-sounds=0
+gtk-xft-antialias=1
+gtk-xft-hinting=1
+gtk-xft-hintstyle="hintslight"
+gtk-xft-rgba="rgb"
+EOF
+
+# Keep ~/.icons/default aligned for apps that still read index.theme
+mkdir -p "$HOME/.icons/default"
+cat > "$HOME/.icons/default/index.theme" <<EOF
+[Icon Theme]
+Inherits=$GTK_CURSOR
 EOF
 
 # Notify running GTK apps via dconf/xdg-desktop-portal-gtk

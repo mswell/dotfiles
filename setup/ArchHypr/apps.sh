@@ -79,9 +79,6 @@ yay_packages="
     pamixer
     wpaperd
     bibata-cursor-theme-bin
-    gruvbox-material-gtk-theme-git
-    bibata-cursor-gruvbox-git
-    kvantum-theme-gruvbox-git
     rofi
     walker
     elephant
@@ -119,6 +116,9 @@ mkdir -p "$HOME/.config/nvim" && cp -r "$DOTFILES/config/nvim/." "$HOME/.config/
 
 # Theme system — create initial symlinks (default: vantablack)
 mkdir -p "$HOME/.config/hypr/themes" "$HOME/.config/kitty/themes" "$HOME/.config/waybar/themes"
+mkdir -p "$HOME/.config/rofi/colors" "$HOME/.config/rofi/launchers/type-2/shared" "$HOME/.config/rofi/launchers/type-3/shared"
+cp -r "$DOTFILES/config/rofi/colors/"* "$HOME/.config/rofi/colors/"
+cp -r "$DOTFILES/config/rofi/launchers/"* "$HOME/.config/rofi/launchers/"
 ln -sf "$HOME/.config/hypr/themes/vantablack.conf" "$HOME/.config/hypr/colors.conf"
 ln -sf "$HOME/.config/kitty/themes/vantablack.conf" "$HOME/.config/kitty/current-theme.conf"
 ln -sf "$HOME/.config/waybar/themes/vantablack.css" "$HOME/.config/waybar/themes/current.css"
@@ -138,18 +138,13 @@ chmod +x "$HOME/.config/hypr/scripts/bg-set.sh"
 chmod +x "$HOME/.config/hypr/scripts/power-menu.sh"
 chmod +x "$HOME/.config/hypr/scripts/screenshot-area.sh"
 
-mkdir -p "$HOME/.config/rofi/colors"
-mkdir -p "$HOME/.config/rofi/launchers/type-2/shared"
-mkdir -p "$HOME/.config/rofi/launchers/type-3/shared"
-cp -r "$DOTFILES/config/rofi/colors/"* "$HOME/.config/rofi/colors/"
-cp -r "$DOTFILES/config/rofi/launchers/"* "$HOME/.config/rofi/launchers/"
-
 mkdir -p "$HOME/.config/gtk-3.0"
 mkdir -p "$HOME/.config/gtk-4.0"
-mkdir -p "$HOME/.config/Kvantum"
+mkdir -p "$HOME/.config/Kvantum/themes"
 cp "$DOTFILES/config/gtk-3.0/settings.ini" "$HOME/.config/gtk-3.0/"
 cp "$DOTFILES/config/gtk-4.0/settings.ini" "$HOME/.config/gtk-4.0/"
-cp "$DOTFILES/config/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/"
+cp -r "$DOTFILES/config/Kvantum/." "$HOME/.config/Kvantum/"
+ln -sf "$HOME/.config/Kvantum/themes/vantablack.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
 cp "$DOTFILES/config/.gtkrc-2.0" "$HOME/.gtkrc-2.0"
 
 # Default cursor
@@ -157,14 +152,15 @@ mkdir -p "$HOME/.icons/default"
 cp "$DOTFILES/config/icons/default/index.theme" "$HOME/.icons/default/"
 
 # Apply initial theme via gsettings (vantablack default)
-gsettings set org.gnome.desktop.interface gtk-theme "Gruvbox-Material-Dark"
+gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
 gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
-gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic-Gruvbox"
+gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic"
 gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
 
 # Mask dunst so it doesn't compete with mako on D-Bus
 systemctl --user mask dunst.service 2>/dev/null || true
 
+setup_bat_theme
 setup_nvim_dir
 
 echo "Apps installation and configuration completed."

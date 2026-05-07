@@ -46,6 +46,9 @@ echo "${yellow}[+] Copying git dotfiles${reset}"
 sleep 1
 copy_file "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
 copy_file "$DOTFILES/config/git/.catppuccin.gitconfig" "$HOME/.catppuccin.gitconfig"
+create_dir "$CONFIG_DIR/git/themes"
+cp -rf "$DOTFILES/config/git/themes/." "$CONFIG_DIR/git/themes/"
+ln -sfn "$CONFIG_DIR/git/themes/vantablack.gitconfig" "$CONFIG_DIR/git/current-theme.gitconfig"
 
 # git hooks (global — applies to all repos via core.hooksPath)
 echo "${green}[+] Installing git hooks${reset}"
@@ -56,8 +59,9 @@ chmod +x "$CONFIG_DIR/git/hooks/pre-commit"
 # bat
 echo "${yellow}[+] Copying bat dotfiles${reset}"
 sleep 1
-create_dir "$CONFIG_DIR/bat"
-copy_file "$DOTFILES/config/bat/config" "$CONFIG_DIR/bat/config"
+create_dir "$CONFIG_DIR/bat/themes"
+cp -rf "$DOTFILES/config/bat/themes/." "$CONFIG_DIR/bat/themes/"
+ln -sfn "$CONFIG_DIR/bat/themes/vantablack.conf" "$CONFIG_DIR/bat/config"
 
 # neovim (LazyVim + Omarchy theme integration)
 echo "${yellow}[+] Copying neovim dotfiles${reset}"
@@ -76,7 +80,6 @@ echo "${yellow}[+] Copying Wezterm dotfiles${reset}"
 sleep 1
 create_dir "$CONFIG_DIR/wezterm"
 copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
-copy_file "$DOTFILES/config/wezterm/cyberdream.lua" "$CONFIG_DIR/wezterm/"
 
 # waypaper
 echo "${yellow}[+] Copying waypaper dotfiles${reset}"

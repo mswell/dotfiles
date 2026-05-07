@@ -5,11 +5,8 @@
  * 
  * Colors
  *
- * Available Colors Schemes
- *
- * adapta    catppuccin    everforest    navy       paper
- * arc       cyberpunk     gruvbox       nord       solarized
- * black     dracula       lovelace      onedark    yousai
+ * Active color schemes live in ~/.config/rofi/colors/
+ * and the theme system switches ~/.config/rofi/colors/current.rasi
  *
  **/
 

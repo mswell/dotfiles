@@ -97,10 +97,9 @@ setup/
 - **MongoDB integration**: Database for results
 
 ### Themes & Appearance
-- **Catppuccin**: Modern theme
-- **Tokyo Night**: Dark theme
-- **Cyberdream**: Cyberpunk theme
-- **Oxocarbon**: Minimalist theme
+- **Vantablack**: High-contrast dark theme
+- **White**: Clean light theme
+- **Tokyo Night**: Dark blue theme
 
 ## 📁 Configuration Structure
 
