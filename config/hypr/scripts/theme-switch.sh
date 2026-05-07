@@ -61,6 +61,22 @@ tmux source-file ~/.tmux.conf 2>/dev/null
 mkdir -p "$HOME/.config/fzf"
 ln -sf "$FZF_THEMES/$THEME.sh" "$HOME/.config/fzf/current-theme.sh"
 
+# Update FZF_DEFAULT_OPTS in running tmux instances and send SIGUSR1 to shells if possible
+if command -v tmux &>/dev/null && tmux info &>/dev/null; then
+    # We evaluate the script in a clean subshell to get the final FZF_DEFAULT_OPTS
+    # We pass the current FZF_DEFAULT_OPTS to avoid losing other configuration
+    CURRENT_FZF=$(tmux show-environment FZF_DEFAULT_OPTS 2>/dev/null | sed 's/^FZF_DEFAULT_OPTS=//' || echo "")
+    NEW_FZF_OPTS=$(env -i bash -c "export FZF_DEFAULT_OPTS='$CURRENT_FZF'; source $HOME/.config/fzf/current-theme.sh && echo \"\$FZF_DEFAULT_OPTS\"")
+    if [[ -n "$NEW_FZF_OPTS" ]]; then
+        tmux set-environment -g FZF_DEFAULT_OPTS "$NEW_FZF_OPTS"
+    fi
+fi
+
+# Send SIGUSR1 to zsh instances to ask them to reload fzf config if they trap it
+# Not all shells trap SIGUSR1 by default, but we can update tmux for now
+killall -SIGUSR1 zsh 2>/dev/null || true
+
+
 # ZSH — p10k + autosuggestions colors (new shells pick up via .zshrc)
 mkdir -p "$HOME/.config/zsh/themes"
 ln -sf "$ZSH_THEMES/$THEME.zsh" "$HOME/.config/zsh/current-theme.zsh"

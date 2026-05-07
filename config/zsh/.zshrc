@@ -93,6 +93,19 @@ zinit cdreplay -q
 # ZSH theme colors (p10k + autosuggest) — synced with Hyprland theme
 [[ -f ~/.config/zsh/current-theme.zsh ]] && source ~/.config/zsh/current-theme.zsh
 
+# Function to reload themes (called by SIGUSR1 from theme-switch.sh)
+reload_theme() {
+    [[ -f ~/.config/zsh/current-theme.zsh ]] && source ~/.config/zsh/current-theme.zsh
+    [[ -f ~/.config/fzf/current-theme.sh ]] && source ~/.config/fzf/current-theme.sh
+    # Re-apply fzf-tab flags since FZF_DEFAULT_OPTS might have changed
+    zstyle ':fzf-tab:*' fzf-flags $(echo $FZF_DEFAULT_OPTS)
+    # Redraw prompt
+    zle && zle reset-prompt
+}
+
+# Trap SIGUSR1 to dynamically reload themes in running shells
+trap 'reload_theme' USR1
+
 # Keybindings
 bindkey -e
 bindkey '^p' history-search-backward

@@ -678,6 +678,15 @@ function commandHelp(): string {
 	].join("\n");
 }
 
+function commandOutputLines(output: string): string[] {
+	const lines = output.split("\n");
+	const maxLines = 80;
+	const maxChars = 180;
+	const visible = lines.slice(0, maxLines).map((line) => (line.length > maxChars ? `${line.slice(0, maxChars - 1)}…` : line));
+	if (lines.length > maxLines) visible.push(`… truncated ${lines.length - maxLines} more lines`);
+	return visible;
+}
+
 async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext): Promise<void> {
 	const root = await resolveProjectRoot(ctx.cwd);
 	const trimmed = args.trim();
@@ -748,8 +757,15 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				output = commandHelp();
 		}
 		if (await exists(path.join(harnessPath(root), "index.json"))) await refreshHarnessUi(ctx, root);
+		ctx.ui.setWidget("pi-harness-command-output", commandOutputLines(output), { placement: "aboveEditor" });
+		
+		// Clear the widget automatically when the next turn starts
+		const off = pi.on("turn_start", () => {
+			ctx.ui.setWidget("pi-harness-command-output", undefined);
+			off();
+		});
+
 		ctx.ui.notify(`pi-harness: ${cmd}`, "info");
-		pi.sendMessage({ customType: "pi-harness", content: output, display: true }, { deliverAs: "nextTurn" });
 	} catch (error) {
 		ctx.ui.notify(`pi-harness error: ${error instanceof Error ? error.message : String(error)}`, "error");
 	}
@@ -802,6 +818,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.on("session_shutdown", async (_event, ctx) => {
 		ctx.ui.setStatus("pi-harness", undefined);
 		ctx.ui.setWidget("pi-harness", undefined);
+		ctx.ui.setWidget("pi-harness-command-output", undefined);
 	});
 
 	pi.on("session_before_compact", async (_event, ctx) => {
