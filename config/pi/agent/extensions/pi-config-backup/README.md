@@ -35,6 +35,10 @@ pi_config_backup
 - `~/.pi/agent/sessions/`
 - package caches/install dirs such as `npm/`, `git/`, `node_modules/`
 - `.env`, token/secret/cookie/auth/private-key-looking filenames
-- API keys, tokens, Bearer <REDACTED>, JWTs, cookies, OAuth material, and similar values in text files
+- API keys, tokens, bearer tokens, JWTs, cookies, OAuth material, and similar values in text files
 
 This is a safety filter, not cryptographic proof. Review diffs before committing dotfiles.
+
+## UI behavior
+
+`/pi-backup` reports completion through a transient notification and intentionally does not keep a persistent widget block in the Pi UI. The `pi_config_backup` tool returns only a one-line summary; detailed file lists remain in the tool `details` and generated `manifest.json`.

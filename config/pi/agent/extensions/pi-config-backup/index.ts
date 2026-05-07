@@ -76,10 +76,12 @@ function sanitizeJson(value: unknown): unknown {
 
 function redactText(input: string): string {
 	let text = input;
-	text = text.replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, "Bearer <REDACTED>");
+	text = text.replace(/Bearer\s+[A-Za-z0-9._~+\/-]{16,}=*/gi, "Bearer <REDACTED>");
 	text = text.replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|sk-ant-[A-Za-z0-9_-]{16,}|github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9_]{20,})\b/g, "<REDACTED>");
 	text = text.replace(/\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\b/g, "<REDACTED_JWT>");
-	text = text.replace(new RegExp(`\\b([A-Z0-9_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|COOKIE|OAUTH|AUTHORIZATION|CLIENT[_-]?SECRET|PRIVATE[_-]?KEY)[A-Z0-9_]*)\\s*[:=]\\s*([\"'])?[^\"'\\s]+\\2?`, "gi"), "$1=<REDACTED>");
+	// Redact shell-style env assignments. Keep this uppercase-only so source code
+	// identifiers such as redactsSensitiveKeysAndTokenPatterns are not corrupted.
+	text = text.replace(new RegExp(`(^|\\n)(\\s*)([A-Z0-9_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|COOKIE|OAUTH|AUTHORIZATION|CLIENT[_-]?SECRET|PRIVATE[_-]?KEY)[A-Z0-9_]*)\\s*[:=]\\s*([^\\n\\r]+)`, "g"), "$1$2$3=<REDACTED>");
 	text = text.replace(/(authorization|cookie|set-cookie)\s*:\s*[^\n\r]+/gi, "$1: <REDACTED>");
 	return text;
 }
@@ -174,7 +176,7 @@ async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResu
 			skipsSessions: true,
 			skipsPackageCaches: true,
 			skipsSensitiveFilenames: true,
-			redactsSensitiveKeysAndTokenPatterns=<REDACTED>
+			redactsSensitiveKeysAndTokenPatterns: true,
 		},
 		filesWritten: result.filesWritten.map((file) => path.relative(destination, file)),
 		filesSkipped: result.filesSkipped.map((item) => ({ ...item, path: item.path.startsWith(destination) ? path.relative(destination, item.path) : item.path })),
@@ -201,7 +203,7 @@ ${includeAgentsSkills ? "- `agents/skills/` sanitized copy of `~/.agents/skills/
 - \`~/.pi/agent/sessions/\`
 - package caches/install dirs such as \`npm/\`, \`git/\`, \`node_modules/\`
 - files with sensitive-looking names such as \`.env\`, \`*token*\`, \`*secret*\`, \`*cookie*\`, private keys, and auth files
-- API keys, tokens, cookies, OAuth material, Bearer <REDACTED>, JWTs, and similar strings found in text files
+- API keys, tokens, cookies, OAuth material, bearer tokens, JWTs, and similar strings found in text files
 
 ## Restore sketch
 
@@ -230,6 +232,13 @@ function formatResult(result: BackupResult): string {
 	return lines.join("\n");
 }
 
+function formatCompactResult(result: BackupResult): string {
+	const verb = result.dryRun ? "dry-run" : "complete";
+	const fileLabel = result.dryRun ? "would write" : "written";
+	const skipped = result.filesSkipped.length ? `, ${result.filesSkipped.length} skipped` : "";
+	return `Pi config backup ${verb}: ${result.filesWritten.length} files ${fileLabel}${skipped} → ${result.destination}`;
+}
+
 export default function piConfigBackup(pi: ExtensionAPI) {
 	pi.registerCommand("pi-backup", {
 		description: "Back up sanitized Pi configuration to dotfiles",
@@ -240,9 +249,8 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 			const destination = parts.find((part) => !part.startsWith("--"));
 			try {
 				const result = await backupPiConfig({ destination, dryRun, includeAgentsSkills });
-				const output = formatResult(result);
-				ctx.ui.setWidget("pi-backup", output.split("\n").slice(0, 80));
-				ctx.ui.notify(output.split("\n")[0], dryRun ? "info" : "success");
+				ctx.ui.setWidget("pi-backup", undefined);
+				ctx.ui.notify(formatCompactResult(result), dryRun ? "info" : "success");
 			} catch (error) {
 				ctx.ui.notify(`pi-backup failed: ${error instanceof Error ? error.message : String(error)}`, "error");
 			}
@@ -262,7 +270,7 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 		async execute(_toolCallId, params: BackupParamsType) {
 			try {
 				const result = await backupPiConfig(params);
-				return { content: [{ type: "text", text: formatResult(result) }], details: result };
+				return { content: [{ type: "text", text: formatCompactResult(result) }], details: result };
 			} catch (error) {
 				return {
 					content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
