@@ -84,6 +84,14 @@ yay_packages="
     kvantum-theme-gruvbox-git
     rofi
     walker
+    elephant
+    elephant-desktopapplications
+    elephant-providerlist
+    elephant-websearch
+    elephant-files
+    elephant-calc
+    elephant-clipboard
+    libqalculate
     jq
 "
 
@@ -102,6 +110,7 @@ cp -r "$DOTFILES/config/tofi" "$HOME/.config/"
 mkdir -p "$HOME/.config/backgrounds" && cp -r "$DOTFILES/config/backgrounds/." "$HOME/.config/backgrounds/"
 cp -r "$DOTFILES/config/hypr/backgrounds/vantablack" "$HOME/.config/backgrounds/"
 cp -r "$DOTFILES/config/hypr/backgrounds/white" "$HOME/.config/backgrounds/"
+cp -r "$DOTFILES/config/hypr/backgrounds/tokyonight" "$HOME/.config/backgrounds/"
 mkdir -p "$HOME/Pictures/backgrounds" && cp -r "$DOTFILES/config/backgrounds/." "$HOME/Pictures/backgrounds/"
 mkdir -p "$HOME/.config/waypaper" && cp "$DOTFILES/config/waypaper/config.ini" "$HOME/.config/waypaper/"
 
