@@ -1,6 +1,6 @@
 # Dotfiles - Development Environment Management System
 
-A comprehensive and modular system for automated configuration of Linux development environments, with support for multiple distributions and window managers.
+A comprehensive and modular system for automated configuration of Linux development environments, with Hyprland as the primary desktop target plus VPS and WSL flows.
 
 <p align="center">
 	<img src="https://raw.githubusercontent.com/mswell/dotfiles/master/images/dotfile.png" alt="Dotfiles Management System" style="max-width:100%;">
@@ -11,7 +11,7 @@ A comprehensive and modular system for automated configuration of Linux developm
 This project offers a complete solution for setting up development environments, including:
 
 - **Multiple Linux distributions** (Ubuntu, Arch Linux)
-- **Various window managers** (Hyprland, i3wm, Qtile)
+- **Hyprland** as the primary desktop target
 - **Development tools** (Python, Go, Neovim)
 - **Security tools** (pentest/hacking tools)
 - **Optimized configurations** for terminal and editors
@@ -35,17 +35,18 @@ cd dotfiles
 
 ## 📊 Installation Menu
 
-The `install.sh` script offers 7 main options:
+The `install.sh` script offers 8 main options:
 
 | Option | Description | Target |
 |--------|-----------|---------|
 | **[1] Ubuntu VPS** | Complete setup for Ubuntu Server | Servers, web development |
-| **[2] Archlinux with Hyprland** | Arch Linux + Wayland + Hyprland | Modern desktop, Wayland |
-| **[3] Install Hacktools** | Pentest/security tools | Security testing, CTF |
-| **[4] Install Pyenv** | Python environment with pyenv | Python development |
-| **[5] Archlinux with i3wm** | Arch Linux + i3 Window Manager | Tiling desktop, X11 |
+| **[2] Archlinux VPS** | Arch Linux CLI-only setup | Servers, CLI |
+| **[3] Archlinux with Hyprland** | Arch Linux + Wayland + Hyprland | Modern desktop, Wayland |
+| **[4] Install Hacktools** | Pentest/security tools | Security testing, CTF |
+| **[5] Install Dev Environment** | Python + Node.js via mise | Development environment |
 | **[6] Archlinux WSL** | Arch Linux on Windows Subsystem | WSL, cross-platform development |
-| **[7] Archlinux DE** | Arch Linux + Desktop Environment | Traditional desktop environment |
+| **[7] Claude for Bug Bounty** | Skills + Agents + Caido AI | AI-assisted bug bounty |
+| **[8] Install Pi Coding Agent** | Pi install + config restore | Pi agent setup |
 
 ## 🏗️ System Architecture
 
@@ -56,13 +57,12 @@ Each distribution has its own setup directory with specialized scripts:
 setup/
 ├── ubuntu/          # Ubuntu scripts (base.sh, devel.sh, apps.sh, terminal.sh)
 ├── ArchHypr/        # Arch + Hyprland (base.sh, apps.sh, fonts.sh, terminal.sh)
-├── ArchI3wm/        # Arch + i3wm (base.sh, apps.sh, fonts.sh, terminal.sh)
-├── ArchWSL/         # Arch WSL (base.sh, apps.sh, terminal.sh)
-└── ArchDE/          # Arch Desktop Environment (base.sh, apps.sh, fonts.sh, terminal.sh)
+├── ArchVPS/         # Arch VPS / CLI-only (base.sh, apps.sh, terminal.sh)
+└── ArchWSL/         # Arch WSL (base.sh, apps.sh, terminal.sh)
 ```
 
 ### Specialized Scripts
-- **`pyenv_install.sh`**: Python version management
+- **`devenv_install.sh`**: Python + Node.js environment management via mise
 - **`install_golang.sh`**: Go language installation
 - **`install_hacktools.sh`**: Security tools
 - **`terminal.sh`**: Terminal configuration
@@ -71,7 +71,7 @@ setup/
 ## 🛠️ Included Features
 
 ### Development
-- **Python**: pyenv for multiple versions
+- **Python**: mise-managed versions and virtualenv tooling
 - **Go**: Installation and configuration
 - **Neovim**: Modern editor with Lua
 - **Git**: Optimized configurations
@@ -84,11 +84,11 @@ setup/
 - **Ghostty**: Wayland-native terminal
 - **Fish**: Alternative shell
 
-### Window Managers
+### Desktop
 - **Hyprland**: Wayland compositor
-- **i3wm**: Tiling window manager
-- **Qtile**: Python window manager
 - **Waybar**: Wayland status bar
+- **Walker**: App launcher
+- **Mako**: Notifications
 
 ### Security Tools
 - **Nuclei**: Vulnerability scanner
@@ -113,9 +113,9 @@ config/
 ├── kitty/            # Kitty themes
 ├── wezterm/          # WezTerm configurations
 ├── hypr/             # Hyprland configuration
-├── i3/               # i3wm configuration
 ├── nvim/             # Neovim configuration
-└── themes/           # Additional themes
+├── pi/               # Sanitized Pi agent files
+└── agents/           # Agent configs and prompts
 ```
 
 ## 🔧 ZSH Configurations
@@ -133,20 +133,20 @@ Ideal for servers and web development:
 ./install.sh # Choose option 1
 ```
 
-### Arch Linux with Hyprland Setup (Option 2)
+### Arch Linux with Hyprland Setup (Option 3)
 Modern desktop with Wayland:
-```bash
-./install.sh # Choose option 2
-```
-
-### Security Tools Installation (Option 3)
 ```bash
 ./install.sh # Choose option 3
 ```
 
-### Python Environment (Option 4)
+### Security Tools Installation (Option 4)
 ```bash
 ./install.sh # Choose option 4
+```
+
+### Dev Environment (Option 5)
+```bash
+./install.sh # Choose option 5
 ```
 
 ## 🎯 Bug Bounty Recon Toolkit

@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a comprehensive dotfiles management system for automated Linux development environment setup. It supports multiple Linux distributions (Ubuntu, Arch Linux), window managers (Hyprland, i3wm), and includes security/pentesting tools for bug bounty hunting and security research.
+This is a comprehensive dotfiles management system for automated Linux development environment setup. It supports multiple Linux distributions (Ubuntu, Arch Linux), with Hyprland as the primary desktop target, and includes security/pentesting tools for bug bounty hunting and security research.
 
 ## Core Commands
 
 ### Initial Setup
 ```bash
-./install.sh  # Interactive menu with 9 setup options
+./install.sh  # Interactive menu with 8 setup options
 ```
 
 **Menu Options:**
@@ -19,15 +19,14 @@ This is a comprehensive dotfiles management system for automated Linux developme
 - `[3]` - Arch Linux + Hyprland (modern desktop, Wayland)
 - `[4]` - Install Hacktools (security testing, CTF, bug bounty)
 - `[5]` - Install Dev Environment (mise: Python + Node.js)
-- `[6]` - Arch Linux + i3wm (tiling window manager, X11)
-- `[7]` - Arch Linux WSL (Windows Subsystem for Linux)
-- `[8]` - Arch Linux DE (traditional desktop environment)
-- `[9]` - Claude for Bug Bounty (Skills + Agents + Caido AI)
+- `[6]` - Arch Linux WSL (Windows Subsystem for Linux)
+- `[7]` - Claude for Bug Bounty (Skills + Agents + Caido AI)
+- `[8]` - Install Pi Coding Agent + Restore Pi Config
 
 ### Dependency Chain
 
 **Critical:** Scripts must be run in the correct order:
-1. Run distro-specific setup first (option 1, 2, 3, 6, 7, or 8) - installs system dependencies
+1. Run distro-specific setup first (option 1, 2, 3, or 6) - installs system dependencies
 2. Run dev environment installation (option 5) - sets up Python + Node.js via mise
 3. Run hacktools installation (option 4) - installs security tools
 
@@ -55,11 +54,11 @@ Each distribution has its own setup directory with specialized scripts:
 - `devel.sh` - Development tools (neovim, virtualenvwrapper)
 - `apps.sh` - Applications (Docker, cargo tools, etc.)
 
-**Arch Linux** (`setup/ArchHypr/`, `setup/ArchI3wm/`, `setup/ArchWSL/`, `setup/ArchDE/`, `setup/ArchVPS/`):
+**Arch Linux** (`setup/ArchHypr/`, `setup/ArchWSL/`, `setup/ArchVPS/`):
 - `setup.sh` - Orchestrator (sources `lib/common.sh` for `source_script()`)
 - `base.sh` - Base system via `arch_base_setup()` + variant-specific extras
 - `apps.sh` - Variant-specific packages (uses shared `install_yay()`/`install_pacman()`)
-- `fonts.sh` - Font installation via shared `install_fonts()` (Hypr/I3wm only)
+- `fonts.sh` - Font installation via shared `install_fonts()` (Hyprland flow)
 
 **Shared scripts** (used by all variants):
 - `setup/terminal.sh` - TPM installation + shell change to zsh
@@ -252,7 +251,6 @@ config/
 ├── walker/themes/
 ├── tmux/themes/
 ├── fzf/themes/
-├── i3/                   # i3wm config (X11 tiling WM)
 ├── home/.gf/             # GF patterns for grep
 └── agents/               # Claude Code agent configurations
 ```

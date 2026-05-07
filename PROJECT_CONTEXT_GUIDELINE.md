@@ -7,14 +7,15 @@ This is a comprehensive dotfiles management system designed to set up developmen
 
 ### Main Entry Point
 - **`install.sh`**: Interactive menu system that allows users to choose their Linux distribution and setup type
-- Provides 7 main options:
+- Provides 8 main options:
   1. Ubuntu VPS
-  2. Archlinux with Hyprland
-  3. Install Hacktools
-  4. Install Pyenv (Python environment)
-  5. Archlinux with i3wm
+  2. Archlinux VPS
+  3. Archlinux with Hyprland
+  4. Install Hacktools
+  5. Install Dev Environment (mise)
   6. Archlinux WSL
-  7. Archlinux DE
+  7. Claude for Bug Bounty
+  8. Install Pi Coding Agent + Restore Pi Config
 
 ### Distribution-Specific Setup Scripts
 Each distribution has its own setup directory with specialized scripts:
@@ -26,7 +27,7 @@ Each distribution has its own setup directory with specialized scripts:
 - **`apps.sh`**: Installs applications (neovim, python-setuptools, etc.)
 - **`terminal.sh`**: Configures terminal tools
 
-#### Arch Linux Variants (`setup/ArchHypr/`, `setup/ArchI3wm/`, `setup/ArchWSL/`, `setup/ArchDE/`)
+#### Arch Linux Variants (`setup/ArchHypr/`, `setup/ArchVPS/`, `setup/ArchWSL/`)
 - **`setup.sh`**: Main orchestrator
 - **`base.sh`**: Installs base system and AUR helper (yay)
 - **`apps.sh`**: Installs applications via pacman/yay
@@ -34,9 +35,9 @@ Each distribution has its own setup directory with specialized scripts:
 - **`terminal.sh`**: Terminal configuration
 
 ### Specialized Installation Scripts
-- **`pyenv_install.sh`**: Python environment setup using pyenv (called from main menu option 4)
+- **`devenv_install.sh`**: Python + Node.js environment setup using mise (called from main menu option 5)
 - **`install_golang.sh`**: Go language installation
-- **`install_hacktools.sh`**: Security testing tools (called from main menu option 3)
+- **`install_hacktools.sh`**: Security testing tools (called from main menu option 4)
 - **`terminal.sh`**: Terminal multiplexer and shell configuration
 - **`copy_dots.sh`**: Copies configuration files to home directory
 
@@ -49,8 +50,8 @@ Each distribution has its own setup directory with specialized scripts:
 - Dependencies are NOT installed by `pyenv_install.sh`
 
 ### Python Environment Dependencies
-- `pyenv_install.sh` assumes system dependencies are already installed
-- Only handles Python-specific tools and pyenv setup
+- `devenv_install.sh` assumes system dependencies are already installed
+- Only handles language/runtime tooling and virtualenv setup
 - Checks for required build tools before proceeding
 
 ## Installation Flow
@@ -58,16 +59,16 @@ Each distribution has its own setup directory with specialized scripts:
 ### Typical Usage Pattern:
 1. **Choose distro** from `install.sh` menu (e.g., option 1 for Ubuntu VPS)
 2. **Distro setup runs first** - installs system dependencies
-3. **Run pyenv_install.sh** separately (option 4) - sets up Python environment
-4. **Run install_hacktools.sh** if needed (option 3) - installs security tools
+3. **Run devenv_install.sh** separately (option 5) - sets up Python + Node.js environment
+4. **Run install_hacktools.sh** if needed (option 4) - installs security tools
 
 ### Example Ubuntu Setup:
 ```bash
 ./install.sh          # Choose option 1 (Ubuntu VPS)
 # ... Ubuntu setup completes with all system deps
-./install.sh          # Choose option 4 (Install Pyenv)
-# ... Python environment setup
-./install.sh          # Choose option 3 (Install Hacktools)
+./install.sh          # Choose option 5 (Install Dev Environment)
+# ... Python + Node.js environment setup
+./install.sh          # Choose option 4 (Install Hacktools)
 # ... Security tools setup
 ```
 
@@ -76,7 +77,7 @@ Each distribution has its own setup directory with specialized scripts:
 ### 1. Separation of Concerns
 - Each script has a single responsibility
 - System deps handled by distro scripts
-- Python environment handled by pyenv script
+- Language environment handled by devenv script
 - Security tools handled by hacktools script
 
 ### 2. Modularity
@@ -99,7 +100,7 @@ Each distribution has its own setup directory with specialized scripts:
 - **ZSH configuration**: Multiple files in `config/zsh/` (functions, aliases, custom flows)
 - **Editor configs**: Neovim, vim configurations
 - **Terminal configs**: Kitty, WezTerm, Ghostty themes
-- **WM configs**: Hyprland, i3wm, Qtile configurations
+- **WM configs**: Hyprland configuration
 
 ## Tools and Technologies
 - **Shell**: Bash/ZSH
@@ -107,7 +108,7 @@ Each distribution has its own setup directory with specialized scripts:
 - **Security**: Custom nuclei templates and recon tools
 - **Editors**: Neovim with Lua configuration
 - **Terminal**: Multiple terminal emulator support
-- **WM**: Multiple window manager support (Hyprland, i3wm, Qtile)
+- **WM**: Hyprland-first desktop support
 
 ## Maintenance Guidelines
 
@@ -130,6 +131,6 @@ Each distribution has its own setup directory with specialized scripts:
 
 ## Troubleshooting
 - **Missing dependencies**: Run distro-specific setup first
-- **Python issues**: Ensure pyenv_install.sh runs after system setup
+- **Python issues**: Ensure devenv_install.sh runs after system setup
 - **Permission issues**: Check sudo access for system packages
 - **AUR issues (Arch)**: Ensure yay is properly installed by base.sh

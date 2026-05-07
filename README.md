@@ -14,7 +14,7 @@ Automated setup for a minimal, consistent Linux environment with:
 - **Vantablack / White / Tokyo Night** three-theme system synced across all components
 - **LazyVim** with Omarchy-style dynamic colorschemes
 - **Bug bounty toolkit** with full automated recon workflow
-- Support for Ubuntu VPS, i3wm, WSL, and headless Arch variants
+- Support for Ubuntu VPS, WSL, and headless Arch variants
 
 ## Install
 
@@ -33,12 +33,11 @@ cd dotfiles
 | [3] Arch + Hyprland | Primary desktop (Wayland) |
 | [4] Hacktools | Security tools, CTF, bug bounty |
 | [5] Dev Environment | Python + Node.js via mise |
-| [6] Arch + i3wm | Tiling WM, X11 |
-| [7] Arch WSL | Windows Subsystem for Linux |
-| [8] Arch DE | Traditional desktop environment |
-| [9] Claude for Bug Bounty | AI skills + Caido integration |
+| [6] Arch WSL | Windows Subsystem for Linux |
+| [7] Claude for Bug Bounty | AI skills + Caido integration |
+| [8] Install Pi Coding Agent | Pi install + config restore |
 
-**Order matters:** run system setup (1/2/3/6/7/8) before dev env (5) or hacktools (4).
+**Order matters:** run system setup (1/2/3/6) before dev env (5) or hacktools (4).
 
 ## Desktop
 
