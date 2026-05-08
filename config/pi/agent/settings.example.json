@@ -1,8 +1,8 @@
 {
   "lastChangelogVersion": "0.74.0",
   "theme": "tokyonight",
-  "defaultProvider": "github-copilot",
-  "defaultModel": "gemini-3.1-pro-preview",
+  "defaultProvider": "google",
+  "defaultModel": "gemini-2.5-flash",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-mcp-adapter",
