@@ -1,8 +1,8 @@
 {
   "lastChangelogVersion": "0.74.0",
   "theme": "tokyonight",
-  "defaultProvider": "google",
-  "defaultModel": "gemini-2.5-flash",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-mcp-adapter",

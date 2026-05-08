@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-08T18:30:42.397Z",
+  "createdAt": "2026-05-08T20:09:37.906Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -25,5 +25,10 @@
     "agent/themes/white.json",
     "README.md"
   ],
-  "filesSkipped": []
+  "filesSkipped": [
+    {
+      "path": "/home/mswell/.pi/agent/skills/bbhunter",
+      "reason": "not a regular file or directory"
+    }
+  ]
 }

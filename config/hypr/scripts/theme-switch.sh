@@ -102,14 +102,9 @@ if [[ -d "$GIT_THEMES" ]]; then
     ln -sf "$GIT_THEMES/$THEME.gitconfig" "$HOME/.config/git/current-theme.gitconfig"
 fi
 
-# Wallpaper via wpaperd — set theme folder, no auto-rotation (cycle manually with wpaperctl next)
+# Wallpaper via wpaperd — generate config with per-output rotation workaround
 if [[ -d "$BG_DIR/$THEME" ]]; then
-    printf '[default]\npath = "%s"\nmode = "stretch"\n' \
-        "$BG_DIR/$THEME" > "$HOME/.config/wpaperd/wallpaper.toml"
-    pkill wpaperd 2>/dev/null
-    sleep 0.3
-    rm -f "$HOME/.local/state/wpaperd/wallpapers/"* 2>/dev/null
-    wpaperd -d
+    "$HOME/.config/hypr/scripts/wpaperd-set.sh" "$BG_DIR/$THEME"
 fi
 
 # Reload Hyprland (picks up colors.conf)

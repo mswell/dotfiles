@@ -135,6 +135,7 @@ ln -sf "$HOME/.config/zsh/themes/vantablack.zsh" "$HOME/.config/zsh/current-them
 echo "vantablack" > "$HOME/.config/hypr/current-theme"
 chmod +x "$HOME/.config/hypr/scripts/theme-switch.sh"
 chmod +x "$HOME/.config/hypr/scripts/bg-set.sh"
+chmod +x "$HOME/.config/hypr/scripts/wpaperd-set.sh"
 chmod +x "$HOME/.config/hypr/scripts/power-menu.sh"
 chmod +x "$HOME/.config/hypr/scripts/screenshot-area.sh"
 
@@ -150,6 +151,9 @@ cp "$DOTFILES/config/.gtkrc-2.0" "$HOME/.gtkrc-2.0"
 # Default cursor
 mkdir -p "$HOME/.icons/default"
 cp "$DOTFILES/config/icons/default/index.theme" "$HOME/.icons/default/"
+
+# Apply initial wallpaper config with portrait-monitor workaround
+"$HOME/.config/hypr/scripts/wpaperd-set.sh" "$HOME/.config/backgrounds/vantablack"
 
 # Apply initial theme via gsettings (vantablack default)
 gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
