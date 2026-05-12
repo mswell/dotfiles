@@ -9,6 +9,7 @@ FUNCTIONS_DIR="${${(%):-%x}:A:h}/functions"
 # Check if functions directory exists and source all modules
 if [ -d "$FUNCTIONS_DIR" ]; then
     # Load modules in logical order
+    source "$FUNCTIONS_DIR/pipeline.zsh"  # Recon stage contracts and pure helpers
     source "$FUNCTIONS_DIR/utils.zsh"     # Utility and helper functions
     source "$FUNCTIONS_DIR/recon.zsh"     # Subdomain enumeration and discovery
     source "$FUNCTIONS_DIR/scanning.zsh"  # Port scanning and HTTP probing

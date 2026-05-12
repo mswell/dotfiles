@@ -256,7 +256,7 @@ test_modular_functions() {
     fi
 
     echo "Checking function modules..."
-    local modules=("utils.zsh" "recon.zsh" "scanning.zsh" "crawling.zsh" "vulns.zsh" "nuclei.zsh" "infra.zsh")
+    local modules=("pipeline.zsh" "utils.zsh" "recon.zsh" "scanning.zsh" "crawling.zsh" "vulns.zsh" "nuclei.zsh" "infra.zsh")
     local missing=0
 
     for module in "${modules[@]}"; do

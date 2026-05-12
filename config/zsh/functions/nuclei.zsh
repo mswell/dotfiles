@@ -11,10 +11,7 @@ run_nuclei_scan() {
     shift 3
     local nuclei_args=($@)
 
-    if [ ! -s "ALLHTTP" ]; then
-        echo "${red}[-] ALLHTTP file not found or empty. Skipping scan.${reset}"
-        return 1
-    fi
+    require_workspace_file "ALLHTTP" "run_nuclei_scan" || return 1
 
     echo "${yellow}[+] Running Nuclei scan: ${success_message}${reset}"
     nuclei -l ALLHTTP -H "$UserAgent" -o "$output_file" "${nuclei_args[@]}"
@@ -154,7 +151,7 @@ massALLHTTPWebCaching() {
 # Requires: cleanHakipResult.txt file
 # Outputs: ALLHTTP, resultNuclei
 nucauto() {
-  if [ ! -s "cleanHakipResult.txt" ]; then echo "${red}[-] cleanHakipResult.txt not found or empty.${reset}"; return 1; fi
+  require_workspace_file "cleanHakipResult.txt" "nucauto" || return 1
   httpx -l cleanHakipResult.txt -silent | anew ALLHTTP
   nuclei -l ALLHTTP -H "$UserAgent" -eid expired-ssl,mismatched-ssl,deprecated-tls,weak-cipher-suites,self-signed-ssl -severity critical,high,medium,low -o resultNuclei
   [ -s "resultNuclei" ] && notify -silent -bulk -data resultNuclei -id nuclei

@@ -1,49 +1,41 @@
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Load completions
 autoload -Uz compinit && compinit
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
 # ===================================================================
 # LOAD ENVIRONMENT CONFIGURATION FIRST
-# This ensures that path variables are available to all other scripts.
-# Auto-detect dotfiles location (portable across different clone paths)
+# ===================================================================
 if [ -f "$HOME/.config/zsh/env.zsh" ]; then
     source "$HOME/.config/zsh/env.zsh"
 elif [ -f "$HOME/Projects/dotfiles/config/zsh/env.zsh" ]; then
-    # Fallback to default location if not copied yet
     source "$HOME/Projects/dotfiles/config/zsh/env.zsh"
 fi
-# ===================================================================
 
-# Set the directory we want to store zinit and plugins
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-
-# Download Zinit, if it's not there yet
-if [ ! -d "$ZINIT_HOME" ]; then
-   mkdir -p "$(dirname $ZINIT_HOME)"
-   git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [ -f "$HOME/.config/zsh/runtime.zsh" ]; then
+    source "$HOME/.config/zsh/runtime.zsh"
+elif [ -f "$HOME/Projects/dotfiles/config/zsh/runtime.zsh" ]; then
+    source "$HOME/Projects/dotfiles/config/zsh/runtime.zsh"
 fi
 
-# Source/Load zinit
-source "${ZINIT_HOME}/zinit.zsh"
+typeset -f zsh_compose_path >/dev/null || zsh_compose_path() { export PATH="$HOME/.local/bin:$PATH"; }
+typeset -f zsh_load_zinit_runtime >/dev/null || zsh_load_zinit_runtime() { zinit() { return 0; }; return 1; }
+typeset -f zsh_setup_go_path >/dev/null || zsh_setup_go_path() { return 0; }
+typeset -f reload_theme >/dev/null || reload_theme() { return 0; }
 
-# Add in Powerlevel10k
+zsh_compose_path
+zsh_load_zinit_runtime || true
+
+# Add in Powerlevel10k and plugins. If zinit is missing, zsh_load_zinit_runtime
+# installs a no-op zinit function instead of cloning during shell startup.
 zinit ice depth=1; zinit light romkatv/powerlevel10k
-
-# Add in zsh plugins
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
-
-# Add in snippets
 zinit snippet OMZL::git.zsh
 zinit snippet OMZP::git
-# zinit snippet OMZP::asdf
 zinit snippet OMZP::sudo
 zinit snippet OMZP::archlinux
 zinit snippet OMZP::aws
@@ -51,38 +43,20 @@ zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
 zinit snippet OMZP::command-not-found
 
-[ -f $HOME/.config/zsh/alias.zsh ] && source $HOME/.config/zsh/alias.zsh
-[ -f $HOME/.config/zsh/custom.zsh ] && source $HOME/.config/zsh/custom.zsh
-
-export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/snapd/snap/bin"''
-
-# FOR WSL USE
-#export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/sbin:/bin:/usr/games:/usr/local/games:/var/lib/snapd/snap/bin:$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/snapd/snap/bin:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA NvDLISR:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Users/mswel/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/mswel/AppData/Local/Programs/Microsoft VS Code/bin"  
+[ -f "$HOME/.config/zsh/alias.zsh" ] && source "$HOME/.config/zsh/alias.zsh"
+[ -f "$HOME/.config/zsh/custom.zsh" ] && source "$HOME/.config/zsh/custom.zsh"
+[ -f "$HOME/.config/zsh/functions.zsh" ] && source "$HOME/.config/zsh/functions.zsh"
 
 # >>> mise initialization >>>
 export PATH="$HOME/.local/bin:$PATH"
-eval "$(mise activate zsh)"
-eval "$(mise completion zsh)"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+command -v mise >/dev/null 2>&1 && eval "$(mise completion zsh)"
 # <<< mise initialization <<<
 
-
 export EDITOR='vim'
+zsh_setup_go_path
 
-
-
-# go - detect installation location
-if command -v go &> /dev/null; then
-  # Go is already in PATH (installed via package manager)
-  export GOPATH=$HOME/go
-  export PATH=$PATH:$GOPATH/bin
-elif [ -d "/usr/local/go" ]; then
-  # Manual installation in /usr/local/go
-  export GOROOT=/usr/local/go
-  export GOPATH=$HOME/go
-  export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-fi
-
-source $HOME/Tools/gf/gf-completion.zsh
+[ -f "$HOME/Tools/gf/gf-completion.zsh" ] && source "$HOME/Tools/gf/gf-completion.zsh"
 bindkey -s ^f "tmux-sessionizer\n"
 
 zinit cdreplay -q
@@ -92,16 +66,6 @@ zinit cdreplay -q
 
 # ZSH theme colors (p10k + autosuggest) — synced with Hyprland theme
 [[ -f ~/.config/zsh/current-theme.zsh ]] && source ~/.config/zsh/current-theme.zsh
-
-# Function to reload themes (called by SIGUSR1 from theme-switch.sh)
-reload_theme() {
-    [[ -f ~/.config/zsh/current-theme.zsh ]] && source ~/.config/zsh/current-theme.zsh
-    [[ -f ~/.config/fzf/current-theme.sh ]] && source ~/.config/fzf/current-theme.sh
-    # Re-apply fzf-tab flags since FZF_DEFAULT_OPTS might have changed
-    zstyle ':fzf-tab:*' fzf-flags $(echo $FZF_DEFAULT_OPTS)
-    # Redraw prompt
-    zle && zle reset-prompt
-}
 
 # Trap SIGUSR1 to dynamically reload themes in running shells
 trap 'reload_theme' USR1
@@ -132,27 +96,13 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
-# Aliases
-# alias ls='ls --color'
-# alias vim='nvim'
-# alias c='clear'
-
 # Shell integrations
-eval "$(fzf --zsh)"
-
+command -v fzf >/dev/null 2>&1 && eval "$(fzf --zsh)"
 [[ -f ~/.config/fzf/current-theme.sh ]] && source ~/.config/fzf/current-theme.sh
+zstyle ':fzf-tab:*' fzf-flags $(echo "$FZF_DEFAULT_OPTS")
 
-zstyle ':fzf-tab:*' fzf-flags $(echo $FZF_DEFAULT_OPTS)
-export WORKON_HOME="/home/mswell/.ve"
-export PROJECT_HOME="/home/mswell/Projects"
-
-
-# Generated for pdtm. Do not edit.
-export PATH=$PATH:/home/mswell/.pdtm/go/bin
-
-
-# opencode
-export PATH=/home/mswell/.opencode/bin:$PATH
+export WORKON_HOME="$HOME/.ve"
+export PROJECT_HOME="$HOME/Projects"
 
 # zoxide — must be last
-eval "$(zoxide init --cmd cd zsh)"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init --cmd cd zsh)"

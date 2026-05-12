@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 source "${DOTFILES}/setup/lib/arch.sh"
+source "${DOTFILES}/setup/lib/theme_orchestrator.sh"
 
 # Hyprland packages
 yay_packages="
@@ -114,52 +115,26 @@ mkdir -p "$HOME/.config/waypaper" && cp "$DOTFILES/config/waypaper/config.ini" "
 # Neovim — LazyVim base + Omarchy-style theme integration
 mkdir -p "$HOME/.config/nvim" && cp -r "$DOTFILES/config/nvim/." "$HOME/.config/nvim/"
 
-# Theme system — create initial symlinks (default: vantablack)
+# Theme system — copy assets, then let the shared orchestrator create initial state.
 mkdir -p "$HOME/.config/hypr/themes" "$HOME/.config/kitty/themes" "$HOME/.config/waybar/themes"
 mkdir -p "$HOME/.config/rofi/colors" "$HOME/.config/rofi/launchers/type-2/shared" "$HOME/.config/rofi/launchers/type-3/shared"
 cp -r "$DOTFILES/config/rofi/colors/"* "$HOME/.config/rofi/colors/"
 cp -r "$DOTFILES/config/rofi/launchers/"* "$HOME/.config/rofi/launchers/"
-ln -sf "$HOME/.config/hypr/themes/vantablack.conf" "$HOME/.config/hypr/colors.conf"
-ln -sf "$HOME/.config/kitty/themes/vantablack.conf" "$HOME/.config/kitty/current-theme.conf"
-ln -sf "$HOME/.config/waybar/themes/vantablack.css" "$HOME/.config/waybar/themes/current.css"
-ln -sf "$HOME/.config/rofi/colors/vantablack.rasi" "$HOME/.config/rofi/colors/current.rasi"
 mkdir -p "$HOME/.config/tmux/themes"
 cp -r "$DOTFILES/config/tmux/themes/." "$HOME/.config/tmux/themes/"
-ln -sf "$HOME/.config/tmux/themes/vantablack.conf" "$HOME/.config/tmux/current-theme.conf"
 mkdir -p "$HOME/.config/fzf/themes"
 cp -r "$DOTFILES/config/fzf/themes/." "$HOME/.config/fzf/themes/"
-ln -sf "$HOME/.config/fzf/themes/vantablack.sh" "$HOME/.config/fzf/current-theme.sh"
 mkdir -p "$HOME/.config/zsh/themes"
 cp -r "$DOTFILES/config/zsh/themes/." "$HOME/.config/zsh/themes/"
-ln -sf "$HOME/.config/zsh/themes/vantablack.zsh" "$HOME/.config/zsh/current-theme.zsh"
-echo "vantablack" > "$HOME/.config/hypr/current-theme"
+mkdir -p "$HOME/.config/Kvantum/themes"
+cp -r "$DOTFILES/config/Kvantum/." "$HOME/.config/Kvantum/"
 chmod +x "$HOME/.config/hypr/scripts/theme-switch.sh"
 chmod +x "$HOME/.config/hypr/scripts/bg-set.sh"
 chmod +x "$HOME/.config/hypr/scripts/wpaperd-set.sh"
 chmod +x "$HOME/.config/hypr/scripts/power-menu.sh"
 chmod +x "$HOME/.config/hypr/scripts/screenshot-area.sh"
 
-mkdir -p "$HOME/.config/gtk-3.0"
-mkdir -p "$HOME/.config/gtk-4.0"
-mkdir -p "$HOME/.config/Kvantum/themes"
-cp "$DOTFILES/config/gtk-3.0/settings.ini" "$HOME/.config/gtk-3.0/"
-cp "$DOTFILES/config/gtk-4.0/settings.ini" "$HOME/.config/gtk-4.0/"
-cp -r "$DOTFILES/config/Kvantum/." "$HOME/.config/Kvantum/"
-ln -sf "$HOME/.config/Kvantum/themes/vantablack.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
-cp "$DOTFILES/config/.gtkrc-2.0" "$HOME/.gtkrc-2.0"
-
-# Default cursor
-mkdir -p "$HOME/.icons/default"
-cp "$DOTFILES/config/icons/default/index.theme" "$HOME/.icons/default/"
-
-# Apply initial wallpaper config with portrait-monitor workaround
-"$HOME/.config/hypr/scripts/wpaperd-set.sh" "$HOME/.config/backgrounds/vantablack"
-
-# Apply initial theme via gsettings (vantablack default)
-gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
-gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
-gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic"
-gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+theme_apply "${DOTFILES_DEFAULT_THEME:-vantablack}"
 
 # Mask dunst so it doesn't compete with mako on D-Bus
 systemctl --user mask dunst.service 2>/dev/null || true

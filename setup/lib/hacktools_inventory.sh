@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Inventory for bug bounty/security tools. Planning helpers are side-effect free.
+
+# shellcheck shell=bash
+
+PROJECTDISCOVERY_TOOLS=(naabu shuffledns chaos nuclei notify httpx dnsx subfinder interactsh-client alterx katana)
+
+# Format: binary|go install package
+GO_TOOLS=(
+  "fff|github.com/tomnomnom/fff"
+  "tojson|github.com/tomnomnom/hacks/tojson"
+  "Rush|github.com/shenwei356/rush"
+  "gron|github.com/tomnomnom/gron"
+  "html-tool|github.com/tomnomnom/hacks/html-tool"
+  "gf|github.com/tomnomnom/gf"
+  "qsreplace|github.com/tomnomnom/qsreplace"
+  "Amass|github.com/owasp-amass/amass/v4/..."
+  "ffuf|github.com/ffuf/ffuf"
+  "assetfinder|github.com/tomnomnom/assetfinder"
+  "github-subdomains|github.com/gwen001/github-subdomains"
+  "waybackurls|github.com/tomnomnom/hacks/waybackurls"
+  "anew|github.com/tomnomnom/anew"
+  "dirdar|github.com/m4dm0e/dirdar"
+  "unfurl|github.com/tomnomnom/unfurl"
+  "gauplus|github.com/bp0lr/gauplus"
+  "subjs|github.com/lc/subjs"
+  "Gxss|github.com/KathanP19/Gxss"
+  "gospider|github.com/jaeles-project/gospider"
+  "puredns|github.com/d3mondev/puredns/v2"
+  "kxss|github.com/tomnomnom/hacks/kxss"
+  "GetJs|github.com/003random/getJS"
+  "Meg|github.com/tomnomnom/meg"
+  "Freq|github.com/takshal/freq"
+  "Sdlookup|github.com/j3ssie/sdlookup"
+  "Airixss|github.com/ferreiraklet/airixss"
+  "Nilo|github.com/ferreiraklet/nilo"
+  "metabigor|github.com/j3ssie/metabigor"
+  "sourcemapper|github.com/denandz/sourcemapper"
+)
+
+# Format: local directory name|GitHub owner/repo
+REPOSITORY_TOOLS=(
+  "gf|tomnomnom/gf"
+  "Gf-Patterns|1ndianl33t/Gf-Patterns"
+  "Interlace|codingo/Interlace"
+  "JSScanner|0x240x23elu/JSScanner"
+  "GitTools|internetwache/GitTools"
+  "SecretFinder|m4ll0k/SecretFinder"
+  "M4ll0k|m4ll0k/BBTz"
+  "Git-Dumper|arthaud/git-dumper"
+  "Knock|guelfoweb/knock"
+  "Massdns|blechschmidt/massdns"
+  "Dirsearch|maurosoria/dirsearch"
+  "xnLinkFinder|xnl-h4ck3r/xnLinkFinder"
+  "MSwellDOTS|mswell/dotfiles"
+  "Waymore|xnl-h4ck3r/waymore"
+  "altdns|infosec-au/altdns"
+)
+
+# Format: destination variable-or-path|source URL
+WORDLISTS=(
+  "\$LISTS_PATH/raft-large-directories-lowercase.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt"
+  "\$LISTS_PATH/raft-large-files.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-files.txt"
+  "\$LISTS_PATH/raft-large-words-lowercase.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words-lowercase.txt"
+  "\$NAMELIST_TXT|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/namelist.txt"
+  "\$LISTS_PATH/directory-list-2.3-small.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/refs/heads/master/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-small.txt"
+  "\$LISTS_PATH/web-extensions.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt"
+  "\$LISTS_PATH/subdomains-top1million-5000.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt"
+  "\$LISTS_PATH/burp-parameter-names.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/burp-parameter-names.txt"
+  "\$LISTS_PATH/xato-net-10-million-usernames.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Usernames/xato-net-10-million-usernames.txt"
+  "\$TOP_1M_110K_LIST|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt"
+  "\$LISTS_PATH/raft-large-words.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-words.txt"
+  "\$ALL_TXT_LIST|https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt"
+)
+
+hacktools_expand_path() {
+    local raw="$1"
+    eval "printf '%s' \"$raw\""
+}
+
+hacktools_projectdiscovery_csv() {
+    local IFS=,
+    printf '%s\n' "${PROJECTDISCOVERY_TOOLS[*]}"
+}
+
+hacktools_inventory_plan() {
+    local item name value dest url
+    printf 'path|TOOLS_PATH|%s\n' "${TOOLS_PATH:-}"
+    printf 'path|LISTS_PATH|%s\n' "${LISTS_PATH:-}"
+    printf 'path|RECON_PATH|%s\n' "${RECON_PATH:-}"
+    printf 'go|pdtm|github.com/projectdiscovery/pdtm/cmd/pdtm@latest\n'
+    printf 'projectdiscovery|pdtm|%s\n' "$(hacktools_projectdiscovery_csv)"
+    for item in "${GO_TOOLS[@]}"; do
+        IFS='|' read -r name value <<< "$item"
+        printf 'go|%s|%s@latest\n' "$name" "$value"
+    done
+    printf 'python|uro|python3 -m pip install --user uro\n'
+    for item in "${WORDLISTS[@]}"; do
+        IFS='|' read -r dest url <<< "$item"
+        printf 'wordlist|%s|%s\n' "$(hacktools_expand_path "$dest")" "$url"
+    done
+    for item in "${REPOSITORY_TOOLS[@]}"; do
+        IFS='|' read -r name value <<< "$item"
+        printf 'repo|%s|https://github.com/%s\n' "$name" "$value"
+    done
+    printf 'post_install|gf_templates|copy gf examples and custom templates\n'
+    printf 'post_install|recursive_wordlist|generate recursive.txt from dirsearch and raft list\n'
+}
+
+hacktools_download_wordlists() {
+    local item raw_dest url dest
+    for item in "${WORDLISTS[@]}"; do
+        IFS='|' read -r raw_dest url <<< "$item"
+        dest="$(hacktools_expand_path "$raw_dest")"
+        if [[ ! -f "$dest" ]]; then
+            wget -nc -O "$dest" "$url"
+        fi
+    done
+}

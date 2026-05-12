@@ -18,6 +18,7 @@ export reset=$(tput sgr0 2>/dev/null || echo "")
 # Source logging and validation libraries
 source "$DOTFILES/setup/lib/logging.sh"
 source "$DOTFILES/setup/lib/preflight.sh"
+source "$DOTFILES/setup/lib/setup_plans.sh"
 
 # Enable error trapping for better logging
 trap_errors
@@ -85,14 +86,7 @@ Menu() {
         read -r option
         
         case $option in
-            1) run_setup "setup/ubuntu/setup.sh"; break ;;
-            2) run_setup "setup/ArchVPS/setup.sh"; break ;;
-            3) run_setup "setup/ArchHypr/setup.sh"; break ;;
-            4) run_setup "setup/install_hacktools.sh"; break ;;
-            5) run_setup "setup/devenv_install.sh"; break ;;
-            6) run_setup "setup/ArchWSL/setup.sh"; break ;;
-            7) run_setup "setup/install_skills.sh"; break ;;
-            8) run_setup "setup/install_pi.sh"; break ;;
+            1|2|3|4|5|6|7|8) setup_plan_run "$option" run_setup; break ;;
             0) exit 0 ;;
             *) echo "${red}Unknown option. Please try again.${reset}";;
         esac

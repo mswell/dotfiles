@@ -1,123 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
+
+if [[ -z "${DOTFILES:-}" ]]; then
+    DOTFILES=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)
+    export DOTFILES
+fi
+
 source "${DOTFILES}/setup/lib/common.sh"
+source "${DOTFILES}/setup/lib/dotfiles_manifest.sh"
+source "${DOTFILES}/setup/lib/theme_orchestrator.sh"
 
-CONFIG_DIR="$HOME/.config"
+CONFIG_DIR="${CONFIG_DIR:-$HOME/.config}"
+export CONFIG_DIR
 
-copy_file() {
-    local source="$1"
-    local destination="$2"
-    echo "${green}[+] Copying $source => $destination${reset}"
-    cp -f "$source" "$destination"
-}
+printf '%s\n' "${yellow}[+] Installing dotfiles from manifest${reset}"
+dotfiles_apply_manifest
 
-create_dir() {
-    local dir="$1"
-    echo "${yellow}[+] Creating directory $dir${reset}"
-    [ ! -d "$dir" ] && mkdir -p "$dir"
-}
+# First-install theme initialization uses the same orchestration path as runtime switching.
+# In dry-run mode this prints the planned theme effects instead of mutating the host.
+printf '%s\n' "${yellow}[+] Initializing default theme${reset}"
+theme_apply "${DOTFILES_DEFAULT_THEME:-vantablack}"
 
-# zsh
-echo "${yellow}[+] Copying zsh dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/zsh"
-
-copy_file "$DOTFILES/config/zsh/.zshrc" "$HOME/.zshrc"
-copy_file "$DOTFILES/config/zsh/env.zsh" "$CONFIG_DIR/zsh/"
-copy_file "$DOTFILES/config/zsh/custom.zsh" "$CONFIG_DIR/zsh/"
-copy_file "$DOTFILES/config/zsh/alias.zsh" "$CONFIG_DIR/zsh/"
-copy_file "$DOTFILES/config/zsh/functions.zsh" "$CONFIG_DIR/zsh/"
-
-# Copy modular functions directory
-echo "${green}[+] Copying modular functions${reset}"
-create_dir "$CONFIG_DIR/zsh/functions"
-cp -rf "$DOTFILES/config/zsh/functions/"* "$CONFIG_DIR/zsh/functions/"
-
-# Copy zsh theme files (p10k + autosuggest colors per theme)
-echo "${green}[+] Copying zsh themes${reset}"
-create_dir "$CONFIG_DIR/zsh/themes"
-cp -rf "$DOTFILES/config/zsh/themes/." "$CONFIG_DIR/zsh/themes/"
-
-copy_file "$DOTFILES/config/zsh/.zprofile" "$HOME/.zprofile"
-copy_file "$DOTFILES/config/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
-
-# git
-echo "${yellow}[+] Copying git dotfiles${reset}"
-sleep 1
-copy_file "$DOTFILES/config/git/.gitconfig" "$HOME/.gitconfig"
-copy_file "$DOTFILES/config/git/.catppuccin.gitconfig" "$HOME/.catppuccin.gitconfig"
-create_dir "$CONFIG_DIR/git/themes"
-cp -rf "$DOTFILES/config/git/themes/." "$CONFIG_DIR/git/themes/"
-ln -sfn "$CONFIG_DIR/git/themes/vantablack.gitconfig" "$CONFIG_DIR/git/current-theme.gitconfig"
-
-# git hooks (global — applies to all repos via core.hooksPath)
-echo "${green}[+] Installing git hooks${reset}"
-create_dir "$CONFIG_DIR/git/hooks"
-cp -f "$DOTFILES/config/git/hooks/pre-commit" "$CONFIG_DIR/git/hooks/pre-commit"
-chmod +x "$CONFIG_DIR/git/hooks/pre-commit"
-
-# bat
-echo "${yellow}[+] Copying bat dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/bat/themes"
-cp -rf "$DOTFILES/config/bat/themes/." "$CONFIG_DIR/bat/themes/"
-ln -sfn "$CONFIG_DIR/bat/themes/vantablack.conf" "$CONFIG_DIR/bat/config"
-
-# neovim (LazyVim + Omarchy theme integration)
-echo "${yellow}[+] Copying neovim dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/nvim"
-cp -rf "$DOTFILES/config/nvim/." "$CONFIG_DIR/nvim/"
-
-# Ghostty
-echo "${yellow}[+] Copying Ghostty dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/ghostty"
-copy_file "$DOTFILES/config/Ghostty/config" "$CONFIG_DIR/ghostty/"
-
-# wezterm
-echo "${yellow}[+] Copying Wezterm dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/wezterm"
-copy_file "$DOTFILES/config/wezterm/wezterm.lua" "$CONFIG_DIR/wezterm/"
-
-# waypaper
-echo "${yellow}[+] Copying waypaper dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/waypaper"
-copy_file "$DOTFILES/config/waypaper/config.ini" "$CONFIG_DIR/waypaper/"
-
-# mako
-echo "${yellow}[+] Copying mako dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/mako"
-copy_file "$DOTFILES/config/mako/config" "$CONFIG_DIR/mako/"
-
-# flameshot
-echo "${yellow}[+] Copying flameshot dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/flameshot"
-copy_file "$DOTFILES/config/flameshot/flameshot.ini" "$CONFIG_DIR/flameshot/"
-
-# swappy
-echo "${yellow}[+] Copying swappy dotfiles${reset}"
-sleep 1
-create_dir "$CONFIG_DIR/swappy"
-copy_file "$DOTFILES/config/swappy/config" "$CONFIG_DIR/swappy/"
-
-# tmux
-echo "${yellow}[+] Copying tmux dotfiles${reset}"
-sleep 1
-create_dir "$HOME/.local/bin"
-copy_file "$DOTFILES/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
-copy_file "$DOTFILES/config/tmux/.tmux-cht-command" "$HOME/.tmux-cht-command"
-copy_file "$DOTFILES/config/tmux/.tmux-cht-languages" "$HOME/.tmux-cht-languages"
-copy_file "$DOTFILES/config/tmux/tmux-sessionizer" "$HOME/.local/bin"
-copy_file "$DOTFILES/config/tmux/tmux-cht.sh" "$HOME/.local/bin"
-
-# Pi coding agent themes
-echo "${yellow}[+] Copying Pi themes${reset}"
-create_dir "$HOME/.pi/agent/themes"
-cp -rf "$DOTFILES/config/pi/agent/themes/." "$HOME/.pi/agent/themes/"
-
-echo "${yellow}[+] Done.${reset}"
+printf '%s\n' "${yellow}[+] Done.${reset}"

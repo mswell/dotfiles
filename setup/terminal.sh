@@ -2,6 +2,7 @@
 set -euo pipefail
 source "${DOTFILES}/setup/lib/common.sh"
 source "${DOTFILES}/setup/lib/shell_utils.sh"
+source "${DOTFILES}/config/zsh/runtime.zsh"
 
 # Clones the tmux plugin manager
 echo "${yellow}[+] Installing tmux plugin manager${reset}"
@@ -10,6 +11,10 @@ if [ ! -d ~/.tmux/plugins/tpm ]; then
 else
     echo "${yellow}[*] TPM already installed, skipping${reset}"
 fi
+
+# Install zinit at setup time so normal shell startup does not clone plugins.
+echo "${yellow}[+] Installing zinit plugin manager${reset}"
+zsh_bootstrap_zinit
 
 # Changes the default shell to zsh (non-interactive)
 echo "${yellow}[+] Changing default shell to zsh${reset}"

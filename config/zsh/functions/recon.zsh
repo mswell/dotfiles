@@ -26,6 +26,7 @@ wellSubRecon() {
 
 subdomainenum() {
   echo "${yellow}[+] Starting passive subdomain enumeration...${reset}"
+  require_workspace_file "domains" "subdomainenum" || return 1
   local Domain
   Domain=$(cat domains)
   subfinder -up
@@ -35,12 +36,14 @@ subdomainenum() {
 }
 
 resolving() {
+  require_workspace_file "domains" "resolving" || return 1
+  require_workspace_file "sorted.all.subdomains" "resolving" || return 1
   shuffledns -d domains -list sorted.all.subdomains -r "$RESOLVERS_LIST" -o resolved.subdomains
 }
 
 subtakeover() {
   echo "${yellow}[+] Checking for Subdomain Takeover...${reset}"
-  if [ ! -s "clean.subdomains" ]; then echo "${red}[-] clean.subdomains not found or empty.${reset}"; return 1; fi
+  require_workspace_file "clean.subdomains" "subtakeover" || return 1
   python3 "$TAKEOVER_SCRIPT_PATH" -l clean.subdomains -o subtakeover.txt -k -v -t 50
   if [ -s "subtakeover.txt" ]; then
     echo "[+] Subdomain Takeover results found!" | notify -silent -id subs
