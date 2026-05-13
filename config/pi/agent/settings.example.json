@@ -3,13 +3,12 @@
   "theme": "tokyonight",
   "defaultProvider": "github-copilot",
   "defaultModel": "claude-opus-4.6",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "low",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
     "npm:pi-context",
-    "npm:@spences10/pi-skills",
-    "npm:pi-subagents"
+    "npm:@spences10/pi-skills"
   ]
 }

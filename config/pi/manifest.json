@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-13T22:43:34.128Z",
+  "createdAt": "2026-05-13T23:32:54.836Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -12,6 +12,10 @@
   },
   "filesWritten": [
     "agent/settings.example.json",
+    "agent/extensions/gemini-auto-router/README.md",
+    "agent/extensions/gemini-auto-router/index.ts",
+    "agent/extensions/gpt-auto-router/README.md",
+    "agent/extensions/gpt-auto-router/index.ts",
     "agent/extensions/guardrails.json",
     "agent/extensions/pi-config-backup/README.md",
     "agent/extensions/pi-config-backup/index.js",

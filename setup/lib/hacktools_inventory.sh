@@ -50,8 +50,6 @@ REPOSITORY_TOOLS=(
   "Git-Dumper|arthaud/git-dumper"
   "Knock|guelfoweb/knock"
   "Massdns|blechschmidt/massdns"
-  "Dirsearch|maurosoria/dirsearch"
-  "xnLinkFinder|xnl-h4ck3r/xnLinkFinder"
   "MSwellDOTS|mswell/dotfiles"
   "Waymore|xnl-h4ck3r/waymore"
   "altdns|infosec-au/altdns"
