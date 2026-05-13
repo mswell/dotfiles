@@ -3,12 +3,13 @@ import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 const HARNESS_DIR = path.join(".pi", "harness");
 const EVENTS_FILE = "events.jsonl";
 const SUMMARY_FILE = "summary.md";
 const TRACE_RECENT_LIMIT = 25;
 const WIDGET_MODE: "off" | "compact" = "off";
+const LEAN_CONTEXT_LIMIT = 4500;
 const PHASES = ["P", "R", "E", "V", "C"] as const;
 const PHASE_LABELS: Record<Phase, string> = {
 	P: "Planning",
@@ -424,6 +425,45 @@ async function buildContext(root: string): Promise<string> {
 	].filter(Boolean).join("\n\n---\n\n");
 }
 
+async function buildLeanContext(root: string): Promise<string> {
+	const index = await loadIndex(root);
+	const active = await getActiveTask(root);
+	const dir = harnessPath(root);
+	const openTasks = index.tasks.filter((task) => task.status !== "done");
+	const lines = [
+		`pi-harness v${VERSION}`,
+		`Root: ${root}`,
+		`Tasks: ${index.tasks.length} total, ${openTasks.length} open`,
+		active ? `Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]` : "Active task: none",
+	];
+
+	const persistedSummary = (await readText(path.join(dir, SUMMARY_FILE))).trim();
+	if (persistedSummary) {
+		lines.push("", "## Harness Summary", truncate(persistedSummary, 1600));
+	} else {
+		lines.push("", "## Project Context", truncate(await readText(path.join(dir, "project.md")), 1000));
+	}
+
+	if (active) {
+		const activeDir = taskDir(root, active);
+		lines.push(
+			"",
+			"## Active Task Snapshot",
+			truncate(await readText(path.join(activeDir, "contract.md")), 700),
+			truncate(await readText(path.join(activeDir, "plan.md")), 700),
+			"### Latest Evidence",
+			truncate((await recentLines(path.join(activeDir, "evidence.md"), 12)).join("\n"), 500),
+			"### Latest Journal",
+			truncate((await recentLines(path.join(activeDir, "journal.md"), 10)).join("\n"), 450),
+		);
+	}
+
+	const recentDecisions = (await recentLines(path.join(dir, "decisions.md"), 20)).join("\n").trim();
+	if (recentDecisions) lines.push("", "## Recent Decisions", truncate(recentDecisions, 800));
+	lines.push("", "Full harness context is available on demand with harness({ action: \"readContext\" }).");
+	return truncate(lines.filter(Boolean).join("\n"), LEAN_CONTEXT_LIMIT);
+}
+
 async function buildStatus(root: string): Promise<string> {
 	if (!(await exists(path.join(harnessPath(root), "index.json")))) {
 		return `pi-harness is not initialized in ${root}. Run /harness init or call harness({ action: "init" }).`;
@@ -830,9 +870,9 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.on("before_agent_start", async (event, ctx) => {
 		const root = await resolveProjectRoot(ctx.cwd);
 		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
-		const context = truncate(await buildContext(root), 9000);
+		const context = await buildLeanContext(root);
 		return {
-			systemPrompt: `${event.systemPrompt}\n\n# pi-harness project context\n\n${context}\n\n# pi-harness operating rules\n\n- Treat .pi/harness as durable, project-local memory and workflow state.\n- For non-trivial tasks, ensure there is an active harness task before major edits.\n- Record important decisions with harness({ action: "recordDecision", text: ... }).\n- Keep task plans/contracts current with harness({ action: "updatePlan" | "updateContract", text: ... }) when scope changes.\n- Use harness({ action: "recordNote", text: ... }) for handoffs/lessons and harness({ action: "appendIdea", text: ... }) for deferred ideas.\n- Record validation evidence with harness({ action: "recordEvidence", text: ... }) before final confirmation.\n- Do not store secrets or authentication data in harness files.`,
+			systemPrompt: `${event.systemPrompt}\n\n# pi-harness lean project context\n\n${context}\n\n# pi-harness operating rules\n\n- Treat .pi/harness as durable, project-local memory/workflow state; call harness({ action: "readContext" }) only when the lean context is insufficient.\n- For non-trivial tasks, keep an active harness task, update plan/contract when scope changes, and record validation evidence before final confirmation.\n- Record durable decisions with recordDecision; use recordNote for handoffs/lessons and appendIdea for deferred ideas.\n- Never store secrets, tokens, cookies, OAuth material, private keys, or auth data in harness files.`,
 		};
 	});
 
