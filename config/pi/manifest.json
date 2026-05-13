@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-08T20:09:37.906Z",
+  "createdAt": "2026-05-13T18:02:06.695Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -20,6 +20,8 @@
     "agent/extensions/pi-harness/index.ts",
     "agent/extensions/zai-auto-router/README.md",
     "agent/extensions/zai-auto-router/index.ts",
+    "agent/skills/frontend-design/.my-pi-source.json",
+    "agent/skills/frontend-design/SKILL.md",
     "agent/themes/tokyonight.json",
     "agent/themes/vantablack.json",
     "agent/themes/white.json",
@@ -27,7 +29,63 @@
   ],
   "filesSkipped": [
     {
-      "path": "/home/mswell/.pi/agent/skills/bbhunter",
+      "path": "/home/mswell/.pi/agent/skills/caido-mode",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/caveman",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/diagnose",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/grill-me",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/grill-with-docs",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/handoff",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/improve-codebase-architecture",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/prototype",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/setup-matt-pocock-skills",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/tdd",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/to-issues",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/to-prd",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/triage",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/write-a-skill",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/zoom-out",
       "reason": "not a regular file or directory"
     }
   ]

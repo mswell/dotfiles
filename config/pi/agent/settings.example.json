@@ -1,14 +1,15 @@
 {
   "lastChangelogVersion": "0.74.0",
   "theme": "tokyonight",
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.4",
+  "defaultProvider": "github-copilot",
+  "defaultModel": "claude-opus-4.6",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
     "npm:pi-context",
-    "npm:@spences10/pi-skills"
+    "npm:@spences10/pi-skills",
+    "npm:pi-subagents"
   ]
 }
