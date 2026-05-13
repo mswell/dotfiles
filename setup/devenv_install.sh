@@ -15,10 +15,18 @@ blue=$(tput setaf 4 2>/dev/null || echo "")
 reset=$(tput sgr0 2>/dev/null || echo "")
 
 # =============================================
-#  CONFIGURATION - Edit versions here
+#  CONFIGURATION
+#  Defaults use the latest versions reported by mise at install time.
+#  Override when needed, e.g.:
+#    PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh
 # =============================================
-PYTHON_VERSION="3.12.7"
-NODE_VERSION="latest"
+PYTHON_VERSION="${PYTHON_VERSION:-latest}"
+NODE_VERSION="${NODE_VERSION:-latest}"
+PNPM_VERSION="${PNPM_VERSION:-latest}"
+
+RESOLVED_PYTHON_VERSION=""
+RESOLVED_NODE_VERSION=""
+RESOLVED_PNPM_VERSION=""
 
 # Python tools to install globally
 PYTHON_TOOLS_ARRAY=("poetry" "ipython" "pytest" "black" "ruff" "mypy" "requests" "colorama" "pipx")
@@ -213,36 +221,88 @@ activate_mise() {
 }
 
 # =============================================
+#  RESOLVE TOOL VERSIONS
+# =============================================
+resolve_mise_version() {
+    local tool="$1"
+    local requested_version="$2"
+    local latest_version=""
+
+    if [[ "$requested_version" == "latest" ]]; then
+        latest_version=$(mise latest "$tool" 2>/dev/null | awk 'NF {print $1; exit}')
+        if [[ -n "$latest_version" ]]; then
+            echo "$latest_version"
+            return 0
+        fi
+    fi
+
+    echo "$requested_version"
+}
+
+resolve_tool_versions() {
+    log_info "Resolving latest tool versions from mise..."
+
+    RESOLVED_PYTHON_VERSION=$(resolve_mise_version "python" "$PYTHON_VERSION")
+    RESOLVED_NODE_VERSION=$(resolve_mise_version "node" "$NODE_VERSION")
+    RESOLVED_PNPM_VERSION=$(resolve_mise_version "pnpm" "$PNPM_VERSION")
+
+    log_info "Python: $PYTHON_VERSION -> $RESOLVED_PYTHON_VERSION"
+    log_info "Node.js: $NODE_VERSION -> $RESOLVED_NODE_VERSION"
+    log_info "pnpm: $PNPM_VERSION -> $RESOLVED_PNPM_VERSION"
+}
+
+python_venv_name() {
+    local version
+    version=$(mise list python --current 2>/dev/null | awk 'NF {print $2; exit}')
+    version="${version:-${RESOLVED_PYTHON_VERSION:-$PYTHON_VERSION}}"
+    echo "tools${version%.*}"
+}
+
+# =============================================
 #  INSTALL PYTHON
 # =============================================
 install_python() {
-    log_info "Installing Python $PYTHON_VERSION via mise..."
+    local version="${RESOLVED_PYTHON_VERSION:-$PYTHON_VERSION}"
+    log_info "Installing Python $version via mise..."
 
-    # Check if already installed
-    if mise list python 2>/dev/null | grep -q "$PYTHON_VERSION"; then
-        log_warning "Python $PYTHON_VERSION already installed"
-    else
-        mise install python@$PYTHON_VERSION
-        log_success "Python $PYTHON_VERSION installed"
-    fi
+    # mise install is idempotent and also fixes versions marked as missing.
+    mise install python@$version
+    log_success "Python $version installed"
 
     # Set as global default
-    mise use --global python@$PYTHON_VERSION
-    log_success "Python $PYTHON_VERSION set as global default"
+    mise use --global python@$version
+    log_success "Python $version set as global default"
 }
 
 # =============================================
 #  INSTALL NODE.JS
 # =============================================
 install_nodejs() {
-    log_info "Installing Node.js (latest) via mise..."
+    local version="${RESOLVED_NODE_VERSION:-$NODE_VERSION}"
+    log_info "Installing Node.js $version via mise..."
 
-    mise install node@latest
-    mise use --global node@latest
+    mise install node@$version
+    mise use --global node@$version
 
     local installed_version
     installed_version=$(mise list node --current 2>/dev/null | awk '{print $2}' | head -1)
     log_success "Node.js $installed_version installed and set as global default"
+}
+
+# =============================================
+#  INSTALL PNPM
+# =============================================
+install_pnpm() {
+    local version="${RESOLVED_PNPM_VERSION:-$PNPM_VERSION}"
+    log_info "Installing pnpm $version via mise..."
+
+    # pnpm is managed by mise directly so it is available as a shim alongside node/npm.
+    mise install pnpm@$version
+    mise use --global pnpm@$version
+
+    local installed_version
+    installed_version=$(mise list pnpm --current 2>/dev/null | awk '{print $2}' | head -1)
+    log_success "pnpm $installed_version installed and set as global default"
 }
 
 # =============================================
@@ -267,7 +327,8 @@ setup_directories() {
 setup_python_venv() {
     log_info "Setting up Python virtual environment..."
 
-    local venv_name="tools${PYTHON_VERSION%.*}"
+    local venv_name
+    venv_name=$(python_venv_name)
     local venv_path="$VENVS/$venv_name"
 
     if [[ -d "$venv_path" ]]; then
@@ -292,7 +353,8 @@ setup_python_venv() {
 install_python_tools() {
     log_info "Installing Python tools..."
 
-    local venv_name="tools${PYTHON_VERSION%.*}"
+    local venv_name
+    venv_name=$(python_venv_name)
     local venv_path="$VENVS/$venv_name"
     local pip_path="$venv_path/bin/pip"
 
@@ -317,14 +379,17 @@ create_global_tool_versions() {
     # Get actual installed versions
     local python_full=$(mise list python --current 2>/dev/null | awk '{print $2}' | head -1)
     local node_full=$(mise list node --current 2>/dev/null | awk '{print $2}' | head -1)
+    local pnpm_full=$(mise list pnpm --current 2>/dev/null | awk '{print $2}' | head -1)
 
     # Fallback to requested versions if detection fails
-    python_full="${python_full:-$PYTHON_VERSION}"
-    node_full="${node_full:-$NODE_VERSION}"
+    python_full="${python_full:-${RESOLVED_PYTHON_VERSION:-$PYTHON_VERSION}}"
+    node_full="${node_full:-${RESOLVED_NODE_VERSION:-$NODE_VERSION}}"
+    pnpm_full="${pnpm_full:-${RESOLVED_PNPM_VERSION:-$PNPM_VERSION}}"
 
     cat > "$tool_versions" << EOF
 python $python_full
 nodejs $node_full
+pnpm $pnpm_full
 EOF
 
     log_success "Global .tool-versions created"
@@ -380,8 +445,19 @@ check_installation() {
         warnings+=("npm")
     fi
 
+    # Check pnpm
+    if command_exists pnpm; then
+        local pnpm_version=$(pnpm --version 2>&1)
+        log_success "pnpm: $pnpm_version"
+        checks+=("pnpm")
+    else
+        log_error "pnpm not found"
+        warnings+=("pnpm")
+    fi
+
     # Check Python tools in virtualenv
-    local venv_name="tools${PYTHON_VERSION%.*}"
+    local venv_name
+    venv_name=$(python_venv_name)
     local venv_path="$VENVS/$venv_name"
     local tools=("poetry" "black" "ruff" "pytest")
 
@@ -460,6 +536,7 @@ print_usage() {
     echo "# Install a specific version"
     echo "  mise install python@3.13"
     echo "  mise install node@20"
+    echo "  mise install pnpm@latest"
     echo ""
     echo "# Set global version"
     echo "  mise use --global python@3.12"
@@ -470,8 +547,11 @@ print_usage() {
     echo "# Update mise itself"
     echo "  mise self-update"
     echo ""
+    echo "# Override default latest versions when needed"
+    echo "  PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh"
+    echo ""
     echo "# Activate virtualenv for Python tools"
-    echo "  source $VENVS/tools${PYTHON_VERSION%.*}/bin/activate"
+    echo "  source $VENVS/$(python_venv_name)/bin/activate"
     echo ""
 }
 
@@ -490,8 +570,10 @@ main() {
     install_mise
     configure_mise_shell
     activate_mise
+    resolve_tool_versions
     install_python
     install_nodejs
+    install_pnpm
     setup_directories
     setup_python_venv
     install_python_tools

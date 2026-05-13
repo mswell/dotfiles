@@ -76,7 +76,7 @@ Menu() {
         echo "[2] - Archlinux VPS"
         echo "[3] - Archlinux with Hyprland"
         echo "[4] - Install Hacktools"
-        echo "[5] - Install Dev Environment (mise: Python + Node.js)"
+        echo "[5] - Install Dev Environment (mise: Python + Node.js + pnpm)"
         echo "[6] - Archlinux WSL"
         echo "[7] - Claude for Bug Bounty (Skills + Agents + Caido AI)"
         echo "[8] - Install Pi Coding Agent + Restore Pi Config"

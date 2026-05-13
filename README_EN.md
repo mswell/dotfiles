@@ -43,10 +43,15 @@ The `install.sh` script offers 8 main options:
 | **[2] Archlinux VPS** | Arch Linux CLI-only setup | Servers, CLI |
 | **[3] Archlinux with Hyprland** | Arch Linux + Wayland + Hyprland | Modern desktop, Wayland |
 | **[4] Install Hacktools** | Pentest/security tools | Security testing, CTF |
-| **[5] Install Dev Environment** | Python + Node.js via mise | Development environment |
+| **[5] Install Dev Environment** | Python + Node.js + pnpm via mise | Development environment |
 | **[6] Archlinux WSL** | Arch Linux on Windows Subsystem | WSL, cross-platform development |
 | **[7] Claude for Bug Bounty** | Skills + Agents + Caido AI | AI-assisted bug bounty |
 | **[8] Install Pi Coding Agent** | Pi install + config restore | Pi agent setup |
+
+Dev environment versions default to `mise latest` at install time. Pin when needed:
+```bash
+PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh
+```
 
 ## 🏗️ System Architecture
 
@@ -62,7 +67,7 @@ setup/
 ```
 
 ### Specialized Scripts
-- **`devenv_install.sh`**: Python + Node.js environment management via mise
+- **`devenv_install.sh`**: Python + Node.js + pnpm environment management via mise
 - **`install_golang.sh`**: Go language installation
 - **`install_hacktools.sh`**: Security tools
 - **`terminal.sh`**: Terminal configuration

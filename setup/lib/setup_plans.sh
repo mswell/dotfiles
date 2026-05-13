@@ -9,7 +9,7 @@ setup_plan_title() {
         2) echo "Archlinux VPS" ;;
         3) echo "Archlinux with Hyprland" ;;
         4) echo "Install Hacktools" ;;
-        5) echo "Install Dev Environment (mise: Python + Node.js)" ;;
+        5) echo "Install Dev Environment (mise: Python + Node.js + pnpm)" ;;
         6) echo "Archlinux WSL" ;;
         7) echo "Claude for Bug Bounty (Skills + Agents + Caido AI)" ;;
         8) echo "Install Pi Coding Agent + Restore Pi Config" ;;

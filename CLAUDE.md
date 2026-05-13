@@ -18,7 +18,7 @@ This is a comprehensive dotfiles management system for automated Linux developme
 - `[2]` - Arch Linux VPS (servers, CLI-only, no GUI)
 - `[3]` - Arch Linux + Hyprland (modern desktop, Wayland)
 - `[4]` - Install Hacktools (security testing, CTF, bug bounty)
-- `[5]` - Install Dev Environment (mise: Python + Node.js)
+- `[5]` - Install Dev Environment (mise: Python + Node.js + pnpm)
 - `[6]` - Arch Linux WSL (Windows Subsystem for Linux)
 - `[7]` - Claude for Bug Bounty (Skills + Agents + Caido AI)
 - `[8]` - Install Pi Coding Agent + Restore Pi Config
@@ -27,7 +27,7 @@ This is a comprehensive dotfiles management system for automated Linux developme
 
 **Critical:** Scripts must be run in the correct order:
 1. Run distro-specific setup first (option 1, 2, 3, or 6) - installs system dependencies
-2. Run dev environment installation (option 5) - sets up Python + Node.js via mise
+2. Run dev environment installation (option 5) - sets up Python + Node.js + pnpm via mise
 3. Run hacktools installation (option 4) - installs security tools
 
 **Do not run devenv or hacktools before system setup** - they depend on system packages being installed first.
@@ -92,8 +92,9 @@ Sources `config/zsh/env.zsh` for all path variables.
 Uses **mise** (ex-rtx) - unified version manager replacing pyenv, asdf, nvm:
 
 - Installs mise via official installer
-- Installs Python 3.12.7 and Node.js 22 (LTS)
-- Sets up virtualenv: `tools3.12` with poetry, ipython, pytest, black, ruff, mypy
+- Installs latest Python, Node.js, and pnpm versions reported by `mise latest` at install time
+- Versions can be pinned with env overrides: `PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh`
+- Sets up virtualenv: `tools<python-major.minor>` with poetry, ipython, pytest, black, ruff, mypy
 - Creates global `~/.tool-versions` file
 - Configures directories: `~/.ve` (virtualenvs), `~/Projects` (projects)
 
@@ -329,7 +330,7 @@ bypass4xx
 - `setup/lib/common.sh` - **Shared library** (colors, DOTFILES detection, source_script)
 - `setup/lib/arch.sh` - **Arch shared library** (pacman/yay helpers, base setup, fonts)
 - `setup/install_hacktools.sh` - Security tools installation
-- `setup/devenv_install.sh` - Dev environment setup (mise: Python + Node.js)
+- `setup/devenv_install.sh` - Dev environment setup (mise: Python + Node.js + pnpm)
 - `setup/copy_dots.sh` - Copies config files to home directory
 
 ## Common Patterns

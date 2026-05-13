@@ -32,12 +32,17 @@ cd dotfiles
 | [2] Arch VPS | CLI-only, no GUI |
 | [3] Arch + Hyprland | Primary desktop (Wayland) |
 | [4] Hacktools | Security tools, CTF, bug bounty |
-| [5] Dev Environment | Python + Node.js via mise |
+| [5] Dev Environment | Python + Node.js + pnpm via mise |
 | [6] Arch WSL | Windows Subsystem for Linux |
 | [7] Claude for Bug Bounty | AI skills + Caido integration |
 | [8] Install Pi Coding Agent | Pi install + config restore |
 
 **Order matters:** run system setup (1/2/3/6) before dev env (5) or hacktools (4).
+
+Dev env versions default to `mise latest` at install time. Pin when needed:
+```bash
+PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh
+```
 
 ## Desktop
 
