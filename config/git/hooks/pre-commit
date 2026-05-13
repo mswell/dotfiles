@@ -37,7 +37,11 @@ BLOCKED_FILES=(
     '\.kube/config$'
 )
 
+# Template/sample files are documentation, not real secrets — skip them.
+TEMPLATE_SUFFIX_RE='\.(example|sample|template|dist|tpl)$'
+
 while IFS= read -r -d '' file; do
+    echo "$file" | grep -qiE "$TEMPLATE_SUFFIX_RE" && continue
     for pattern in "${BLOCKED_FILES[@]}"; do
         if echo "$file" | grep -qiE "$pattern"; then
             err "Sensitive filename: $file  (matches: $pattern)"
@@ -58,11 +62,13 @@ PATTERNS=(
     "AWS Access Key ID|||AKIA[0-9A-Z]{16}"
     "AWS Secret Access Key|||(aws_secret_access_key|AWS_SECRET_ACCESS_KEY)\s*[=:]\s*[A-Za-z0-9+/]{40}"
 
-    # Generic high-entropy secrets (value must be 20+ non-space chars)
-    "API key assignment|||(api[_-]?key|apikey)\s*[=:]\s*[\"']?[A-Za-z0-9_\-\.]{20,}"
-    "Secret assignment|||(secret[_-]?key|client_secret|app_secret)\s*[=:]\s*[\"']?[A-Za-z0-9_\-\.+/]{20,}"
+    # Generic high-entropy secrets (must be QUOTED — unquoted RHS like
+    # `client_secret = settings.X` is a variable reference, not a literal).
+    # Charset includes ~ and = because Entra ID / base64-padded secrets use them.
+    "API key assignment|||(api[_-]?key|apikey)\s*[=:]\s*[\"'][A-Za-z0-9_\-\.+/~=]{20,}[\"']"
+    "Secret assignment|||(secret[_-]?key|client_secret|app_secret)\s*[=:]\s*[\"'][A-Za-z0-9_\-\.+/~=]{20,}[\"']"
     "Password assignment|||(password|passwd)\s*[=:]\s*[\"'][^\"']{8,}[\"']"
-    "Token assignment|||(access_token|auth_token|bearer_token|refresh_token|api_token)\s*[=:]\s*[\"']?[A-Za-z0-9_\-\.]{20,}"
+    "Token assignment|||(access_token|auth_token|bearer_token|refresh_token|api_token)\s*[=:]\s*[\"'][A-Za-z0-9_\-\.+/~=]{20,}[\"']"
 
     # Provider-specific tokens
     "GitHub token|||gh[ps]_[A-Za-z0-9]{36}"
@@ -93,6 +99,9 @@ while IFS= read -r -d '' file; do
     # Skip by extension
     ext=".${file##*.}"
     echo "$ext" | grep -qiE "$SKIP_EXTENSIONS" && continue
+
+    # Skip template/sample/example files — those are documentation, not secrets.
+    echo "$file" | grep -qiE "$TEMPLATE_SUFFIX_RE" && continue
 
     # Skip GF grep pattern files (they contain regex fragments, not real secrets)
     echo "$file" | grep -q '\.gf/' && continue
