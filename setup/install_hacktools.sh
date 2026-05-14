@@ -32,6 +32,18 @@ printf "${bblue} Sourcing environment variables ${reset}\n"
 printf "${yellow} TOOLS_PATH is set to: %s ${reset}\n" "$TOOLS_PATH"
 printf "${yellow} LISTS_PATH is set to: %s ${reset}\n\n" "$LISTS_PATH"
 
+require_cmd() {
+    local cmd="$1"
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        printf "${red}[!] Required command not found: %s${reset}\n" "$cmd"
+        exit 1
+    fi
+}
+
+require_cmd git
+require_cmd wget
+require_cmd python3
+
 printf "${bblue} Running: Installing Golang tools ${reset}\n\n"
 
 # Detect Go installation
