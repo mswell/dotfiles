@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
@@ -11,6 +11,9 @@ const TRACE_RECENT_LIMIT = 25;
 const WIDGET_MODE: "off" | "compact" = "off";
 const LEAN_CONTEXT_LIMIT = 4500;
 const PHASES = ["P", "R", "E", "V", "C"] as const;
+let turnStartCleanupHookInstalled = false;
+const HARNESS_STATUS_WIDGET = "pi-harness";
+const HARNESS_COMMAND_OUTPUT_WIDGET = "pi-harness-command-output";
 const PHASE_LABELS: Record<Phase, string> = {
 	P: "Planning",
 	R: "Review",
@@ -489,9 +492,14 @@ async function buildCompactStatus(root: string): Promise<string> {
 }
 
 async function refreshHarnessUi(ctx: ExtensionContext, root: string): Promise<void> {
-	ctx.ui.setStatus("pi-harness", await buildCompactStatus(root));
-	if (WIDGET_MODE === "compact") ctx.ui.setWidget("pi-harness", [await buildCompactStatus(root)]);
-	else ctx.ui.setWidget("pi-harness", undefined);
+	const status = await buildCompactStatus(root);
+	ctx.ui.setStatus(HARNESS_STATUS_WIDGET, status);
+	if (WIDGET_MODE === "compact") ctx.ui.setWidget(HARNESS_STATUS_WIDGET, [status]);
+	else ctx.ui.setWidget(HARNESS_STATUS_WIDGET, undefined);
+}
+
+function clearHarnessCommandOutput(ctx: ExtensionContext): void {
+	ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, undefined);
 }
 
 async function buildTaskList(root: string, includeDone = false): Promise<string> {
@@ -755,7 +763,7 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				output = await handleHarness(root, { action: "startTask", title: rest } as HarnessParamsType);
 				break;
 			case "phase":
-				output = await handleHarness(root, { action: "setPhase", phase: rest.toUpperCase() } as HarnessParamsType);
+				output = await handleHarness(root, { action: "setPhase", phase: rest.toUpperCase() } as unknown as HarnessParamsType);
 				break;
 			case "advance":
 				output = await handleHarness(root, { action: "advancePhase" } as HarnessParamsType);
@@ -797,13 +805,16 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				output = commandHelp();
 		}
 		if (await exists(path.join(harnessPath(root), "index.json"))) await refreshHarnessUi(ctx, root);
-		ctx.ui.setWidget("pi-harness-command-output", commandOutputLines(output), { placement: "aboveEditor" });
-		
-		// Clear the widget automatically when the next turn starts
-		const off = pi.on("turn_start", () => {
-			ctx.ui.setWidget("pi-harness-command-output", undefined);
-			off();
-		});
+		ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, commandOutputLines(output), { placement: "aboveEditor" });
+
+		// Clear the widget automatically at the start of the next turn.
+		// Register once for the whole extension to avoid piling up listeners.
+		if (!turnStartCleanupHookInstalled) {
+			turnStartCleanupHookInstalled = true;
+			pi.on("turn_start", async (_event, turnCtx) => {
+				clearHarnessCommandOutput(turnCtx);
+			});
+		}
 
 		ctx.ui.notify(`pi-harness: ${cmd}`, "info");
 	} catch (error) {
@@ -834,7 +845,7 @@ export default function piHarness(pi: ExtensionAPI) {
 		],
 		parameters: HarnessParams,
 		async execute(_toolCallId, params: HarnessParamsType, _signal, onUpdate, ctx) {
-			onUpdate?.({ content: [{ type: "text", text: `pi-harness ${params.action}...` }] });
+			onUpdate?.({ content: [{ type: "text", text: `pi-harness ${params.action}...` }], details: {} });
 			const root = await resolveProjectRoot(ctx.cwd);
 			try {
 				const output = await handleHarness(root, params);
@@ -856,9 +867,9 @@ export default function piHarness(pi: ExtensionAPI) {
 	});
 
 	pi.on("session_shutdown", async (_event, ctx) => {
-		ctx.ui.setStatus("pi-harness", undefined);
-		ctx.ui.setWidget("pi-harness", undefined);
-		ctx.ui.setWidget("pi-harness-command-output", undefined);
+		ctx.ui.setStatus(HARNESS_STATUS_WIDGET, undefined);
+		ctx.ui.setWidget(HARNESS_STATUS_WIDGET, undefined);
+		clearHarnessCommandOutput(ctx);
 	});
 
 	pi.on("session_before_compact", async (_event, ctx) => {
