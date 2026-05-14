@@ -2,6 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for `mswell/dotfiles`, using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the default canonical labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo uses a single-context domain docs layout. See `docs/agents/domain.md`.
+
 ## Overview
 
 This is a comprehensive dotfiles management system for automated Linux development environment setup. It supports multiple Linux distributions (Ubuntu, Arch Linux), with Hyprland as the primary desktop target, and includes security/pentesting tools for bug bounty hunting and security research.
