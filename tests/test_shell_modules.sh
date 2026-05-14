@@ -39,6 +39,6 @@ source "$ROOT/setup/lib/hacktools_inventory.sh"
 hacktools_plan=$(hacktools_inventory_plan)
 assert_contains "$hacktools_plan" "projectdiscovery|pdtm|naabu,shuffledns,chaos,nuclei,notify,httpx,dnsx,subfinder,interactsh-client,alterx,katana"
 assert_contains "$hacktools_plan" "wordlist|$LISTS_PATH/raft-large-directories-lowercase.txt|"
-assert_contains "$hacktools_plan" "repo|Dirsearch|https://github.com/maurosoria/dirsearch"
+assert_contains "$hacktools_plan" "wordlist|$LISTS_PATH/dirsearch-dicc.txt|https://raw.githubusercontent.com/maurosoria/dirsearch/master/db/dicc.txt"
 
 echo "shell module tests passed"

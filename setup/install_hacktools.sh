@@ -142,9 +142,9 @@ fi
 
 # Generate recursive.txt for ffuf recursive fuzzing (dirsearch + raft-large combined)
 RECURSIVE_LIST="$LISTS_PATH/recursive.txt"
-if [[ -f "$TOOLS_PATH/Dirsearch/db/dicc.txt" && -f "$LISTS_PATH/raft-large-directories-lowercase.txt" ]]; then
+if [[ -f "$LISTS_PATH/dirsearch-dicc.txt" && -f "$LISTS_PATH/raft-large-directories-lowercase.txt" ]]; then
     printf "${bblue} Generating recursive.txt wordlist ${reset}\n"
-    cat "$TOOLS_PATH/Dirsearch/db/dicc.txt" "$LISTS_PATH/raft-large-directories-lowercase.txt" | sort -u > "$RECURSIVE_LIST"
+    cat "$LISTS_PATH/dirsearch-dicc.txt" "$LISTS_PATH/raft-large-directories-lowercase.txt" | sort -u > "$RECURSIVE_LIST"
     printf "${green} recursive.txt generated: %s entries${reset}\n" "$(wc -l < "$RECURSIVE_LIST")"
 else
     printf "${yellow} Could not generate recursive.txt — missing dirsearch or raft-large wordlist${reset}\n"
