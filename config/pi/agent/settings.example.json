@@ -1,9 +1,9 @@
 {
   "lastChangelogVersion": "0.74.0",
   "theme": "tokyonight",
-  "defaultProvider": "github-copilot",
-  "defaultModel": "claude-opus-4.6",
-  "defaultThinkingLevel": "low",
+  "defaultProvider": "google",
+  "defaultModel": "gemini-3.1-flash-lite-preview",
+  "defaultThinkingLevel": "minimal",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",

@@ -301,12 +301,14 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 	 * Update footer status.
 	 */
 	function updateStatus(ctx: ExtensionContext) {
-		if (!isCodexActive(ctx)) {
+		const theme = ctx.ui.theme;
+
+		// Allow status if codex is active OR we have a recent route (model may still be switching)
+		if (!isCodexActive(ctx) && !lastRoute) {
 			ctx.ui.setStatus("gpt-router", undefined);
 			return;
 		}
 
-		const theme = ctx.ui.theme;
 		if (!autoRouting) {
 			ctx.ui.setStatus(
 				"gpt-router",
@@ -316,14 +318,18 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 		}
 
 		if (lastRoute) {
-			const emoji = ROUTE_EMOJI[lastRoute.reason];
+			const emoji = ROUTE_EMOJI[lastRoute.reason] || "🤖";
 			const modelShort = lastRoute.model.replace("gpt-", "");
 			const savings = estimateSavings();
 			const savingsStr = savings.totalRoutes > 0 ? ` ↓${savings.percentage}%` : "";
-			ctx.ui.setStatus(
-				"gpt-router",
-				theme.fg("accent", `${emoji}gpt→${modelShort}:${lastRoute.thinking}${savingsStr}`),
-			);
+			
+			const text = `${emoji}gpt→${modelShort}:${lastRoute.thinking}${savingsStr}`;
+			ctx.ui.setStatus("gpt-router", theme.fg("accent", text));
+		} else if (isCodexActive(ctx)) {
+			// Se o codex está ativo mas ainda não roteamos, mostra pronto
+			ctx.ui.setStatus("gpt-router", theme.fg("dim", "gpt:auto-ready"));
+		} else {
+			ctx.ui.setStatus("gpt-router", undefined);
 		}
 	}
 

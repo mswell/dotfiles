@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-13T23:32:54.836Z",
+  "createdAt": "2026-05-14T00:06:49.856Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -17,6 +17,7 @@
     "agent/extensions/gpt-auto-router/README.md",
     "agent/extensions/gpt-auto-router/index.ts",
     "agent/extensions/guardrails.json",
+    "agent/extensions/list-google-models.js",
     "agent/extensions/pi-config-backup/README.md",
     "agent/extensions/pi-config-backup/index.js",
     "agent/extensions/pi-config-backup/index.ts",

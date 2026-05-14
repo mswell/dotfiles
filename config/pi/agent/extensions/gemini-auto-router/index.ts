@@ -30,14 +30,14 @@ import { Key } from "@earendil-works/pi-tui";
 // ─── Configuration ────────────────────────────────────────────────────────────
 
 const GEMINI_MODELS = {
-	lite: "gemini-3.1-flash-lite",      // ultra-cheap with reasoning
+	lite: "gemini-3.1-flash-lite-preview",      // ultra-cheap with reasoning
 	flash: "gemini-3-flash-preview",    // balanced workhorse
 	pro: "gemini-3.1-pro-preview",      // $2/$12     — full power
 } as const;
 
 // Cost per 1M tokens (output, which dominates cost)
 const OUTPUT_COST: Record<string, number> = {
-	"gemini-3.1-flash-lite": 0.4,
+	"gemini-3.1-flash-lite-preview": 0.4,
 	"gemini-3-flash-preview": 2.5,
 	"gemini-3.1-pro-preview": 12,
 };
@@ -284,31 +284,28 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 	 * Update footer status.
 	 */
 	function updateStatus(ctx: ExtensionContext) {
-		if (!isGoogleActive(ctx)) {
-			ctx.ui.setStatus("gem-router", undefined);
-			return;
-		}
-
 		const theme = ctx.ui.theme;
+		
 		if (!autoRouting) {
-			ctx.ui.setStatus(
-				"gem-router",
-				theme.fg("dim", "gem:manual"),
-			);
+			ctx.ui.setStatus("gem-router", theme.fg("dim", "gem:manual"));
 			return;
 		}
 
 		if (lastRoute) {
-			const emoji = ROUTE_EMOJI[lastRoute.reason];
+			const emoji = ROUTE_EMOJI[lastRoute.reason] || "🤖";
 			const modelShort = lastRoute.model
 				.replace("gemini-", "")
 				.replace("-preview", "");
 			const savings = estimateSavings();
 			const savingsStr = savings.totalRoutes > 0 ? ` ↓${savings.percentage}%` : "";
-			ctx.ui.setStatus(
-				"gem-router",
-				theme.fg("accent", `${emoji}gem→${modelShort}:${lastRoute.thinking}${savingsStr}`),
-			);
+			
+			const text = `${emoji}gem→${modelShort}:${lastRoute.thinking}${savingsStr}`;
+			ctx.ui.setStatus("gem-router", theme.fg("accent", text));
+		} else if (isGoogleActive(ctx)) {
+			// Se o Google está ativo mas ainda não roteamos, mostra que está pronto
+			ctx.ui.setStatus("gem-router", theme.fg("dim", "gem:auto-ready"));
+		} else {
+			ctx.ui.setStatus("gem-router", undefined);
 		}
 	}
 
@@ -345,6 +342,27 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 	});
 
 	pi.on("session_start", async (_event, ctx) => {
+		// Register the missing Gemini 3 models on session start
+		if (typeof (ctx.modelRegistry as any).register === "function") {
+			(ctx.modelRegistry as any).register({
+				provider: "google",
+				id: "gemini-3-flash-preview",
+				maxTokens: 1048576,
+				contextWindow: 1048576,
+				supportsImages: true,
+				supportsThinking: true,
+			});
+
+			(ctx.modelRegistry as any).register({
+				provider: "google",
+				id: "gemini-3.1-flash-lite-preview",
+				maxTokens: 1048576,
+				contextWindow: 1048576,
+				supportsImages: true,
+				supportsThinking: true,
+			});
+		}
+
 		for (const entry of ctx.sessionManager.getEntries()) {
 			if (
 				entry.type === "custom" &&
