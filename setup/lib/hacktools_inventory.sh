@@ -103,7 +103,7 @@ hacktools_inventory_plan() {
         printf 'repo|%s|https://github.com/%s\n' "$name" "$value"
     done
     printf 'post_install|gf_templates|copy gf examples and custom templates\n'
-    printf 'post_install|recursive_wordlist|generate recursive.txt from dirsearch and raft list\n'
+    printf 'post_install|recursive_wordlist|generate recursive.txt from dirsearch wordlist and raft list\n'
 }
 
 hacktools_download_wordlists() {

@@ -134,10 +134,10 @@ for item in "${REPOSITORY_TOOLS[@]}"; do
 done
 
 printf "${bblue} Adding my gf templates ${reset}\n"
-if compgen -G "$TOOLS_PATH/MSwellDOTS/config/home/.gf/*.json" >/dev/null; then
-    cp -r "$TOOLS_PATH"/MSwellDOTS/config/home/.gf/*.json "$HOME"/.gf/
+if compgen -G "$DOTFILES/config/home/.gf/*.json" >/dev/null; then
+    cp -r "$DOTFILES"/config/home/.gf/*.json "$HOME"/.gf/
 else
-    printf "${yellow} No custom gf templates found in MSwellDOTS clone.${reset}\n"
+    printf "${yellow} No custom gf templates found in DOTFILES repo.${reset}\n"
 fi
 
 # Generate recursive.txt for ffuf recursive fuzzing (dirsearch + raft-large combined)
