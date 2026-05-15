@@ -1,15 +1,15 @@
 /**
  * GPT Auto Router Extension
  *
- * Automatically routes between OpenAI Codex GPT models based on prompt complexity,
- * saving quota by only using expensive models when truly needed.
+ * Automatically routes GPT-5.5 reasoning levels based on prompt complexity,
+ * preserving subscription quota by avoiding high reasoning when it is not needed.
  *
  * Routing tiers:
- *   Ultra-simple  → gpt-5.4-mini  (thinking: off)    — "yes", "ok", <20 chars
- *   Simple        → gpt-5.4-mini  (thinking: low)     — short questions, list, explain
- *   Medium        → gpt-5.4       (thinking: medium)  — multi-step coding, code blocks
- *   Complex       → gpt-5.4       (thinking: high)    — architecture, debugging
- *   Critical      → gpt-5.5       (thinking: high)    — system design, massive refactors
+ *   Ultra-simple  → gpt-5.5  (thinking: low)     — "yes", "ok", <20 chars
+ *   Simple        → gpt-5.5  (thinking: low)     — short questions, list, explain
+ *   Medium        → gpt-5.5  (thinking: medium)  — multi-step coding, code blocks
+ *   Complex       → gpt-5.5  (thinking: high)    — architecture, debugging
+ *   Critical      → gpt-5.5  (thinking: high)    — system design, massive refactors
  *
  * Only activates when the current model is from the "openai-codex" provider.
  * Other providers are completely unaffected.
@@ -18,7 +18,7 @@
  *   /gpt-route          - Show current routing info and cost savings
  *   /gpt-route auto     - Enable auto-routing
  *   /gpt-route manual   - Disable auto-routing (keep current model)
- *   /gpt-route <tier>   - Force a specific tier (mini, balanced, flagship)
+ *   /gpt-route <tier>   - Force a reasoning tier (low, medium, high)
  *
  * Shortcut:
  *   Ctrl+Shift+G        - Toggle auto-routing on/off
@@ -30,16 +30,20 @@ import { Key } from "@earendil-works/pi-tui";
 // ─── Configuration ────────────────────────────────────────────────────────────
 
 const GPT_MODELS = {
-	mini: "gpt-5.4-mini",       // $0.75/$4.5  — cheap workhorse
-	balanced: "gpt-5.4",        // $2.5/$15    — good balance
-	flagship: "gpt-5.5",        // $5/$30      — only for critical tasks
+	low: "gpt-5.5",
+	medium: "gpt-5.5",
+	high: "gpt-5.5",
 } as const;
 
-// Cost per 1M tokens (output, which dominates cost)
-const OUTPUT_COST: Record<string, number> = {
-	"gpt-5.4-mini": 4.5,
-	"gpt-5.4": 15,
-	"gpt-5.5": 30,
+// Rough relative quota pressure by reasoning level. This is intentionally
+// heuristic because ChatGPT subscription quotas are not token-billed like API.
+const REASONING_WEIGHT: Record<string, number> = {
+	off: 0.2,
+	minimal: 0.3,
+	low: 0.45,
+	medium: 0.7,
+	high: 1,
+	xhigh: 1.3,
 };
 
 type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
@@ -60,11 +64,11 @@ interface RouteResult {
 }
 
 const ROUTE_LABELS: Record<RouteReason, string> = {
-	ultra_simple: "⚡ ultra-simples → mini (off)",
-	simple: "🪶 simples → mini (low)",
-	medium: "💰 médio → balanced (medium)",
-	complex: "🧠 complexo → balanced (high)",
-	critical: "🔥 crítico → flagship (high)",
+	ultra_simple: "⚡ ultra-simples → GPT-5.5 (low)",
+	simple: "🪶 simples → GPT-5.5 (low)",
+	medium: "💰 médio → GPT-5.5 (medium)",
+	complex: "🧠 complexo → GPT-5.5 (high)",
+	critical: "🔥 crítico → GPT-5.5 (high)",
 };
 
 const ROUTE_EMOJI: Record<RouteReason, string> = {
@@ -169,12 +173,12 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 		if (promptLength < 30) {
 			for (const pattern of ULTRA_SIMPLE_PATTERNS) {
 				if (pattern.test(promptLower)) {
-					return { reason: "ultra_simple", model: GPT_MODELS.mini, thinking: "off" };
+					return { reason: "ultra_simple", model: GPT_MODELS.low, thinking: "low" };
 				}
 			}
 			// Very short but not matching patterns — still simple
 			if (promptLength < 15) {
-				return { reason: "ultra_simple", model: GPT_MODELS.mini, thinking: "off" };
+				return { reason: "ultra_simple", model: GPT_MODELS.low, thinking: "low" };
 			}
 		}
 
@@ -184,14 +188,14 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 		}, 0);
 
 		if (criticalScore >= 2 || (criticalScore >= 1 && promptLength > 500)) {
-			return { reason: "critical", model: GPT_MODELS.flagship, thinking: "high" };
+			return { reason: "critical", model: GPT_MODELS.high, thinking: "high" };
 		}
 
 		// ── Rule 3: Simple tasks ──
 		if (promptLength < 80) {
 			const isSimple = SIMPLE_KEYWORDS.some((kw) => promptLower.includes(kw));
 			if (isSimple) {
-				return { reason: "simple", model: GPT_MODELS.mini, thinking: "low" };
+				return { reason: "simple", model: GPT_MODELS.low, thinking: "low" };
 			}
 		}
 
@@ -211,30 +215,30 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 
 		// Complex: strong coding signals + length
 		if (effectiveCodingScore >= 5 || (effectiveCodingScore >= 3 && promptLength > 300)) {
-			return { reason: "complex", model: GPT_MODELS.balanced, thinking: "high" };
+			return { reason: "complex", model: GPT_MODELS.high, thinking: "high" };
 		}
 
 		// Medium: moderate coding signals
 		if (effectiveCodingScore >= 2 || hasCodeBlocks || promptLength > 200) {
-			return { reason: "medium", model: GPT_MODELS.balanced, thinking: "medium" };
+			return { reason: "medium", model: GPT_MODELS.medium, thinking: "medium" };
 		}
 
-		// ── Rule 5: High tool-call activity → needs a capable model ──
+		// ── Rule 5: High tool-call activity → needs more reasoning, same GPT-5.5 model ──
 		if (recentToolCalls >= 8 && turnsSinceReset <= 3) {
-			return { reason: "medium", model: GPT_MODELS.balanced, thinking: "medium" };
+			return { reason: "medium", model: GPT_MODELS.medium, thinking: "medium" };
 		}
 
 		// ── Rule 6: Long prompts without strong coding signals ──
 		if (promptLength > 500) {
-			return { reason: "complex", model: GPT_MODELS.balanced, thinking: "high" };
+			return { reason: "complex", model: GPT_MODELS.high, thinking: "high" };
 		}
 
 		if (promptLength > 150) {
-			return { reason: "medium", model: GPT_MODELS.balanced, thinking: "medium" };
+			return { reason: "medium", model: GPT_MODELS.medium, thinking: "medium" };
 		}
 
 		// ── Default: simple ──
-		return { reason: "simple", model: GPT_MODELS.mini, thinking: "low" };
+		return { reason: "simple", model: GPT_MODELS.low, thinking: "low" };
 	}
 
 	/**
@@ -275,24 +279,21 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 	}
 
 	/**
-	 * Estimate savings compared to always using gpt-5.5 on high.
+	 * Estimate quota preservation compared to always using GPT-5.5 high.
 	 */
 	function estimateSavings(): { percentage: number; totalRoutes: number } {
 		const totalRoutes = Object.values(routeStats).reduce((a, b) => a + b, 0);
 		if (totalRoutes === 0) return { percentage: 0, totalRoutes: 0 };
 
-		// Rough estimate: each route would have cost gpt-5.5 rate
-		// Actual savings = (baseline_cost - actual_cost) / baseline_cost
-		const baselineCostPerRoute = OUTPUT_COST["gpt-5.5"]; // 30
-		let actualCost = 0;
-		actualCost += routeStats.ultra_simple * OUTPUT_COST["gpt-5.4-mini"]; // off thinking = minimal output
-		actualCost += routeStats.simple * OUTPUT_COST["gpt-5.4-mini"];
-		actualCost += routeStats.medium * OUTPUT_COST["gpt-5.4"];
-		actualCost += routeStats.complex * OUTPUT_COST["gpt-5.4"];
-		actualCost += routeStats.critical * OUTPUT_COST["gpt-5.5"];
+		const baseline = totalRoutes * REASONING_WEIGHT.high;
+		let actual = 0;
+		actual += routeStats.ultra_simple * REASONING_WEIGHT.low;
+		actual += routeStats.simple * REASONING_WEIGHT.low;
+		actual += routeStats.medium * REASONING_WEIGHT.medium;
+		actual += routeStats.complex * REASONING_WEIGHT.high;
+		actual += routeStats.critical * REASONING_WEIGHT.high;
 
-		const baselineCost = totalRoutes * baselineCostPerRoute;
-		const percentage = Math.round(((baselineCost - actualCost) / baselineCost) * 100);
+		const percentage = Math.round(((baseline - actual) / baseline) * 100);
 
 		return { percentage, totalRoutes };
 	}
@@ -435,17 +436,17 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 				info += `    🔥 Crítico:       ${routeStats.critical}\n`;
 				if (savings.totalRoutes > 0) {
 					info += `    ─────────────────────\n`;
-					info += `    💰 Economia estimada: ~${savings.percentage}% vs GPT-5.5 fixo\n`;
+					info += `    💰 Preservação estimada: ~${savings.percentage}% vs GPT-5.5 high fixo\n`;
 				}
 				info += `\n`;
 				info += `  Roteamento:\n`;
-				info += `    ⚡ ultra-simples → ${GPT_MODELS.mini} (thinking: off)    — $${OUTPUT_COST[GPT_MODELS.mini]}/1M out\n`;
-				info += `    🪶 simples       → ${GPT_MODELS.mini} (thinking: low)    — $${OUTPUT_COST[GPT_MODELS.mini]}/1M out\n`;
-				info += `    💰 médio         → ${GPT_MODELS.balanced} (thinking: medium) — $${OUTPUT_COST[GPT_MODELS.balanced]}/1M out\n`;
-				info += `    🧠 complexo      → ${GPT_MODELS.balanced} (thinking: high)   — $${OUTPUT_COST[GPT_MODELS.balanced]}/1M out\n`;
-				info += `    🔥 crítico       → ${GPT_MODELS.flagship} (thinking: high)   — $${OUTPUT_COST[GPT_MODELS.flagship]}/1M out\n`;
+				info += `    ⚡ ultra-simples → ${GPT_MODELS.low} (thinking: low)\n`;
+				info += `    🪶 simples       → ${GPT_MODELS.low} (thinking: low)\n`;
+				info += `    💰 médio         → ${GPT_MODELS.medium} (thinking: medium)\n`;
+				info += `    🧠 complexo      → ${GPT_MODELS.high} (thinking: high)\n`;
+				info += `    🔥 crítico       → ${GPT_MODELS.high} (thinking: high)\n`;
 				info += `\n`;
-				info += `  Uso: /gpt-route auto|manual|mini|balanced|flagship`;
+				info += `  Uso: /gpt-route auto|manual|low|medium|high`;
 
 				ctx.ui.notify(info, "info");
 				return;
@@ -474,23 +475,26 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 				return;
 			}
 
-			// Force a specific tier
+			// Force a specific reasoning tier. Legacy aliases are preserved.
 			const tierMap: Record<string, { model: string; thinking: ThinkingLevel }> = {
-				mini: { model: GPT_MODELS.mini, thinking: "low" },
-				light: { model: GPT_MODELS.mini, thinking: "low" },
-				leve: { model: GPT_MODELS.mini, thinking: "low" },
-				balanced: { model: GPT_MODELS.balanced, thinking: "medium" },
-				balanceado: { model: GPT_MODELS.balanced, thinking: "medium" },
-				medio: { model: GPT_MODELS.balanced, thinking: "medium" },
-				flagship: { model: GPT_MODELS.flagship, thinking: "high" },
-				max: { model: GPT_MODELS.flagship, thinking: "high" },
-				full: { model: GPT_MODELS.flagship, thinking: "high" },
+				low: { model: GPT_MODELS.low, thinking: "low" },
+				mini: { model: GPT_MODELS.low, thinking: "low" },
+				light: { model: GPT_MODELS.low, thinking: "low" },
+				leve: { model: GPT_MODELS.low, thinking: "low" },
+				medium: { model: GPT_MODELS.medium, thinking: "medium" },
+				balanced: { model: GPT_MODELS.medium, thinking: "medium" },
+				balanceado: { model: GPT_MODELS.medium, thinking: "medium" },
+				medio: { model: GPT_MODELS.medium, thinking: "medium" },
+				high: { model: GPT_MODELS.high, thinking: "high" },
+				flagship: { model: GPT_MODELS.high, thinking: "high" },
+				max: { model: GPT_MODELS.high, thinking: "high" },
+				full: { model: GPT_MODELS.high, thinking: "high" },
 			};
 
 			const tier = tierMap[arg];
 			if (!tier) {
 				ctx.ui.notify(
-					`Tier "${arg}" não encontrado. Use: mini, balanced, flagship, auto, manual, reset`,
+					`Tier "${arg}" não encontrado. Use: low, medium, high, auto, manual, reset`,
 					"error",
 				);
 				return;
@@ -509,7 +513,7 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 				lastRoute = { reason: "medium", model: tier.model, thinking: tier.thinking };
 				pi.appendEntry("gpt-router-state", { autoRouting: false, routeStats });
 				ctx.ui.notify(
-					`Modelo fixado: ${tier.model} (thinking: ${tier.thinking}) — auto-routing desativado`,
+					`GPT-5.5 fixado com thinking: ${tier.thinking} — auto-routing desativado`,
 					"info",
 				);
 			} else {

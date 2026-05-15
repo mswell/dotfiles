@@ -3,12 +3,14 @@
   "theme": "tokyonight",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "low",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
     "npm:pi-context",
-    "npm:@spences10/pi-skills"
-  ]
+    "npm:@spences10/pi-skills",
+    "npm:pi-subagents"
+  ],
+  "hideThinkingBlock": false
 }
