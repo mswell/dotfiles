@@ -16,9 +16,13 @@ export CONFIG_DIR
 printf '%s\n' "${yellow}[+] Installing dotfiles from manifest${reset}"
 dotfiles_apply_manifest
 
-# First-install theme initialization uses the same orchestration path as runtime switching.
-# In dry-run mode this prints the planned theme effects instead of mutating the host.
-printf '%s\n' "${yellow}[+] Initializing default theme${reset}"
-theme_apply "${DOTFILES_DEFAULT_THEME:-vantablack}"
+# Re-apply the current theme so all components reload from the freshly synced files.
+# On first install no current-theme file exists yet; fall back to the configured default.
+target_theme="${DOTFILES_DEFAULT_THEME:-}"
+if [[ -z "$target_theme" ]]; then
+    target_theme="$(theme_current)"
+fi
+printf '%s\n' "${yellow}[+] Applying theme: ${target_theme}${reset}"
+theme_apply "$target_theme"
 
 printf '%s\n' "${yellow}[+] Done.${reset}"

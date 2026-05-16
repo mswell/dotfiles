@@ -15,7 +15,7 @@ assert_contains() {
 }
 
 source "$ROOT/setup/lib/theme_orchestrator.sh"
-[[ "$(theme_resolve vantablack)" == "vantablack" ]]
+[[ "$(theme_resolve wellpunk-dark)" == "wellpunk-dark" ]]
 if theme_resolve invalid >/tmp/theme-invalid.out 2>&1; then
   echo "invalid theme unexpectedly succeeded" >&2
   exit 1
@@ -27,7 +27,7 @@ assert_contains "$plan" "symlink|/tmp/dotfiles-home/.config/waybar/themes/white.
 source "$ROOT/setup/lib/dotfiles_manifest.sh"
 manifest=$(DOTFILES="$ROOT" HOME=/tmp/dotfiles-home dotfiles_plan)
 assert_contains "$manifest" "copy_file|$ROOT/config/zsh/runtime.zsh|/tmp/dotfiles-home/.config/zsh/runtime.zsh"
-assert_contains "$manifest" "symlink|/tmp/dotfiles-home/.config/git/themes/vantablack.gitconfig|/tmp/dotfiles-home/.config/git/current-theme.gitconfig"
+assert_contains "$manifest" "symlink|/tmp/dotfiles-home/.config/git/themes/wellpunk-dark.gitconfig|/tmp/dotfiles-home/.config/git/current-theme.gitconfig"
 
 source "$ROOT/setup/lib/setup_plans.sh"
 ubuntu_plan=$(setup_plan_print 1)

@@ -198,7 +198,7 @@ All functions expect files like `domains`, `clean.subdomains`, `ALLHTTP` in curr
 
 ### Desktop Theme System (Hyprland only)
 
-Three themes — **vantablack**, **white**, **tokyonight** — cycle via `SUPER+SHIFT+T`. All components read a single source of truth and switch atomically.
+Three themes — **wellpunk-dark**, **wellpunk-light**, **tokyonight** — cycle via `SUPER+SHIFT+T`. All components read a single source of truth and switch atomically.
 
 **How it works:**
 - `~/.config/hypr/current-theme` — plain text file holding the active theme name
@@ -256,7 +256,7 @@ config/
 ├── hypr/
 │   ├── hyprland.conf
 │   ├── hyprlock.conf     # Omarchy style: blurred screenshot, centered input only
-│   ├── themes/           # vantablack.conf, white.conf, tokyonight.conf
+│   ├── themes/           # wellpunk-dark.conf, wellpunk-light.conf, tokyonight.conf
 │   ├── backgrounds/      # per-theme wallpaper directories
 │   └── scripts/
 │       ├── theme-switch.sh  # syncs all components on theme change

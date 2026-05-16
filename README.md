@@ -48,7 +48,7 @@ PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh
 
 Minimal Wayland setup inspired by [Omarchy](https://github.com/basecamp/omarchy):
 
-- **Theme**: `SUPER+SHIFT+T` cycles vantablack → white → tokyonight, syncing Hyprland, Kitty, Waybar, Walker, tmux, fzf, ZSH prompt, and Neovim
+- **Theme**: `SUPER+SHIFT+T` cycles wellpunk-dark → wellpunk-light → tokyonight, syncing Hyprland, Kitty, Waybar, Walker, tmux, fzf, ZSH prompt, and Neovim
 - **Launcher**: Walker (`SUPER+A`)
 - **Power menu**: Walker dmenu (`SUPER+ESC`) — Lock / Suspend / Logout / Restart / Shutdown
 - **Lock screen**: Hyprlock — blurred screenshot background, minimal centered input field
@@ -64,7 +64,7 @@ Minimal Wayland setup inspired by [Omarchy](https://github.com/basecamp/omarchy)
 | `SUPER+A` | App launcher (Walker) |
 | `SUPER+ESC` | Power menu |
 | `SUPER+SHIFT+L` | Lock screen |
-| `SUPER+SHIFT+T` | Cycle theme (vantablack → white → tokyonight) |
+| `SUPER+SHIFT+T` | Cycle theme (wellpunk-dark → wellpunk-light → tokyonight) |
 | `SUPER+CTRL+W` | Next wallpaper |
 | `SUPER+V` | Clipboard history |
 
@@ -167,13 +167,13 @@ config/
 ├── hypr/
 │   ├── hyprland.conf
 │   ├── hyprlock.conf
-│   ├── themes/              # vantablack.conf + white.conf + tokyonight.conf
+│   ├── themes/              # wellpunk-dark.conf + wellpunk-light.conf + tokyonight.conf
 │   └── scripts/
 │       ├── theme-switch.sh  # syncs all components on theme change
 │       └── power-menu.sh    # walker dmenu power menu
 ├── nvim/
 │   └── lua/plugins/
-│       └── colorscheme.lua  # reads current-theme → vantablack, white, or tokyonight
+│       └── colorscheme.lua  # reads current-theme → wellpunk-dark, wellpunk-light, or tokyonight
 ├── kitty/themes/
 ├── waybar/themes/
 ├── walker/

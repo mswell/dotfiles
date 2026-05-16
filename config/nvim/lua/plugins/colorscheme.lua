@@ -5,16 +5,16 @@ local function current_theme()
     f:close()
     return theme
   end
-  return "vantablack"
+  return "wellpunk-dark"
 end
 
 local theme = current_theme()
 
--- map theme names to nvim colorscheme names
+-- map our theme keys to the nvim colorscheme name registered by the upstream plugin
 local colorscheme = ({
-  vantablack = "vantablack",
-  white      = "white",
-  tokyonight = "tokyonight",
+  ["wellpunk-dark"]  = "vantablack",
+  ["wellpunk-light"] = "white",
+  tokyonight         = "tokyonight",
 })[theme] or "vantablack"
 
 return {

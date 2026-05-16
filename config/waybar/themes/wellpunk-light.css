@@ -2,8 +2,8 @@
 @define-color bg      #ffffff;
 @define-color fg      #000000;
 @define-color muted   #6e6e6e;
-@define-color accent  #3a3a3a;
-@define-color hover   #1a1a1a;
+@define-color accent  #4f46e5;
+@define-color hover   #6366f1;
 @define-color urgent  #1a1a1a;
 @define-color warning #3a3a3a;
 @define-color success #2e2e2e;

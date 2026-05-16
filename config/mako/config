@@ -8,7 +8,7 @@ outer-margin=20
 padding=10,15
 border-size=2
 max-icon-size=32
-font=sans-serif 14px
+font=JetbrainsMono Nerd Font 14px
 
 # Colors — updated by theme-switch.sh
 text-color=#ffffff

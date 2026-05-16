@@ -4,8 +4,8 @@
 
 # shellcheck shell=bash
 
-THEME_NAMES=(vantablack white tokyonight)
-THEME_DEFAULT="vantablack"
+THEME_NAMES=(wellpunk-dark wellpunk-light tokyonight)
+THEME_DEFAULT="wellpunk-dark"
 
 _theme_home() {
     printf '%s\n' "${THEME_HOME:-$HOME}"
@@ -73,7 +73,7 @@ theme_resolve() {
 
 theme_gtk_values() {
     local theme="$1"
-    if [[ "$theme" == "white" ]]; then
+    if [[ "$theme" == "wellpunk-light" ]]; then
         printf '%s|%s|%s|%s|%s\n' "Adwaita" "0" "prefer-light" "Papirus-Light" "Bibata-Modern-Ice"
     else
         printf '%s|%s|%s|%s|%s\n' "Adwaita-dark" "1" "prefer-dark" "Papirus-Dark" "Bibata-Modern-Classic"
@@ -83,9 +83,9 @@ theme_gtk_values() {
 theme_mako_values() {
     local theme="$1"
     case "$theme" in
-        white) printf '%s|%s|%s\n' "#000000" "#6e6e6e" "#ffffff" ;;
+        wellpunk-light) printf '%s|%s|%s\n' "#000000" "#4f46e5" "#ffffff" ;;
         tokyonight) printf '%s|%s|%s\n' "#c0caf5" "#7aa2f7" "#1a1b26" ;;
-        *) printf '%s|%s|%s\n' "#ffffff" "#8d8d8d" "#000000" ;;
+        *) printf '%s|%s|%s\n' "#ffffff" "#6366f1" "#000000" ;;
     esac
 }
 
@@ -168,7 +168,10 @@ theme_apply() {
         sed -i "s/^theme = .*/theme = \"$theme\"/" "$walker_cfg"
         pkill -x walker 2>/dev/null || true
         sleep 0.2
-        command -v walker >/dev/null 2>&1 && walker --gapplication-service &
+        if command -v walker >/dev/null 2>&1; then
+            walker --gapplication-service &
+            disown $! 2>/dev/null || true
+        fi
     fi
 
     _theme_ln_sf "$tmux_themes/$theme.conf" "$home/.config/tmux/current-theme.conf"
@@ -197,7 +200,10 @@ theme_apply() {
     if ! pkill -SIGUSR2 -x waybar 2>/dev/null; then
         pkill -x waybar 2>/dev/null || true
         sleep 0.2
-        command -v waybar >/dev/null 2>&1 && waybar &
+        if command -v waybar >/dev/null 2>&1; then
+            waybar &
+            disown $! 2>/dev/null || true
+        fi
     fi
 
     IFS='|' read -r gtk_theme_name gtk_dark gtk_color_scheme gtk_icons gtk_cursor <<< "$(theme_gtk_values "$theme")"
@@ -273,7 +279,7 @@ EOF
         if [[ -f "$home/.pi/agent/themes/$theme.json" ]]; then
             pi_theme="$theme"
         else
-            pi_theme=$([[ "$theme" == "white" ]] && echo "light" || echo "dark")
+            pi_theme=$([[ "$theme" == "wellpunk-light" ]] && echo "light" || echo "dark")
         fi
         if command -v jq >/dev/null 2>&1; then
             tmp=$(mktemp)

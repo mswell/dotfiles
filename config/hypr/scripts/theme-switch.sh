@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # theme-switch.sh — Cycle or set desktop theme
-# Usage: theme-switch.sh [vantablack|white|tokyonight|next]
+# Usage: theme-switch.sh [wellpunk-dark|wellpunk-light|tokyonight|next]
 
 set -euo pipefail
 

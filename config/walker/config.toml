@@ -5,7 +5,7 @@ single_click_activation = true
 selection_wrap = true
 hide_action_hints = true
 hide_return_action = true
-theme = "vantablack"
+theme = "wellpunk-dark"
 
 [shell]
 layer = "overlay"

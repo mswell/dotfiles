@@ -30,8 +30,8 @@
     "agent/skills/frontend-design/.my-pi-source.json",
     "agent/skills/frontend-design/SKILL.md",
     "agent/themes/tokyonight.json",
-    "agent/themes/vantablack.json",
-    "agent/themes/white.json",
+    "agent/themes/wellpunk-dark.json",
+    "agent/themes/wellpunk-light.json",
     "README.md"
   ],
   "filesSkipped": [

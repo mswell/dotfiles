@@ -20,7 +20,7 @@ dotfiles_manifest_entries() {
 
     cat <<EOF
 dir||$config_dir/zsh
-copy_file|$root/config/zsh/.zshrc|$HOME/.zshrc
+shim|$root/config/zsh/.zshrc|$HOME/.zshrc
 copy_file|$root/config/zsh/env.zsh|$config_dir/zsh/env.zsh
 copy_file|$root/config/zsh/custom.zsh|$config_dir/zsh/custom.zsh
 copy_file|$root/config/zsh/alias.zsh|$config_dir/zsh/alias.zsh
@@ -30,17 +30,17 @@ copy_dir|$root/config/zsh/functions|$config_dir/zsh/functions
 copy_dir|$root/config/zsh/themes|$config_dir/zsh/themes
 copy_file|$root/config/zsh/.zprofile|$HOME/.zprofile
 copy_file|$root/config/zsh/.p10k.zsh|$HOME/.p10k.zsh
-copy_file|$root/config/git/.gitconfig|$HOME/.gitconfig
+shim_git|$root/config/git/.gitconfig|$HOME/.gitconfig
 copy_file|$root/config/git/.catppuccin.gitconfig|$HOME/.catppuccin.gitconfig
 dir||$config_dir/git/themes
 copy_dir|$root/config/git/themes|$config_dir/git/themes
-symlink|$config_dir/git/themes/vantablack.gitconfig|$config_dir/git/current-theme.gitconfig
+symlink|$config_dir/git/themes/wellpunk-dark.gitconfig|$config_dir/git/current-theme.gitconfig
 dir||$config_dir/git/hooks
 copy_file|$root/config/git/hooks/pre-commit|$config_dir/git/hooks/pre-commit
 chmod_exec||$config_dir/git/hooks/pre-commit
 dir||$config_dir/bat/themes
 copy_dir|$root/config/bat/themes|$config_dir/bat/themes
-symlink|$config_dir/bat/themes/vantablack.conf|$config_dir/bat/config
+symlink|$config_dir/bat/themes/wellpunk-dark.conf|$config_dir/bat/config
 dir||$config_dir/nvim
 copy_dir|$root/config/nvim|$config_dir/nvim
 copy_file|$root/config/Ghostty/config|$config_dir/ghostty/config
@@ -59,6 +59,34 @@ chmod_exec||$HOME/.local/bin/tmux-sessionizer
 chmod_exec||$HOME/.local/bin/tmux-cht.sh
 dir||$HOME/.pi/agent/themes
 copy_dir|$root/config/pi/agent/themes|$HOME/.pi/agent/themes
+copy_file|$root/config/hypr/hyprland.conf|$config_dir/hypr/hyprland.conf
+copy_file|$root/config/hypr/hyprlock.conf|$config_dir/hypr/hyprlock.conf
+copy_file|$root/config/hypr/hyprpaper.conf|$config_dir/hypr/hyprpaper.conf
+copy_file|$root/config/hypr/hypridle.conf|$config_dir/hypr/hypridle.conf
+copy_dir|$root/config/hypr/themes|$config_dir/hypr/themes
+copy_dir|$root/config/hypr/scripts|$config_dir/hypr/scripts
+chmod_exec||$config_dir/hypr/scripts/theme-switch.sh
+chmod_exec||$config_dir/hypr/scripts/wpaperd-set.sh
+chmod_exec||$config_dir/hypr/scripts/bg-set.sh
+chmod_exec||$config_dir/hypr/scripts/power-menu.sh
+chmod_exec||$config_dir/hypr/scripts/screenshot-area.sh
+chmod_exec||$config_dir/hypr/scripts/kill-confirm.sh
+copy_dir|$root/config/kitty|$config_dir/kitty
+copy_dir|$root/config/walker|$config_dir/walker
+copy_dir|$root/config/waybar|$config_dir/waybar
+copy_dir|$root/config/wpaperd|$config_dir/wpaperd
+copy_dir|$root/config/rofi|$config_dir/rofi
+copy_dir|$root/config/tofi|$config_dir/tofi
+copy_dir|$root/config/Kvantum|$config_dir/Kvantum
+dir||$config_dir/fzf/themes
+copy_dir|$root/config/fzf/themes|$config_dir/fzf/themes
+dir||$config_dir/tmux/themes
+copy_dir|$root/config/tmux/themes|$config_dir/tmux/themes
+dir||$config_dir/backgrounds
+copy_dir|$root/config/hypr/backgrounds/wellpunk-dark|$config_dir/backgrounds/wellpunk-dark
+copy_dir|$root/config/hypr/backgrounds/wellpunk-light|$config_dir/backgrounds/wellpunk-light
+copy_dir|$root/config/hypr/backgrounds/tokyonight|$config_dir/backgrounds/tokyonight
+copy_dir|$root/config/backgrounds|$HOME/Pictures/backgrounds
 EOF
 }
 
@@ -90,6 +118,63 @@ _dotfiles_copy_dir() {
     cp -rf "$source/." "$destination/"
 }
 
+# Install a non-destructive shim at $destination that pulls in the curated config
+# from $source. Idempotent: if the directive that references $source is already
+# present, do nothing. If $destination is byte-identical to $source (legacy
+# copy_file state), replace it with a pure shim. Otherwise prepend the shim and
+# preserve any existing content below — this is the path that protects
+# installer-appended lines (mise, fnm, atuin, fzf, gh auth setup-git, etc.).
+#
+# $syntax decides the include directive and comment style:
+#   shell → `source "<path>"` with `#` comments (shell rc files)
+#   git   → `[include] path = <path>` with `#` comments (gitconfig)
+_dotfiles_ensure_shim() {
+    local source="$1" destination="$2" syntax="${3:-shell}"
+    local directive=""
+
+    case "$syntax" in
+        shell) directive='source "'"$source"'"' ;;
+        git)   directive="$(printf '[include]\n    path = %s' "$source")" ;;
+        *)
+            _dotfiles_log "[WARN] Unknown shim syntax: $syntax"
+            return 0
+            ;;
+    esac
+
+    if [[ ! -f "$source" ]]; then
+        _dotfiles_log "[WARN] Missing shim source: $source"
+        return 0
+    fi
+
+    # Use the source path itself as the idempotency marker — it's stable across
+    # both `source "..."` and `path = ...` forms.
+    if [[ -f "$destination" ]] && grep -qF "$source" "$destination"; then
+        _dotfiles_log "[=] Shim already in place: $destination"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$destination")"
+
+    local existing=""
+    if [[ -f "$destination" ]] && ! cmp -s "$source" "$destination"; then
+        existing="$(cat "$destination")"
+    fi
+
+    {
+        echo "# Managed by dotfiles — pulls the curated config from the repo."
+        echo "# Anything you add below this block stays on this machine and survives sync."
+        echo "# That includes lines auto-appended by installers (mise, fnm, atuin, fzf, gh, etc.)."
+        printf '%s\n' "$directive"
+        if [[ -n "$existing" ]]; then
+            echo ""
+            echo "# === Local additions below (preserved across sync) ==="
+            printf '%s\n' "$existing"
+        fi
+    } > "$destination"
+
+    _dotfiles_log "[+] Shim installed ($syntax): $destination → $source"
+}
+
 dotfiles_apply_manifest() {
     local action source destination
 
@@ -112,6 +197,12 @@ dotfiles_apply_manifest() {
             copy_dir)
                 _dotfiles_log "[+] Copying directory $source => $destination"
                 _dotfiles_copy_dir "$source" "$destination"
+                ;;
+            shim)
+                _dotfiles_ensure_shim "$source" "$destination" shell
+                ;;
+            shim_git)
+                _dotfiles_ensure_shim "$source" "$destination" git
                 ;;
             symlink)
                 _dotfiles_log "[+] Linking $source => $destination"

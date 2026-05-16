@@ -1,5 +1,6 @@
 @define-color window_bg_color #000000;
-@define-color accent_bg_color #8d8d8d;
+@define-color accent_bg_color #6366f1;
+@define-color accent_fg_color #ffffff;
 @define-color theme_fg_color #ffffff;
 @define-color fg_muted       #8d8d8d;
 
@@ -27,11 +28,15 @@ scrollbar { opacity: 0; }
 
 .input {
   background: #0d0d0d;
-  caret-color: @theme_fg_color;
+  caret-color: @accent_bg_color;
   color: @theme_fg_color;
   padding: 10px 14px;
   border-radius: 4px;
   border: 1px solid #2a2a2a;
+}
+
+.input:focus {
+  border: 1px solid @accent_bg_color;
 }
 
 .input placeholder { opacity: 0.4; }
@@ -45,7 +50,13 @@ scrollbar { opacity: 0; }
 
 child:selected .item-box,
 row:selected   .item-box {
-  background: #1a1a1a;
+  background: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+child:selected .item-subtext,
+row:selected   .item-subtext {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .item-subtext {
