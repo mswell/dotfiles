@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # install_caido_ai.sh
-# Instala o caido/skills oficial (Claude Code Agent Skills)
+# Instala o caido/skills oficial usando o fluxo padrão do projeto upstream.
 # =============================================================================
 
 set -euo pipefail
@@ -24,7 +24,7 @@ die()     { error "$*"; exit 1; }
 echo -e "${BOLD}"
 echo "╔═══════════════════════════════════════════╗"
 echo "║        Caido AI Setup — Bug Bounty        ║"
-echo "║         caido/skills (official)            ║"
+echo "║         caido/skills (official)           ║"
 echo "╚═══════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -38,73 +38,81 @@ check_cmd() {
     success "$1 encontrado: $(command -v "$1")"
 }
 
-check_cmd git
 check_cmd node
 check_cmd npm
 
-# Garante pnpm globalmente (necessário para `pnpm dlx skills add`)
+# O README oficial do caido/skills usa pnpm dlx skills add caido/skills --skill='*' -g
 if command -v pnpm &>/dev/null; then
     success "pnpm encontrado: $(command -v pnpm)"
 else
     warn "pnpm não encontrado — instalando via npm..."
     npm install -g pnpm || die "Falha ao instalar pnpm via npm"
-    # Recarrega PATH para encontrar o binário recém-instalado
     export PATH="$(npm root -g)/../bin:$PATH"
     command -v pnpm &>/dev/null || die "pnpm instalado mas não encontrado no PATH"
     success "pnpm instalado: $(command -v pnpm)"
 fi
 
-PKG_INSTALL="pnpm install --frozen-lockfile"
-
 echo ""
 
-# ── 2. caido/skills (Claude Code Agent Skills) ────────────────────────────────
-# ~/.claude/skills/ é o diretório GLOBAL do Claude Code (disponível em qualquer projeto).
-# Usamos ~/.agents/skills/caido-mode como fonte e criamos symlink global para lá.
-info "Instalando caido/skills para Claude Code (global)..."
+# ── 2. caido/skills pelo instalador oficial ───────────────────────────────────
+info "Instalando caido/skills pelo comando oficial..."
 
-AGENTS_SKILLS_DIR="$HOME/.agents/skills"
-AGENTS_CAIDO="$AGENTS_SKILLS_DIR/caido-mode"
-GLOBAL_SKILLS_DIR="$HOME/.claude/skills"
-GLOBAL_LINK="$GLOBAL_SKILLS_DIR/caido-mode"
-
-mkdir -p "$AGENTS_SKILLS_DIR" "$GLOBAL_SKILLS_DIR"
-
-# Clona/atualiza a skill em ~/.agents/skills/caido-mode
-if [ -d "$AGENTS_CAIDO/.git" ]; then
-    info "Atualizando caido/skills existente..."
-    git -C "$AGENTS_CAIDO" pull --ff-only || warn "Não foi possível atualizar — continuando com versão atual"
+# -g instala globalmente para Claude Code em ~/.claude/skills.
+# Tentamos -y primeiro para setup não interativo; se a CLI não suportar, usamos stdin yes.
+if pnpm dlx skills add caido/skills --skill='*' -g -y; then
+    success "caido/skills instalado via pnpm dlx skills"
 else
-    TMP_SKILLS=$(mktemp -d)
-    trap 'rm -rf "$TMP_SKILLS"' EXIT
+    warn "Instalação com -y falhou; tentando confirmação por stdin..."
+    yes | pnpm dlx skills add caido/skills --skill='*' -g \
+        || die "Falha ao instalar caido/skills pelo comando oficial"
+    success "caido/skills instalado via pnpm dlx skills"
+fi
 
-    info "Clonando caido/skills..."
-    git clone --depth=1 https://github.com/caido/skills.git "$TMP_SKILLS" \
-        || die "Falha ao clonar caido/skills"
+# ── 3. Symlink para Pi ────────────────────────────────────────────────────────
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+PI_SKILLS_DIR="$HOME/.pi/agent/skills"
 
-    if [ ! -d "$TMP_SKILLS/skills/caido-mode" ]; then
-        die "Estrutura inesperada no repo caido/skills (skills/caido-mode não encontrado)"
+mkdir -p "$PI_SKILLS_DIR"
+
+link_skill_to_pi() {
+    local skill_name="$1"
+    local claude_target="$CLAUDE_SKILLS_DIR/$skill_name"
+    local pi_link="$PI_SKILLS_DIR/$skill_name"
+
+    if [ ! -e "$claude_target" ]; then
+        warn "Skill não encontrada no Claude após instalação: $claude_target"
+        return 1
     fi
 
-    rm -rf "$AGENTS_CAIDO"
-    cp -r "$TMP_SKILLS/skills/caido-mode" "$AGENTS_CAIDO"
+    if [ -L "$pi_link" ] && [ "$(readlink -f "$pi_link")" = "$(readlink -f "$claude_target")" ]; then
+        success "Symlink Pi já correto: $pi_link"
+        return 0
+    fi
+
+    if [ -e "$pi_link" ] && [ ! -L "$pi_link" ]; then
+        warn "Já existe no Pi e não é symlink, preservando: $pi_link"
+        return 0
+    fi
+
+    rm -f "$pi_link"
+    ln -sfn "$claude_target" "$pi_link"
+    success "Symlink Pi criado: $pi_link → $claude_target"
+}
+
+# Hoje o repo oficial instala caido-mode; se adicionar mais skills caido-* no futuro,
+# espelha todas automaticamente para o Pi.
+found_caido_skill=0
+shopt -s nullglob
+for skill_path in "$CLAUDE_SKILLS_DIR"/caido-* "$CLAUDE_SKILLS_DIR"/caido_mode "$CLAUDE_SKILLS_DIR"/caido-mode; do
+    [ -e "$skill_path" ] || continue
+    found_caido_skill=1
+    link_skill_to_pi "$(basename "$skill_path")" || true
+done
+shopt -u nullglob
+
+if [ "$found_caido_skill" -eq 0 ]; then
+    warn "Nenhuma skill caido-* encontrada em $CLAUDE_SKILLS_DIR após instalação."
 fi
 
-success "caido-mode disponível em $AGENTS_CAIDO"
-
-# Cria symlink global (substitui symlink antigo, preserva se já aponta correto)
-if [ -L "$GLOBAL_LINK" ] && [ "$(readlink -f "$GLOBAL_LINK")" = "$(readlink -f "$AGENTS_CAIDO")" ]; then
-    success "Symlink global já correto: $GLOBAL_LINK"
-else
-    rm -f "$GLOBAL_LINK"
-    ln -sf "$AGENTS_CAIDO" "$GLOBAL_LINK"
-    success "Symlink global criado: $GLOBAL_LINK → $AGENTS_CAIDO"
-fi
-
-info "Instalando dependências Node.js..."
-(cd "$AGENTS_CAIDO" && $PKG_INSTALL) \
-    || die "Falha ao instalar dependências em $AGENTS_CAIDO"
-
-success "caido/skills instalado com sucesso (global)"
-
+success "caido/skills instalado com sucesso para Claude Code e Pi"
 echo ""

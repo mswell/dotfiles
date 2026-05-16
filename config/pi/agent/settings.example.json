@@ -9,8 +9,6 @@
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
     "npm:pi-context",
-    "npm:@spences10/pi-skills",
-    "npm:pi-subagents"
-  ],
-  "hideThinkingBlock": false
+    "npm:@spences10/pi-skills"
+  ]
 }

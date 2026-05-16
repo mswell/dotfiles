@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-15T17:06:25.132Z",
+  "createdAt": "2026-05-16T01:57:36.729Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -36,6 +36,10 @@
   ],
   "filesSkipped": [
     {
+      "path": "/home/mswell/.pi/agent/skills/bbhunter",
+      "reason": "not a regular file or directory"
+    },
+    {
       "path": "/home/mswell/.pi/agent/skills/caido-mode",
       "reason": "not a regular file or directory"
     },
@@ -45,6 +49,10 @@
     },
     {
       "path": "/home/mswell/.pi/agent/skills/diagnose",
+      "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/skills/find-skills",
       "reason": "not a regular file or directory"
     },
     {

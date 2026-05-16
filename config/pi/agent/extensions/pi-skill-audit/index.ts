@@ -1,8 +1,10 @@
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import { Container, type SelectItem, SelectList, Text } from "@earendil-works/pi-tui";
 import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
+import { spawnSync } from "node:child_process";
 
 const VERSION = "0.1.0";
 const REPORT_DIR = path.join(".pi", "skill-audit");
@@ -77,6 +79,20 @@ async function statSafe(filePath: string) {
 	}
 }
 
+async function realPathSafe(filePath: string): Promise<string> {
+	try {
+		return await fs.realpath(filePath);
+	} catch {
+		return path.resolve(filePath);
+	}
+}
+
+async function skillSourceInfo(candidate: SkillCandidate): Promise<{ displayPath: string; sourcePath: string; isSymlink: boolean }> {
+	const displayPath = path.resolve(candidate.path);
+	const sourcePath = await realPathSafe(candidate.path);
+	return { displayPath, sourcePath, isSymlink: displayPath !== sourcePath };
+}
+
 async function readText(filePath: string): Promise<string> {
 	try {
 		return await fs.readFile(filePath, "utf8");
@@ -141,6 +157,10 @@ async function walk(dir: string, visitor: (filePath: string, dirent: any) => Pro
 		const filePath = path.join(dir, entry.name);
 		await visitor(filePath, entry);
 		if (entry.isDirectory()) await walk(filePath, visitor);
+		else if (entry.isSymbolicLink()) {
+			const st = await statSafe(filePath);
+			if (st?.isDirectory()) await walk(filePath, visitor);
+		}
 	}
 }
 
@@ -445,28 +465,68 @@ async function selectSkill(cwd: string, query: string): Promise<{ candidate?: Sk
 	return { candidate: matches.length === 1 ? matches[0] : undefined, matches, names };
 }
 
-function buildImprovePrompt(audit: SkillAudit): string {
+async function buildImprovePrompt(audit: SkillAudit): Promise<string> {
 	const name = audit.frontmatter.name || audit.candidate.nameHint;
 	const content = truncate(audit.content, 100_000);
+	const source = await skillSourceInfo(audit.candidate);
 	return `You are reviewing a Pi Agent Skill. Produce a SAFE IMPROVEMENT PROPOSAL ONLY. Do not rewrite the file blindly and do not claim changes were applied.
 
 Target skill: ${name}
-Path: ${audit.candidate.path}
+Display path: ${source.displayPath}
+Resolved source path: ${source.sourcePath}
+Symlink: ${source.isSymlink ? "yes" : "no"}
 Scope: ${audit.candidate.scope}
 
 Deterministic audit findings:
 ${formatFindings(audit.findings)}
 
-Goals:
-1. Improve trigger clarity in the YAML description if needed.
-2. Add or sharpen "When to use", procedure, pitfalls, and verification guidance when useful.
-3. Preserve the skill's intent and avoid adding broad, permanent constraints that may become stale.
-4. Prefer small targeted patches. Move long details to references/ only if clearly beneficial.
-5. Output a concise proposal with:
-   - Summary of recommended changes
-   - Risk/compatibility notes
-   - A diff-style patch or exact edit blocks the user can review
-   - Questions for the user if approval is unsafe without more context
+Optimization goals:
+1. Improve invocation reliability: make the YAML description specific about when the skill should and should not be used.
+2. Improve execution quality: sharpen concrete steps, tool/file usage, pitfalls, and verification guidance.
+3. Improve maintainability: keep SKILL.md concise, preserve progressive disclosure, and move long reference material to references/ only if clearly beneficial.
+4. Preserve intent and safety: do not broaden scope, invent capabilities, add permanent global rules, or remove explicit safety/approval gates.
+5. Prefer small targeted patches over full rewrites.
+
+Review rubric:
+Score each dimension from 1-5 and justify briefly.
+- Completeness: covers the core workflow and required context without obvious gaps.
+- Actionability: gives concrete steps an agent can execute, not just principles.
+- Conciseness: avoids bloat, duplication, and irrelevant background in SKILL.md.
+- Robustness: handles edge cases, ambiguity, failures, and stale assumptions.
+- Invocation clarity: frontmatter description and triggers route the skill precisely.
+- Safety/approval: risky actions, secrets, destructive edits, network calls, and user approval are handled explicitly.
+- Validation: tells the agent how to check that the skill's work succeeded.
+
+Required output format:
+## Review scores
+- Completeness: <1-5> — <reason>
+- Actionability: <1-5> — <reason>
+- Conciseness: <1-5> — <reason>
+- Robustness: <1-5> — <reason>
+- Invocation clarity: <1-5> — <reason>
+- Safety/approval: <1-5> — <reason>
+- Validation: <1-5> — <reason>
+
+## Main gaps
+List the 3-5 highest-impact gaps. Tie each gap to evidence from the skill or deterministic audit findings.
+
+## Proposed changes
+Use bullets. For each change include: target section/file, why it helps routing or task performance, and risk.
+
+## Suggested patch
+Provide a unified diff or exact edit blocks the user can review. Keep patches minimal and do not imply they were applied.
+
+## Eval scenarios
+Provide lightweight scenarios for future manual/automated testing:
+### Should invoke
+- <user request that should trigger this skill and expected behavior>
+### Should not invoke
+- <near-miss request that should not trigger this skill and why>
+### Stress task
+- <hard realistic task that tests the improved instructions>
+
+## Approval questions
+Ask only questions that block safe approval. If none, say "None".
 
 Skill content:
 \`\`\`markdown
@@ -515,7 +575,7 @@ async function runImprove(cwd: string, query: string, ctx: any, signal?: AbortSi
 		{
 			messages: [{
 				role: "user" as const,
-				content: [{ type: "text" as const, text: buildImprovePrompt(audit) }],
+				content: [{ type: "text" as const, text: await buildImprovePrompt(audit) }],
 				timestamp: Date.now(),
 			}],
 		},
@@ -525,9 +585,15 @@ async function runImprove(cwd: string, query: string, ctx: any, signal?: AbortSi
 	if (!proposal) throw new Error("Gemini Flash returned an empty proposal.");
 	const projectRoot = await resolveProjectRoot(cwd);
 	const name = audit.frontmatter.name || audit.candidate.nameHint;
+	const source = await skillSourceInfo(audit.candidate);
 	const proposalPath = path.join(projectRoot, REPORT_DIR, `improve-${slugify(name)}.md`);
-	await writeText(proposalPath, [`# Skill Improvement Proposal: ${name}`, "", `Generated: ${now()}`, `Model: ${modelLabel}`, `Skill: ${audit.candidate.path}`, "", proposal].join("\n"));
-	return { proposal, proposalPath, skillPath: audit.candidate.path, model: modelLabel, findings: audit.findings };
+	await writeText(proposalPath, [`# Skill Improvement Proposal: ${name}`, "", `Generated: ${now()}`, `Model: ${modelLabel}`, `Skill: ${source.displayPath}`, `Resolved source: ${source.sourcePath}`, `Symlink: ${source.isSymlink ? "yes" : "no"}`, "", proposal].join("\n"));
+	return { proposal, proposalPath, skillPath: source.sourcePath, model: modelLabel, findings: audit.findings };
+}
+
+function truncate(value: string, maxChars: number): string {
+	if (value.length <= maxChars) return value;
+	return `${value.slice(0, Math.max(0, maxChars - 40))}\n\n... truncated ${value.length - maxChars} chars ...`;
 }
 
 function outputLines(output: string): string[] {
@@ -559,15 +625,208 @@ async function runImproveCommand(args: string, ctx: any): Promise<void> {
 	try {
 		const query = args.trim();
 		const result = await runImprove(ctx.cwd, query, ctx, ctx.signal);
-		const visible = result.proposalPath ? result.proposal : result.proposal;
-		ctx.ui.setWidget("pi-skill-improve", outputLines(visible), { placement: "aboveEditor" });
 		if (result.matches?.length) {
+			ctx.ui.setWidget("pi-skill-improve", outputLines(result.proposal), { placement: "aboveEditor" });
 			ctx.ui.notify(`skill-improve: ${result.matches.length} matches; narrow the query.`, "warning");
 			return;
 		}
+		ctx.ui.setWidget("pi-skill-improve", [
+			`Skill improve proposal written`,
+			`Path: ${result.proposalPath}`,
+			`Model: ${result.model}`,
+			`Open it from /skill-manager → Open latest proposal in nvim`,
+		], { placement: "aboveEditor" });
 		ctx.ui.notify(`skill-improve: proposal written with ${result.model}: ${result.proposalPath}`, "info");
 	} catch (error) {
 		ctx.ui.notify(`skill-improve error: ${error instanceof Error ? error.message : String(error)}`, "error");
+	}
+}
+
+function openInNeovim(filePath: string, ctx: any): void {
+	ctx.ui.setWidget("pi-skill-manager", undefined);
+	ctx.ui.setWidget("pi-skill-improve", undefined);
+	ctx.ui.notify(`Opening nvim: ${filePath}`, "info");
+	const result = spawnSync(process.env.EDITOR || "nvim", [filePath], { stdio: "inherit" });
+	if (result.error) ctx.ui.notify(`nvim error: ${result.error.message}`, "error");
+}
+
+async function latestProposalPath(cwd: string, candidate: SkillCandidate): Promise<string> {
+	const projectRoot = await resolveProjectRoot(cwd);
+	const content = await readText(candidate.path);
+	const { frontmatter } = parseFrontmatter(content);
+	const name = frontmatter.name || candidate.nameHint;
+	return path.join(projectRoot, REPORT_DIR, `improve-${slugify(name)}.md`);
+}
+
+interface SkillListEntry {
+	candidate: SkillCandidate;
+	duplicates: SkillCandidate[];
+	source: { displayPath: string; sourcePath: string; isSymlink: boolean };
+}
+
+function candidateRank(candidate: SkillCandidate): number {
+	let rank = 0;
+	if (candidate.scope === "project") rank -= 100;
+	if (candidate.path.includes(`${path.sep}.pi${path.sep}agent${path.sep}skills${path.sep}`)) rank -= 20;
+	if (candidate.path.includes(`${path.sep}.pi${path.sep}skills${path.sep}`)) rank -= 15;
+	if (candidate.path.includes(`${path.sep}.agents${path.sep}skills${path.sep}`)) rank -= 5;
+	return rank;
+}
+
+async function buildSkillListEntries(candidates: SkillCandidate[]): Promise<SkillListEntry[]> {
+	const groups = new Map<string, SkillCandidate[]>();
+	for (const candidate of candidates) {
+		const key = `${candidate.scope}:${candidate.nameHint}`;
+		groups.set(key, [...(groups.get(key) ?? []), candidate]);
+	}
+	const entries: SkillListEntry[] = [];
+	for (const group of groups.values()) {
+		const sorted = [...group].sort((a, b) => candidateRank(a) - candidateRank(b) || a.path.localeCompare(b.path));
+		const candidate = sorted[0];
+		entries.push({ candidate, duplicates: sorted.slice(1), source: await skillSourceInfo(candidate) });
+	}
+	return entries.sort((a, b) => a.candidate.nameHint.localeCompare(b.candidate.nameHint) || a.candidate.scope.localeCompare(b.candidate.scope));
+}
+
+function shortPath(filePath: string): string {
+	const home = os.homedir();
+	return filePath.startsWith(`${home}${path.sep}`) ? `~/${filePath.slice(home.length + 1)}` : filePath;
+}
+
+async function pickSkill(ctx: any, candidates: SkillCandidate[]): Promise<SkillCandidate | undefined> {
+	const entries = await buildSkillListEntries(candidates);
+	const byValue = new Map<string, SkillListEntry>();
+	const items: SelectItem[] = entries.map((entry, index) => {
+		const duplicateBadge = entry.duplicates.length ? ` ×${entry.duplicates.length + 1}` : "";
+		const symlinkBadge = entry.source.isSymlink ? " symlink" : "";
+		const value = `${entry.candidate.nameHint} ${entry.candidate.scope} ${entry.candidate.path} ${index}`.toLowerCase();
+		byValue.set(value, entry);
+		return {
+			value,
+			label: `${entry.candidate.nameHint} [${entry.candidate.scope}]${symlinkBadge}${duplicateBadge}`,
+			description: `${shortPath(entry.candidate.path)}${entry.source.isSymlink ? ` -> ${shortPath(entry.source.sourcePath)}` : ""}${entry.duplicates.length ? ` (+${entry.duplicates.length} duplicate path${entry.duplicates.length === 1 ? "" : "s"})` : ""}`,
+		};
+	});
+	const picked = await ctx.ui.custom<string | null>((tui: any, theme: any, _kb: any, done: (value: string | null) => void) => {
+		const container = new Container();
+		container.addChild(new Text(theme.fg("accent", theme.bold(`Skill Manager — ${items.length} skills${items.length === candidates.length ? "" : ` (${candidates.length} paths)`}`))));
+		container.addChild(new Text(theme.fg("dim", "type prefix to filter • ↑↓ scroll • enter select • backspace edit filter • esc cancel")));
+		const selectList = new SelectList(items, Math.min(items.length, 12), {
+			selectedPrefix: (text: string) => theme.fg("accent", text),
+			selectedText: (text: string) => theme.fg("accent", text),
+			description: (text: string) => theme.fg("muted", text),
+			scrollInfo: (text: string) => theme.fg("dim", text),
+			noMatch: (text: string) => theme.fg("warning", text),
+		}, { minPrimaryColumnWidth: 24, maxPrimaryColumnWidth: 44 });
+		let filter = "";
+		selectList.onSelect = (item: SelectItem) => done(String(item.value));
+		selectList.onCancel = () => done(null);
+		container.addChild(selectList);
+		return {
+			render(width: number) {
+				return container.render(width);
+			},
+			invalidate() {
+				container.invalidate();
+			},
+			handleInput(data: string) {
+				if (data === "\u007f" || data === "\b") {
+					filter = filter.slice(0, -1);
+					selectList.setFilter(filter);
+				} else if (/^[\x20-\x7e]$/.test(data)) {
+					filter += data.toLowerCase();
+					selectList.setFilter(filter);
+				} else {
+					selectList.handleInput(data);
+				}
+				tui.requestRender();
+			},
+		};
+	});
+	if (picked === null || picked === undefined) return undefined;
+	return byValue.get(picked)?.candidate;
+}
+
+async function runSkillManager(ctx: any): Promise<void> {
+	try {
+		const candidates = await discoverSkills(ctx.cwd, "all");
+		if (!candidates.length) {
+			ctx.ui.notify("skill-manager: no skills discovered.", "warning");
+			return;
+		}
+		const candidate = await pickSkill(ctx, candidates);
+		if (!candidate) return;
+
+		const action = await ctx.ui.select(`Skill: ${candidate.nameHint}`, [
+			"Run audit",
+			"Generate improve proposal",
+			"Open latest proposal in nvim",
+			"Show paths",
+			"Cancel",
+		]);
+		if (!action || action === "Cancel") return;
+
+		if (action === "Show paths") {
+			const source = await skillSourceInfo(candidate);
+			ctx.ui.setWidget("pi-skill-manager", [
+				`Skill: ${candidate.nameHint}`,
+				`Scope: ${candidate.scope}`,
+				`Display path: ${source.displayPath}`,
+				`Resolved source: ${source.sourcePath}`,
+				`Symlink: ${source.isSymlink ? "yes" : "no"}`,
+			], { placement: "aboveEditor" });
+			return;
+		}
+
+		if (action === "Run audit") {
+			const names = await buildNameMap(candidates);
+			const audit = await auditSkill(candidate, names);
+			const errors = audit.findings.filter((f) => f.severity === "error").length;
+			const warns = audit.findings.filter((f) => f.severity === "warn").length;
+			const infos = audit.findings.filter((f) => f.severity === "info").length;
+			const source = await skillSourceInfo(candidate);
+			const findingPreview = audit.findings.slice(0, 3).map((f) => `- ${f.severity.toUpperCase()} ${f.code}: ${f.message}`);
+			if (audit.findings.length > findingPreview.length) findingPreview.push(`- ... ${audit.findings.length - findingPreview.length} more finding(s); run /skill-audit ${audit.frontmatter.name || candidate.nameHint} for full report`);
+			const lines = [
+				`# Skill audit: ${audit.frontmatter.name || candidate.nameHint}`,
+				`Findings: ${errors} errors, ${warns} warnings, ${infos} info • Symlink: ${source.isSymlink ? "yes" : "no"}`,
+				`Source: ${shortPath(source.sourcePath)}`,
+				...findingPreview,
+			];
+			ctx.ui.setWidget("pi-skill-manager", lines, { placement: "aboveEditor" });
+			ctx.ui.notify(`skill-manager: audited ${candidate.nameHint}.`, errors ? "warning" : "info");
+			const shouldImprove = await ctx.ui.confirm("Generate improve proposal?", `Run skill-improve for ${audit.frontmatter.name || candidate.nameHint} now?`);
+			if (shouldImprove) {
+				ctx.ui.setWidget("pi-skill-manager", undefined);
+				await runImproveCommand(candidate.path, ctx);
+				const proposalPath = await latestProposalPath(ctx.cwd, candidate);
+				if (await exists(proposalPath)) {
+					const open = await ctx.ui.confirm("Open proposal in nvim?", proposalPath);
+					if (open) openInNeovim(proposalPath, ctx);
+				}
+			}
+			return;
+		}
+
+		if (action === "Generate improve proposal") {
+			await runImproveCommand(candidate.path, ctx);
+			const proposalPath = await latestProposalPath(ctx.cwd, candidate);
+			if (await exists(proposalPath)) {
+				const open = await ctx.ui.confirm("Open proposal in nvim?", proposalPath);
+				if (open) openInNeovim(proposalPath, ctx);
+			}
+		}
+
+		if (action === "Open latest proposal in nvim") {
+			const proposalPath = await latestProposalPath(ctx.cwd, candidate);
+			if (!(await exists(proposalPath))) {
+				ctx.ui.notify(`No proposal found yet: ${proposalPath}`, "warning");
+				return;
+			}
+			openInNeovim(proposalPath, ctx);
+		}
+	} catch (error) {
+		ctx.ui.notify(`skill-manager error: ${error instanceof Error ? error.message : String(error)}`, "error");
 	}
 }
 
@@ -585,6 +844,11 @@ export default function piSkillAudit(pi: ExtensionAPI) {
 	pi.registerCommand("skill-improve", {
 		description: "Generate a Gemini Flash improvement proposal for one skill; writes .pi/skill-audit/improve-<skill>.md without editing",
 		handler: async (args, ctx) => runImproveCommand(args, ctx),
+	});
+
+	pi.registerCommand("skill-manager", {
+		description: "Open an interactive menu to list skills, audit one skill, show paths, or generate a skill-improve proposal",
+		handler: async (_args, ctx) => runSkillManager(ctx),
 	});
 
 	pi.registerTool({
@@ -636,5 +900,6 @@ export default function piSkillAudit(pi: ExtensionAPI) {
 	pi.on("session_shutdown", async (_event, ctx) => {
 		ctx.ui.setWidget("pi-skill-audit", undefined);
 		ctx.ui.setWidget("pi-skill-improve", undefined);
+		ctx.ui.setWidget("pi-skill-manager", undefined);
 	});
 }
