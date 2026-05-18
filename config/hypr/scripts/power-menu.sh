@@ -1,6 +1,6 @@
 #!/bin/bash
 
-options="  Lock\n󰒲  Suspend\n󰍃  Logout\n󰜉  Restart\n󰐥  Shutdown"
+options="󰌾  Lock\n󰒲  Suspend\n󰍃  Logout\n󰜉  Restart\n󰐥  Shutdown"
 
 choice=$(echo -e "$options" | walker --dmenu --width 295 --minheight 1 --maxheight 400 -p "System…" 2>/dev/null)
 
