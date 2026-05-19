@@ -17,6 +17,7 @@
     "agent/extensions/gpt-auto-router/README.md",
     "agent/extensions/gpt-auto-router/index.ts",
     "agent/extensions/guardrails.json",
+    "agent/extensions/hypr-theme-sync.js",
     "agent/extensions/list-google-models.js",
     "agent/extensions/pi-config-backup/README.md",
     "agent/extensions/pi-config-backup/index.js",

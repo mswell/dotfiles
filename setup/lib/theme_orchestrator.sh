@@ -118,7 +118,7 @@ reload|kitty SIGUSR1
 reload|tmux source-file
 reload|zsh SIGUSR1
 reload|mako reload
-reload|pi-settings theme
+reload|pi hypr-theme-sync extension
 PLAN
 }
 
