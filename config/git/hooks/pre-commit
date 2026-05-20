@@ -76,12 +76,12 @@ PATTERNS=(
     "Slack token|||xox[baprs]-[A-Za-z0-9\-]+"
     "Stripe key|||sk_(live|test)_[A-Za-z0-9]{24,}"
     "SendGrid key|||SG\.[A-Za-z0-9_\-]{22}\.[A-Za-z0-9_\-]{43}"
-    "Twilio SID|||AC[a-f0-9]{32}"
+    "Twilio SID|||\bAC[a-f0-9]{32}\b"
     "HackerOne token|||[Hh]1[_-]?token\s*[=:]\s*[A-Za-z0-9_\-\.]{20,}"
     "Google API key|||AIza[0-9A-Za-z\-_]{35}"
     "Heroku key|||[Hh]eroku[_-]?(api[_-]?)?key\s*[=:]\s*[\"']?[a-f0-9\-]{36,}"
 
-    # JWT (only flag if it looks like a real one, 3 base64url parts)
+    # JWT (only flag if it looks like a real one, 3 base64url parts — skip hash fields)
     "JWT token|||eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
 
     # Pi / Claude / AI provider keys
@@ -105,6 +105,9 @@ while IFS= read -r -d '' file; do
 
     # Skip GF grep pattern files (they contain regex fragments, not real secrets)
     echo "$file" | grep -q '\.gf/' && continue
+
+    # Skip manifest/hash files — they contain hex digests, not secrets
+    echo "$file" | grep -qiE '(manifest\.json|checksums|SHASUMS|\.lock)$' && continue
 
     # Get staged content
     content=$(git show ":$file" 2>/dev/null) || continue
