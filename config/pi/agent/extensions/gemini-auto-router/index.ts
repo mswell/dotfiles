@@ -286,6 +286,16 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 	function updateStatus(ctx: ExtensionContext) {
 		const theme = ctx.ui.theme;
 		
+		if (!isGoogleActive(ctx)) {
+			ctx.ui.setStatus("gem-router", undefined);
+			return;
+		}
+
+		// Gemini router is active; hide statuses from sibling routers that may have
+		// been left behind after a manual provider/router switch.
+		ctx.ui.setStatus("gpt-router", undefined);
+		ctx.ui.setStatus("zai-router", undefined);
+
 		if (!autoRouting) {
 			ctx.ui.setStatus("gem-router", theme.fg("dim", "gem:manual"));
 			return;

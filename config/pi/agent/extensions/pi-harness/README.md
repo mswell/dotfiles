@@ -2,7 +2,7 @@
 
 Global Pi extension for project-local harness state without MCP or dotcontext.
 
-Version: 0.3.0
+Version: 0.4.0
 
 Installed globally at:
 
@@ -34,6 +34,10 @@ Project data is stored per repository in:
 /harness idea <text>
 /harness contract <markdown>
 /harness plan <markdown>
+/harness goal [status]
+/harness goal [--max-turns N] [--max-minutes N] <verifiable condition>
+/harness goal clear
+/harness goal achieved <evidence>
 /harness summary
 /harness rebuild-summary
 /harness report [note]
@@ -49,7 +53,24 @@ PREVC phases:
 - V: Validation
 - C: Confirmation
 
-Use the `harness` tool or `/harness` command to keep durable task contracts, plans, decisions, evidence, notes, ideas, reports, and traces in `.pi/harness`.
+Use the `harness` tool or `/harness` command to keep durable task contracts, plans, goals, decisions, evidence, notes, ideas, reports, and traces in `.pi/harness`.
+
+Tool actions for task files are `updatePlan` and `updateContract`. Compatibility aliases `recordPlan` and `recordContract` are accepted because agents sometimes infer those names from `recordDecision` / `recordEvidence`.
+
+## Goal mode
+
+`/harness goal` is an evidence-driven, budgeted loop inspired by Claude Code's `/goal`:
+
+```text
+/harness goal --max-turns 10 npm test exits 0 and git status is clean
+/harness goal status
+/harness goal clear
+/harness goal achieved tests pass with exit 0 and git status is clean
+```
+
+Goal mode requires an active task. It stores state in the active task's `goal.json`, injects the goal into future turns, evaluates the visible conversation after each agent turn using a fast model when available, and automatically sends a follow-up message while the condition remains unmet and the turn/time budget has not been reached. If the evaluator is unavailable, the loop remains agent-driven: the agent or user should mark success with `achieveGoal` / `/harness goal achieved <evidence>` once proof is surfaced.
+
+Write goals as verifiable conditions. The evaluator does not run tools by itself; it judges from surfaced evidence such as test output, exit codes, file reads, and `recordEvidence` entries. Default budget is 10 evaluated turns unless `--max-turns` is supplied.
 
 ## Autoresearch-inspired additions
 

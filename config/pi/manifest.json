@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "createdAt": "2026-05-17T00:33:21.594Z",
+  "createdAt": "2026-05-20T20:06:54.731Z",
   "source": {
     "piAgentDir": "/home/mswell/.pi/agent"
   },
@@ -19,13 +19,12 @@
     "agent/extensions/guardrails.json",
     "agent/extensions/hypr-theme-sync.js",
     "agent/extensions/list-google-models.js",
-    "agent/extensions/pi-config-backup/README.md",
-    "agent/extensions/pi-config-backup/index.js",
     "agent/extensions/pi-config-backup/index.ts",
     "agent/extensions/pi-harness/README.md",
     "agent/extensions/pi-harness/index.ts",
     "agent/extensions/pi-skill-audit/README.md",
     "agent/extensions/pi-skill-audit/index.ts",
+    "agent/extensions/ui-ux-design/index.ts",
     "agent/extensions/zai-auto-router/README.md",
     "agent/extensions/zai-auto-router/index.ts",
     "agent/skills/frontend-design/.my-pi-source.json",
@@ -37,10 +36,6 @@
   ],
   "filesSkipped": [
     {
-      "path": "/home/mswell/.pi/agent/skills/bbhunter",
-      "reason": "not a regular file or directory"
-    },
-    {
       "path": "/home/mswell/.pi/agent/skills/caido-mode",
       "reason": "not a regular file or directory"
     },
@@ -50,10 +45,6 @@
     },
     {
       "path": "/home/mswell/.pi/agent/skills/diagnose",
-      "reason": "not a regular file or directory"
-    },
-    {
-      "path": "/home/mswell/.pi/agent/skills/find-skills",
       "reason": "not a regular file or directory"
     },
     {
@@ -103,6 +94,10 @@
     {
       "path": "/home/mswell/.pi/agent/skills/zoom-out",
       "reason": "not a regular file or directory"
+    },
+    {
+      "path": "/home/mswell/.pi/agent/themes/wellpunk-dark.json.bak.20260519-155040",
+      "reason": "non-text file"
     }
   ]
 }

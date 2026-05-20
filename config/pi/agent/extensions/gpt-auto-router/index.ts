@@ -304,11 +304,15 @@ export default function gptAutoRouter(pi: ExtensionAPI) {
 	function updateStatus(ctx: ExtensionContext) {
 		const theme = ctx.ui.theme;
 
-		// Allow status if codex is active OR we have a recent route (model may still be switching)
-		if (!isCodexActive(ctx) && !lastRoute) {
+		if (!isCodexActive(ctx)) {
 			ctx.ui.setStatus("gpt-router", undefined);
 			return;
 		}
+
+		// GPT router is active; hide statuses from sibling routers that may have
+		// been left behind after a manual provider/router switch.
+		ctx.ui.setStatus("gem-router", undefined);
+		ctx.ui.setStatus("zai-router", undefined);
 
 		if (!autoRouting) {
 			ctx.ui.setStatus(

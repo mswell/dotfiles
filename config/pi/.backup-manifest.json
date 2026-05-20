@@ -1,0 +1,115 @@
+{
+  "manifestVersion": 1,
+  "lastBackupAt": "2026-05-20T20:08:02.078Z",
+  "files": {
+    "agent/settings.example.json": {
+      "hash": "sha256:35e79dd1a8378a08ad62725a92875ff6eb835f63a5e7b9366293fc195c6a4e4b",
+      "backedUpAt": "2026-05-20T20:08:01.906Z",
+      "size": 333
+    },
+    "agent/extensions/gemini-auto-router/README.md": {
+      "hash": "sha256:7ff21412eee6be9daed21fb0cf155629f928fa93856afda13eb145a0db7b6ec5",
+      "backedUpAt": "2026-05-20T20:08:01.907Z",
+      "size": 1510
+    },
+    "agent/extensions/gemini-auto-router/index.ts": {
+      "hash": "sha256:82f899a6c33eeac178bfc7660841c15af18c9d928f89b5dab44277886e621e7d",
+      "backedUpAt": "2026-05-20T20:08:01.928Z",
+      "size": 18902
+    },
+    "agent/extensions/gpt-auto-router/README.md": {
+      "hash": "sha256:dc85df6e7a00da1828855e4b223a82ff1c48bb06499ec13aac285f3c08f93b1b",
+      "backedUpAt": "2026-05-20T20:08:01.929Z",
+      "size": 2497
+    },
+    "agent/extensions/gpt-auto-router/index.ts": {
+      "hash": "sha256:d11e3d179ed41061441f2f4941a5095a25391609a113baf8f117c7cb07ab7f10",
+      "backedUpAt": "2026-05-20T20:08:01.947Z",
+      "size": 19083
+    },
+    "agent/extensions/guardrails.json": {
+      "hash": "sha256:81a73fc0f872991b72496c9f76c4d6210adb293e38a27a48abba99c846fe6fc6",
+      "backedUpAt": "2026-05-20T20:08:01.948Z",
+      "size": 191
+    },
+    "agent/extensions/hypr-theme-sync.js": {
+      "hash": "sha256:576a2dfbf6b9b2a4c209dc5dd57e7afc33c1966aea5a938e633d43251983bd11",
+      "backedUpAt": "2026-05-20T20:08:01.966Z",
+      "size": 2412
+    },
+    "agent/extensions/list-google-models.js": {
+      "hash": "sha256:ff8bcfbb01232b0678121f143446943c13332f55da69d53ac74f53d7b243a5cb",
+      "backedUpAt": "2026-05-20T20:08:01.984Z",
+      "size": 362
+    },
+    "agent/extensions/pi-config-backup/index.ts": {
+      "hash": "sha256:28024f42d1d295d8bba09f58607f965aff5384cad543d57ffd5e60d3b2906ae4",
+      "version": "0.2.0",
+      "backedUpAt": "2026-05-20T20:08:02.002Z",
+      "size": 22598
+    },
+    "agent/extensions/pi-harness/README.md": {
+      "hash": "sha256:cc49d12dc9eae83866bbb6928944cb07179d2ff85ac3f57950755cdfdc5a48ce",
+      "backedUpAt": "2026-05-20T20:08:02.002Z",
+      "size": 4018
+    },
+    "agent/extensions/pi-harness/index.ts": {
+      "hash": "sha256:c51230e93e496e084eb1abf57688d5e1ff7e577111c0b4bc42a53f6f84d81dc1",
+      "version": "0.4.2",
+      "backedUpAt": "2026-05-20T20:08:02.022Z",
+      "size": 64080
+    },
+    "agent/extensions/pi-skill-audit/README.md": {
+      "hash": "sha256:c22331bbdc547127bc016201e5c212b3c1e9a80ec6e1d5c82187d48b05eb7fe0",
+      "backedUpAt": "2026-05-20T20:08:02.022Z",
+      "size": 2935
+    },
+    "agent/extensions/pi-skill-audit/index.ts": {
+      "hash": "sha256:f6c55158f736648f3ccd26d84072343c2157621bd866cd788ea8449eeb44c57e",
+      "version": "0.1.0",
+      "backedUpAt": "2026-05-20T20:08:02.039Z",
+      "size": 39754
+    },
+    "agent/extensions/ui-ux-design/index.ts": {
+      "hash": "sha256:c60890b8943328d6d31ca770ab6d4a33a6413fdedca3fb3ce8842a3ea66cf2c1",
+      "version": "0.1.0",
+      "backedUpAt": "2026-05-20T20:08:02.058Z",
+      "size": 16961
+    },
+    "agent/extensions/zai-auto-router/README.md": {
+      "hash": "sha256:c614efee92f3b9a7f1109817a6826380343c78baabfa8dc416872a0f64851aa5",
+      "backedUpAt": "2026-05-20T20:08:02.058Z",
+      "size": 2236
+    },
+    "agent/extensions/zai-auto-router/index.ts": {
+      "hash": "sha256:221f4915f4a61f662d87c43454d96e9b28db159e4abbcf8611222954f7755ecb",
+      "backedUpAt": "2026-05-20T20:08:02.076Z",
+      "size": 19717
+    },
+    "agent/skills/frontend-design/.my-pi-source.json": {
+      "hash": "sha256:a8097d74cf53d599a91e32fc7df33679ba0fb9f8c5d51070505a1c774db162ba",
+      "backedUpAt": "2026-05-20T20:08:02.076Z",
+      "size": 676
+    },
+    "agent/skills/frontend-design/SKILL.md": {
+      "hash": "sha256:8bf9905dbcd9b1edb47f2a44cadbb9bb66314f73a8e3631ec7feee913777ceb8",
+      "backedUpAt": "2026-05-20T20:08:02.076Z",
+      "size": 4275
+    },
+    "agent/themes/tokyonight.json": {
+      "hash": "sha256:8324200abc602896c7ec77a3530ef4ba78d4aec76444b17d524f0d935a45f7c4",
+      "backedUpAt": "2026-05-20T20:08:02.077Z",
+      "size": 2197
+    },
+    "agent/themes/wellpunk-dark.json": {
+      "hash": "sha256:4ae066db19c6807570e7d40a656dea74933d7ad65c8a8c260154fa88d85b668f",
+      "backedUpAt": "2026-05-20T20:08:02.077Z",
+      "size": 2178
+    },
+    "agent/themes/wellpunk-light.json": {
+      "hash": "sha256:363ae2f10fef85cb7ad52f8ad8cbe9dfef572c9c47990fa6752c644e1622ce25",
+      "backedUpAt": "2026-05-20T20:08:02.078Z",
+      "size": 2135
+    }
+  }
+}
