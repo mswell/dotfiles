@@ -1,8 +1,8 @@
 {
   "lastChangelogVersion": "0.75.4",
-  "theme": "wellpunk-dark",
-  "defaultProvider": "github-copilot",
-  "defaultModel": "claude-opus-4.6",
+  "theme": "wellpunk-light",
+  "defaultProvider": "google",
+  "defaultModel": "gemini-3-flash-preview",
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-mcp-adapter",

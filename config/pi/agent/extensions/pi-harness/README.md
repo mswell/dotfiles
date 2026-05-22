@@ -2,7 +2,7 @@
 
 Global Pi extension for project-local harness state without MCP or dotcontext.
 
-Version: 0.4.0
+Version: 0.4.3
 
 Installed globally at:
 
@@ -22,6 +22,7 @@ Project data is stored per repository in:
 /harness init
 /harness status
 /harness tasks [all]
+/harness tasks-ui [all]
 /harness context
 /harness task <title>
 /harness phase <P|R|E|V|C>
@@ -41,6 +42,12 @@ Project data is stored per repository in:
 /harness summary
 /harness rebuild-summary
 /harness report [note]
+/harness remember <type>: <content>
+/harness recall [type|query]
+/harness forget <type>: <substring>
+/harness reflect [task-id]
+/harness reflect-ai [task-id]
+/harness improve-report
 ```
 
 ## Workflow
@@ -54,6 +61,10 @@ PREVC phases:
 - C: Confirmation
 
 Use the `harness` tool or `/harness` command to keep durable task contracts, plans, goals, decisions, evidence, notes, ideas, reports, and traces in `.pi/harness`.
+
+For many tasks, `/harness tasks all` opens a navigable task browser instead of a truncating widget. Use `/harness tasks text all` for the old plain text list, or `/harness tasks-ui all` to explicitly open the browser. In the browser, type to filter, use ↑/↓ or j/k to move, Enter to insert `/harness reflect-ai <task-id>`, `r` to insert `/harness reflect <task-id>`, and q/Esc to close.
+
+Long outputs such as `/harness reflect-ai`, `/harness reflect`, `/harness report`, `/harness summary`, `/harness context`, and `/harness improve-report` open in a scrollable overlay reader instead of the truncating command widget. Use ↑/↓ or j/k to scroll, PgUp/PgDn/Space to page, Home/End, and q/Esc to close.
 
 Tool actions for task files are `updatePlan` and `updateContract`. Compatibility aliases `recordPlan` and `recordContract` are accepted because agents sometimes infer those names from `recordDecision` / `recordEvidence`.
 
@@ -71,6 +82,12 @@ Tool actions for task files are `updatePlan` and `updateContract`. Compatibility
 Goal mode requires an active task. It stores state in the active task's `goal.json`, injects the goal into future turns, evaluates the visible conversation after each agent turn using a fast model when available, and automatically sends a follow-up message while the condition remains unmet and the turn/time budget has not been reached. If the evaluator is unavailable, the loop remains agent-driven: the agent or user should mark success with `achieveGoal` / `/harness goal achieved <evidence>` once proof is surfaced.
 
 Write goals as verifiable conditions. The evaluator does not run tools by itself; it judges from surfaced evidence such as test output, exit codes, file reads, and `recordEvidence` entries. Default budget is 10 evaluated turns unless `--max-turns` is supplied.
+
+## Memory and continuous improvement
+
+Memory is explicit and project-local. Use `/harness remember <type>: <content>` to persist reusable knowledge. Valid types are `facts`, `preferences`, `patterns`, `mistakes`, `playbooks`, and `glossary`. The lean prompt automatically includes high-signal `preferences`, `playbooks`, and `mistakes`.
+
+`/harness reflect [task-id]` performs a deterministic heuristic review of the active task, or a selected open/closed task when an id, slug, or exact title is provided. `/harness reflect-ai [task-id]` asks the current Pi model for continuous-improvement suggestions, extracts suggested `/harness remember ...` commands, and opens a checkbox approval overlay. Only selected memories are applied; press `v` in the overlay to inspect the full read-only report without applying anything.
 
 ## Autoresearch-inspired additions
 

@@ -543,9 +543,17 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 				const result = await restorePiConfig(params);
 				return { content: [{ type: "text", text: formatRestoreResult(result) }], details: result };
 			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				const details: RestoreResult = {
+					destination: expandHome(params.source ?? DEFAULT_DESTINATION),
+					filesWritten: [],
+					filesSkipped: [{ path: "", reason: message }],
+					filesDiverged: [],
+					dryRun: Boolean(params.dryRun),
+				};
 				return {
-					content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-					details: { error: String(error) },
+					content: [{ type: "text", text: `Error: ${message}` }],
+					details,
 					isError: true,
 				};
 			}

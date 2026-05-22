@@ -1,115 +1,145 @@
 {
   "manifestVersion": 1,
-  "lastBackupAt": "2026-05-20T20:08:02.078Z",
+  "lastBackupAt": "2026-05-22T11:47:42.931Z",
   "files": {
     "agent/settings.example.json": {
-      "hash": "sha256:35e79dd1a8378a08ad62725a92875ff6eb835f63a5e7b9366293fc195c6a4e4b",
-      "backedUpAt": "2026-05-20T20:08:01.906Z",
+      "hash": "sha256:ef784e16583d9f509bdefcd001a374e4933918155a81a22aa44063c9620a7e17",
+      "backedUpAt": "2026-05-22T11:47:42.667Z",
       "size": 333
     },
     "agent/extensions/gemini-auto-router/README.md": {
-      "hash": "sha256:7ff21412eee6be9daed21fb0cf155629f928fa93856afda13eb145a0db7b6ec5",
-      "backedUpAt": "2026-05-20T20:08:01.907Z",
-      "size": 1510
+      "hash": "sha256:9b3141d7f7de490a827255dbb7bd9eb2f1ba9afb5cca4a33ef137eb4fc5ebe73",
+      "backedUpAt": "2026-05-22T11:47:42.712Z",
+      "size": 1808
     },
     "agent/extensions/gemini-auto-router/index.ts": {
-      "hash": "sha256:82f899a6c33eeac178bfc7660841c15af18c9d928f89b5dab44277886e621e7d",
-      "backedUpAt": "2026-05-20T20:08:01.928Z",
-      "size": 18902
+      "hash": "sha256:a67735ef2af8654c47b07dd9043d144fabfbb63b256f9f3bec04365efd27be4f",
+      "backedUpAt": "2026-05-22T11:47:42.734Z",
+      "size": 18760
     },
     "agent/extensions/gpt-auto-router/README.md": {
       "hash": "sha256:dc85df6e7a00da1828855e4b223a82ff1c48bb06499ec13aac285f3c08f93b1b",
-      "backedUpAt": "2026-05-20T20:08:01.929Z",
+      "backedUpAt": "2026-05-22T11:47:42.734Z",
       "size": 2497
     },
     "agent/extensions/gpt-auto-router/index.ts": {
       "hash": "sha256:d11e3d179ed41061441f2f4941a5095a25391609a113baf8f117c7cb07ab7f10",
-      "backedUpAt": "2026-05-20T20:08:01.947Z",
+      "backedUpAt": "2026-05-22T11:47:42.755Z",
       "size": 19083
     },
     "agent/extensions/guardrails.json": {
       "hash": "sha256:81a73fc0f872991b72496c9f76c4d6210adb293e38a27a48abba99c846fe6fc6",
-      "backedUpAt": "2026-05-20T20:08:01.948Z",
+      "backedUpAt": "2026-05-22T11:47:42.755Z",
       "size": 191
     },
     "agent/extensions/hypr-theme-sync.js": {
       "hash": "sha256:576a2dfbf6b9b2a4c209dc5dd57e7afc33c1966aea5a938e633d43251983bd11",
-      "backedUpAt": "2026-05-20T20:08:01.966Z",
+      "backedUpAt": "2026-05-22T11:47:42.777Z",
       "size": 2412
     },
     "agent/extensions/list-google-models.js": {
       "hash": "sha256:ff8bcfbb01232b0678121f143446943c13332f55da69d53ac74f53d7b243a5cb",
-      "backedUpAt": "2026-05-20T20:08:01.984Z",
+      "backedUpAt": "2026-05-22T11:47:42.798Z",
       "size": 362
     },
     "agent/extensions/pi-config-backup/index.ts": {
-      "hash": "sha256:28024f42d1d295d8bba09f58607f965aff5384cad543d57ffd5e60d3b2906ae4",
+      "hash": "sha256:29aa0e9b431ebd99fdf38a60e3b97396b4ef73a51be92775d4cb711e58c16a20",
       "version": "0.2.0",
-      "backedUpAt": "2026-05-20T20:08:02.002Z",
-      "size": 22598
+      "backedUpAt": "2026-05-22T11:47:42.820Z",
+      "size": 22849
     },
     "agent/extensions/pi-harness/README.md": {
-      "hash": "sha256:cc49d12dc9eae83866bbb6928944cb07179d2ff85ac3f57950755cdfdc5a48ce",
-      "backedUpAt": "2026-05-20T20:08:02.002Z",
-      "size": 4018
+      "hash": "sha256:5d19b370220ff03ee9f70a5c94767ac3fa72069023173bf3ae96a4462a9e8a83",
+      "backedUpAt": "2026-05-22T11:47:42.820Z",
+      "size": 5755
     },
     "agent/extensions/pi-harness/index.ts": {
-      "hash": "sha256:c51230e93e496e084eb1abf57688d5e1ff7e577111c0b4bc42a53f6f84d81dc1",
-      "version": "0.4.2",
-      "backedUpAt": "2026-05-20T20:08:02.022Z",
-      "size": 64080
+      "hash": "sha256:00c5b37342d4b8e7d9fc881b610809e1b1ac62536317559e015ed84275620911",
+      "version": "0.4.3",
+      "backedUpAt": "2026-05-22T11:47:42.841Z",
+      "size": 86660
     },
     "agent/extensions/pi-skill-audit/README.md": {
       "hash": "sha256:c22331bbdc547127bc016201e5c212b3c1e9a80ec6e1d5c82187d48b05eb7fe0",
-      "backedUpAt": "2026-05-20T20:08:02.022Z",
+      "backedUpAt": "2026-05-22T11:47:42.842Z",
       "size": 2935
     },
     "agent/extensions/pi-skill-audit/index.ts": {
-      "hash": "sha256:f6c55158f736648f3ccd26d84072343c2157621bd866cd788ea8449eeb44c57e",
+      "hash": "sha256:551766e0287f732e4875d910ebb8af2c5a21d8b04684e103d009f21294496085",
       "version": "0.1.0",
-      "backedUpAt": "2026-05-20T20:08:02.039Z",
-      "size": 39754
+      "backedUpAt": "2026-05-22T11:47:42.863Z",
+      "size": 39765
     },
     "agent/extensions/ui-ux-design/index.ts": {
       "hash": "sha256:c60890b8943328d6d31ca770ab6d4a33a6413fdedca3fb3ce8842a3ea66cf2c1",
       "version": "0.1.0",
-      "backedUpAt": "2026-05-20T20:08:02.058Z",
+      "backedUpAt": "2026-05-22T11:47:42.885Z",
       "size": 16961
     },
     "agent/extensions/zai-auto-router/README.md": {
       "hash": "sha256:c614efee92f3b9a7f1109817a6826380343c78baabfa8dc416872a0f64851aa5",
-      "backedUpAt": "2026-05-20T20:08:02.058Z",
+      "backedUpAt": "2026-05-22T11:47:42.886Z",
       "size": 2236
     },
     "agent/extensions/zai-auto-router/index.ts": {
-      "hash": "sha256:221f4915f4a61f662d87c43454d96e9b28db159e4abbcf8611222954f7755ecb",
-      "backedUpAt": "2026-05-20T20:08:02.076Z",
-      "size": 19717
+      "hash": "sha256:8f8e45edebb9cdb89ccb18821334c5f67399c306f364f026b93d729cbe8a9cc7",
+      "backedUpAt": "2026-05-22T11:47:42.906Z",
+      "size": 19589
     },
     "agent/skills/frontend-design/.my-pi-source.json": {
       "hash": "sha256:a8097d74cf53d599a91e32fc7df33679ba0fb9f8c5d51070505a1c774db162ba",
-      "backedUpAt": "2026-05-20T20:08:02.076Z",
+      "backedUpAt": "2026-05-22T11:47:42.907Z",
       "size": 676
     },
     "agent/skills/frontend-design/SKILL.md": {
       "hash": "sha256:8bf9905dbcd9b1edb47f2a44cadbb9bb66314f73a8e3631ec7feee913777ceb8",
-      "backedUpAt": "2026-05-20T20:08:02.076Z",
+      "backedUpAt": "2026-05-22T11:47:42.907Z",
       "size": 4275
     },
     "agent/themes/tokyonight.json": {
       "hash": "sha256:8324200abc602896c7ec77a3530ef4ba78d4aec76444b17d524f0d935a45f7c4",
-      "backedUpAt": "2026-05-20T20:08:02.077Z",
+      "backedUpAt": "2026-05-22T11:47:42.930Z",
       "size": 2197
     },
     "agent/themes/wellpunk-dark.json": {
       "hash": "sha256:4ae066db19c6807570e7d40a656dea74933d7ad65c8a8c260154fa88d85b668f",
-      "backedUpAt": "2026-05-20T20:08:02.077Z",
+      "backedUpAt": "2026-05-22T11:47:42.930Z",
       "size": 2178
     },
     "agent/themes/wellpunk-light.json": {
       "hash": "sha256:363ae2f10fef85cb7ad52f8ad8cbe9dfef572c9c47990fa6752c644e1622ce25",
-      "backedUpAt": "2026-05-20T20:08:02.078Z",
+      "backedUpAt": "2026-05-22T11:47:42.931Z",
       "size": 2135
+    },
+    "agent/skills/obsidian-blog-post-review/SKILL.md": {
+      "hash": "sha256:4798223dcb70691378895e072090cd3df877c4c8ac2974cbdf3069609b61df7e",
+      "backedUpAt": "2026-05-22T11:47:42.908Z",
+      "size": 4561
+    },
+    "agent/skills/obsidian-blog-post-review/scripts/validate-post.mjs": {
+      "hash": "sha256:0332a5ff04c595717f73d5c445731fd31ade768ff6db937ff18d832b0a4c3661",
+      "backedUpAt": "2026-05-22T11:47:42.929Z",
+      "size": 5716
+    },
+    "agent/extensions/copilot-auto-router/README.md": {
+      "hash": "sha256:e41e1607b7ab4c4671ac81e636fd40deb7fb34a01dc54584c6eb916c1d4cc0ce",
+      "backedUpAt": "2026-05-22T11:47:42.669Z",
+      "size": 2344
+    },
+    "agent/extensions/copilot-auto-router/index.ts": {
+      "hash": "sha256:3cf1fd3bd1fbdff34e8f6dbb8ca522eceee77cbdd82275b9dd2cc740910879c7",
+      "backedUpAt": "2026-05-22T11:47:42.691Z",
+      "size": 19039
+    },
+    "agent/extensions/copilot-context/README.md": {
+      "hash": "sha256:5ee516bbff6ee07032060adf74bf100ea77bc1afce98319dbbab5b81c40fd644",
+      "backedUpAt": "2026-05-22T11:47:42.692Z",
+      "size": 2212
+    },
+    "agent/extensions/copilot-context/index.ts": {
+      "hash": "sha256:73de8737789d19e3088b4caff25b9865100049b80ad7d2b5bae3cbfb7bd05466",
+      "backedUpAt": "2026-05-22T11:47:42.712Z",
+      "size": 14996
     }
   }
 }

@@ -707,7 +707,7 @@ async function pickSkill(ctx: any, candidates: SkillCandidate[]): Promise<SkillC
 			description: `${shortPath(entry.candidate.path)}${entry.source.isSymlink ? ` -> ${shortPath(entry.source.sourcePath)}` : ""}${entry.duplicates.length ? ` (+${entry.duplicates.length} duplicate path${entry.duplicates.length === 1 ? "" : "s"})` : ""}`,
 		};
 	});
-	const picked = await ctx.ui.custom<string | null>((tui: any, theme: any, _kb: any, done: (value: string | null) => void) => {
+	const picked = await ctx.ui.custom((tui: any, theme: any, _kb: any, done: (value: string | null) => void) => {
 		const container = new Container();
 		container.addChild(new Text(theme.fg("accent", theme.bold(`Skill Manager — ${items.length} skills${items.length === candidates.length ? "" : ` (${candidates.length} paths)`}`))));
 		container.addChild(new Text(theme.fg("dim", "type prefix to filter • ↑↓ scroll • enter select • backspace edit filter • esc cancel")));
@@ -862,7 +862,7 @@ export default function piSkillAudit(pi: ExtensionAPI) {
 		],
 		parameters: AuditParams,
 		async execute(_toolCallId, params: AuditParamsType, _signal, onUpdate, ctx) {
-			onUpdate?.({ content: [{ type: "text", text: "Auditing skills..." }] });
+			onUpdate?.({ content: [{ type: "text", text: "Auditing skills..." }], details: {} });
 			const result = await runAudit(ctx.cwd, params);
 			return {
 				content: [{ type: "text", text: `Audited ${result.audited} skills. Findings: ${result.counts.error} errors, ${result.counts.warn} warnings, ${result.counts.info} info. Report written to ${result.reportPath}` }],
@@ -882,7 +882,7 @@ export default function piSkillAudit(pi: ExtensionAPI) {
 		],
 		parameters: ImproveParams,
 		async execute(_toolCallId, params: ImproveParamsType, signal, onUpdate, ctx) {
-			onUpdate?.({ content: [{ type: "text", text: `Generating skill improvement proposal with Gemini Flash for ${params.query}...` }] });
+			onUpdate?.({ content: [{ type: "text", text: `Generating skill improvement proposal with Gemini Flash for ${params.query}...` }], details: {} });
 			const result = await runImprove(ctx.cwd, params.query, ctx, signal);
 			if (result.matches?.length) {
 				return {

@@ -3,7 +3,7 @@ import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const VERSION = "0.4.2";
+const VERSION = "0.4.3";
 const HARNESS_DIR = path.join(".pi", "harness");
 const EVENTS_FILE = "events.jsonl";
 const SUMMARY_FILE = "summary.md";
@@ -106,6 +106,7 @@ const HarnessParams = Type.Object({
 		Type.Literal("recall"),
 		Type.Literal("forget"),
 		Type.Literal("reflect"),
+		Type.Literal("reflectAi"),
 		Type.Literal("memoryCandidates"),
 		Type.Literal("improveReport"),
 	], { description: "Harness action to run." }),
@@ -363,7 +364,17 @@ async function completeTaskState(root: string, task: TaskState, note?: string): 
 			}
 		}
 		if (candidates.length) {
-			reflectionHint = `\n\n💡 Memory candidates from this task (use \`remember type: content\` to persist):\n${candidates.slice(0, 10).join("\n")}`;
+			reflectionHint = [
+				"",
+				"💡 Memory candidates from this task:",
+				...candidates.slice(0, 10),
+				"",
+				"To persist one, choose a valid type and run for example:",
+				"  /harness remember mistakes: <reusable lesson to avoid repeating>",
+				"  /harness remember playbooks: <repeatable procedure>",
+				`Valid types: ${MEMORY_TYPES.join(", ")}`,
+				"For AI-assisted curation before closing future tasks, run: /harness reflect-ai",
+			].join("\n");
 		}
 	} catch { /* non-critical */ }
 	task.phase = "C";
@@ -689,6 +700,431 @@ function clearHarnessCommandOutput(ctx: ExtensionContext): void {
 	ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, undefined);
 }
 
+function taskDisplayId(task: { id: string; slug: string }): string {
+	return `${task.id}-${task.slug}`;
+}
+
+function clipLine(value: string, width: number): string {
+	if (width <= 0) return "";
+	return value.length <= width ? value : `${value.slice(0, Math.max(0, width - 1))}…`;
+}
+
+function wrapPlainLine(value: string, width: number): string[] {
+	if (width <= 0) return [""];
+	if (!value) return [""];
+	const lines: string[] = [];
+	let rest = value;
+	while (rest.length > width) {
+		lines.push(rest.slice(0, width));
+		rest = rest.slice(width);
+	}
+	lines.push(rest);
+	return lines;
+}
+
+function wrapPlainText(value: string, width: number): string[] {
+	return value.split("\n").flatMap((line) => wrapPlainLine(line, width));
+}
+
+type StyleFn = (text: string) => string;
+
+function padPanelLine(value: string, width: number): string {
+	return clipLine(value, width).padEnd(Math.max(0, width), " ");
+}
+
+function panelTop(title: string, width: number): string {
+	const inner = Math.max(0, width - 2);
+	const label = title ? ` ${title} ` : "";
+	const rest = Math.max(0, inner - label.length);
+	return `╭${clipLine(label, inner)}${"─".repeat(rest)}╮`;
+}
+
+function panelMid(width: number): string {
+	return `├${"─".repeat(Math.max(0, width - 2))}┤`;
+}
+
+function panelBottom(width: number): string {
+	return `╰${"─".repeat(Math.max(0, width - 2))}╯`;
+}
+
+function panelBody(value: string, width: number): string {
+	return `│${padPanelLine(value, Math.max(0, width - 2))}│`;
+}
+
+class HarnessOutputViewerComponent {
+	private offset = 0;
+	constructor(
+		private readonly title: string,
+		private readonly content: string,
+		private readonly done: () => void,
+		private readonly panel: StyleFn,
+		private readonly header: StyleFn,
+		private readonly border: StyleFn,
+		private readonly dim: StyleFn,
+	) {}
+
+	handleInput(data: string): void {
+		if (data === "\x1b" || data === "q") return this.done();
+		if (data === "\x1b[A" || data === "k") this.offset = Math.max(0, this.offset - 1);
+		else if (data === "\x1b[B" || data === "j") this.offset += 1;
+		else if (data === "\x1b[5~") this.offset = Math.max(0, this.offset - 12);
+		else if (data === "\x1b[6~" || data === " ") this.offset += 12;
+		else if (data === "\x1b[H") this.offset = 0;
+		else if (data === "\x1b[F") this.offset = Number.MAX_SAFE_INTEGER;
+	}
+
+	render(width: number): string[] {
+		const innerWidth = Math.max(20, width - 4);
+		const lines = wrapPlainText(this.content, innerWidth);
+		const viewport = 24;
+		const maxOffset = Math.max(0, lines.length - viewport);
+		this.offset = Math.max(0, Math.min(this.offset, maxOffset));
+		const title = `${this.title} · ${lines.length} lines · ${this.offset + 1}-${Math.min(lines.length, this.offset + viewport)}`;
+		const help = "↑↓/j/k scroll · PgUp/PgDn/space page · Home/End · q/Esc close";
+		const rendered: string[] = [];
+		rendered.push(this.header(panelTop(title, width)));
+		rendered.push(this.header(panelBody(` ${help}`, width)));
+		rendered.push(this.border(panelMid(width)));
+		for (const line of lines.slice(this.offset, this.offset + viewport)) {
+			rendered.push(this.panel(panelBody(` ${line}`, width)));
+		}
+		while (rendered.length < viewport + 3) rendered.push(this.panel(panelBody("", width)));
+		rendered.push(this.border(panelMid(width)));
+		rendered.push(this.dim(panelBody(` ${lines.length ? this.offset + 1 : 0}/${lines.length} · q/Esc close`, width)));
+		rendered.push(this.border(panelBottom(width)));
+		return rendered;
+	}
+
+	invalidate(): void {}
+}
+
+async function showOutputViewer(ctx: ExtensionContext, title: string, content: string): Promise<void> {
+	await ctx.ui.custom<void>((tui, theme, _keybindings, done) => {
+		const panel = (s: string) => theme.bg("customMessageBg", theme.fg("text", s));
+		const header = (s: string) => theme.bg("selectedBg", theme.fg("accent", s));
+		const border = (s: string) => theme.bg("customMessageBg", theme.fg("borderAccent", s));
+		const dim = (s: string) => theme.bg("customMessageBg", theme.fg("dim", s));
+		const viewer = new HarnessOutputViewerComponent(title, content, done, panel, header, border, dim);
+		return {
+			render: (width: number) => viewer.render(width),
+			handleInput: (data: string) => {
+				viewer.handleInput(data);
+				tui.requestRender();
+			},
+			invalidate: () => viewer.invalidate(),
+		};
+	}, { overlay: true, overlayOptions: { width: "94%", maxHeight: "88%", anchor: "center", margin: 1 } });
+}
+
+function shouldUseOutputViewer(cmd: string, output: string): boolean {
+	const lines = output.split("\n");
+	return ["reflect-ai", "reflect", "report", "summary", "context", "improve-report"].includes(cmd) || lines.length > 40 || output.length > 6000;
+}
+
+class TaskBrowserComponent {
+	private selected = 0;
+	private query = "";
+	private readonly pageSize = 14;
+	constructor(
+		private readonly tasks: HarnessIndex["tasks"],
+		private readonly activeTaskId: string | undefined,
+		private readonly includeDone: boolean,
+		private readonly done: (command: string | null) => void,
+		private readonly panel: StyleFn,
+		private readonly header: StyleFn,
+		private readonly border: StyleFn,
+		private readonly dim: StyleFn,
+		private readonly selectedStyle: StyleFn,
+	) {}
+
+	private filtered(): HarnessIndex["tasks"] {
+		const q = this.query.trim().toLowerCase();
+		const base = this.includeDone ? this.tasks : this.tasks.filter((task) => task.status !== "done");
+		if (!q) return base;
+		return base.filter((task) =>
+			task.title.toLowerCase().includes(q) ||
+			task.slug.includes(q) ||
+			task.id.includes(q) ||
+			task.status.includes(q) ||
+			task.phase.toLowerCase().includes(q),
+		);
+	}
+
+	private clamp(): void {
+		const count = this.filtered().length;
+		this.selected = Math.max(0, Math.min(this.selected, Math.max(0, count - 1)));
+	}
+
+	handleInput(data: string): void {
+		const items = this.filtered();
+		if (data === "\x1b" || data === "q") return this.done(null);
+		if (data === "\x1b[A" || data === "k") {
+			this.selected = Math.max(0, this.selected - 1);
+			return;
+		}
+		if (data === "\x1b[B" || data === "j") {
+			this.selected = Math.min(Math.max(0, items.length - 1), this.selected + 1);
+			return;
+		}
+		if (data === "\x1b[5~") {
+			this.selected = Math.max(0, this.selected - this.pageSize);
+			return;
+		}
+		if (data === "\x1b[6~") {
+			this.selected = Math.min(Math.max(0, items.length - 1), this.selected + this.pageSize);
+			return;
+		}
+		if (data === "\r" || data === "\n") {
+			const task = items[this.selected];
+			if (task) this.done(`/harness reflect-ai ${taskDisplayId(task)}`);
+			return;
+		}
+		if (data === "r") {
+			const task = items[this.selected];
+			if (task) this.done(`/harness reflect ${taskDisplayId(task)}`);
+			return;
+		}
+		if (data === "c") {
+			const task = items[this.selected];
+			if (task) this.done(`/harness close ${taskDisplayId(task)}`);
+			return;
+		}
+		if (data === "\x7f" || data === "\b") {
+			this.query = this.query.slice(0, -1);
+			this.selected = 0;
+			return;
+		}
+		if (data.length === 1 && data >= " " && data !== "q") {
+			this.query += data;
+			this.selected = 0;
+		}
+		this.clamp();
+	}
+
+	render(width: number): string[] {
+		const items = this.filtered();
+		this.clamp();
+		const open = this.tasks.filter((task) => task.status !== "done").length;
+		const doneCount = this.tasks.length - open;
+		const start = Math.max(0, Math.min(this.selected - Math.floor(this.pageSize / 2), Math.max(0, items.length - this.pageSize)));
+		const visible = items.slice(start, start + this.pageSize);
+		const title = `pi-harness tasks ${this.includeDone ? "all" : "open"} · ${items.length}/${this.tasks.length} shown · open ${open} · done ${doneCount}`;
+		const rendered = [
+			this.header(panelTop(title, width)),
+			this.header(panelBody(` filter: ${this.query || "(type to search)"}`, width)),
+			this.header(panelBody(" ↑↓/j/k move · type filter · enter AI reflect · r reflect · c close · q/esc exit", width)),
+			this.border(panelMid(width)),
+		];
+		if (!visible.length) rendered.push(this.panel(panelBody(" No tasks match the current filter.", width)));
+		for (let i = 0; i < visible.length; i++) {
+			const task = visible[i]!;
+			const absolute = start + i;
+			const selected = absolute === this.selected;
+			const active = task.id === this.activeTaskId;
+			const marker = selected ? ">" : " ";
+			const state = task.status === "done" ? "✓" : active ? "*" : "·";
+			const style = selected ? this.selectedStyle : this.panel;
+			rendered.push(style(panelBody(` ${marker} ${state} ${task.title}`, width)));
+			rendered.push(style(panelBody(`     ${taskDisplayId(task)} · ${task.phase} ${PHASE_LABELS[task.phase]} · ${task.status}`, width)));
+		}
+		while (rendered.length < this.pageSize * 2 + 4) rendered.push(this.panel(panelBody("", width)));
+		rendered.push(this.border(panelMid(width)));
+		rendered.push(this.dim(panelBody(` selected ${items.length ? this.selected + 1 : 0}/${items.length}; Enter inserts /harness reflect-ai <task-id>`, width)));
+		rendered.push(this.border(panelBottom(width)));
+		return rendered;
+	}
+
+	invalidate(): void {}
+}
+
+async function showTaskBrowser(ctx: ExtensionContext, root: string, includeDone: boolean): Promise<string> {
+	await ensureHarness(root);
+	const index = await loadIndex(root);
+	const command = await ctx.ui.custom<string | null>((tui, theme, _keybindings, done) => {
+		const panel = (s: string) => theme.bg("customMessageBg", theme.fg("text", s));
+		const header = (s: string) => theme.bg("selectedBg", theme.fg("accent", s));
+		const border = (s: string) => theme.bg("customMessageBg", theme.fg("borderAccent", s));
+		const dim = (s: string) => theme.bg("customMessageBg", theme.fg("dim", s));
+		const selectedStyle = (s: string) => theme.bg("selectedBg", theme.fg("text", s));
+		const browser = new TaskBrowserComponent(index.tasks, index.activeTaskId, includeDone, done, panel, header, border, dim, selectedStyle);
+		return {
+			render: (width: number) => browser.render(width),
+			handleInput: (data: string) => {
+				browser.handleInput(data);
+				tui.requestRender();
+			},
+			invalidate: () => browser.invalidate(),
+		};
+	}, { overlay: true, overlayOptions: { width: "92%", maxHeight: "85%", anchor: "center", margin: 1 } });
+	if (command) {
+		(ctx.ui as any).setEditorText?.(command);
+		return `Task selected. Inserted command into editor:\n${command}`;
+	}
+	return "Task browser closed.";
+}
+
+interface ReflectApprovalItem {
+	command: string;
+	type: MemoryType;
+	content: string;
+	selected: boolean;
+}
+
+function normalizeReflectCommand(line: string): string {
+	return line
+		.trim()
+		.replace(/^[-*]\s*/, "")
+		.replace(/^\d+[.)]\s*/, "")
+		.replace(/^`+|`+$/g, "")
+		.trim();
+}
+
+function parseReflectAiRememberCommands(output: string): ReflectApprovalItem[] {
+	const seen = new Set<string>();
+	const items: ReflectApprovalItem[] = [];
+	const addItem = (rawType: string, rawContent: string) => {
+		const type = rawType.toLowerCase() as MemoryType;
+		let content = rawContent.trim()
+			.replace(/^`+|`+$/g, "")
+			.replace(/\s+\/harness\s+remember\s+[a-z]+\s*:\s*.*$/i, "")
+			.trim();
+		if (!MEMORY_TYPES.includes(type) || !content) return;
+		// Avoid capturing section headers or explanatory fragments.
+		if (/^(suggested|rejected|copy-paste|commands?)\b/i.test(content)) return;
+		content = content.replace(/\s+/g, " ");
+		const key = `${type}:${content}`.toLowerCase();
+		if (seen.has(key)) return;
+		seen.add(key);
+		items.push({ command: `/harness remember ${type}: ${content}`, type, content, selected: true });
+	};
+	for (const rawLine of output.split("\n")) {
+		const line = normalizeReflectCommand(rawLine);
+		// Exact copy-paste command format.
+		let match = line.match(/^\/?harness\s+remember\s+([a-z]+)\s*:\s*(.+)$/i);
+		if (match) {
+			addItem(match[1]!, match[2]!);
+			continue;
+		}
+		// Markdown list format emitted by models: `1. **facts**: ...` or `- **playbooks**: ...`.
+		match = line.match(/^(?:\d+[.)]\s*|[-*]\s*)?(?:\*\*)?([a-z]+)(?:\*\*)?\s*:\s*(.+)$/i);
+		if (match) {
+			addItem(match[1]!, match[2]!);
+			continue;
+		}
+		// Backticked type format: `facts`: ...
+		match = line.match(/^(?:\d+[.)]\s*|[-*]\s*)?`([a-z]+)`\s*:\s*(.+)$/i);
+		if (match) addItem(match[1]!, match[2]!);
+	}
+	return items.slice(0, 12);
+}
+
+class ReflectApprovalComponent {
+	private selected = 0;
+	private offset = 0;
+	private readonly pageSize = 10;
+	constructor(
+		private readonly items: ReflectApprovalItem[],
+		private readonly done: (result: "apply" | "report" | null) => void,
+		private readonly panel: StyleFn,
+		private readonly header: StyleFn,
+		private readonly border: StyleFn,
+		private readonly dim: StyleFn,
+		private readonly selectedStyle: StyleFn,
+		private readonly success: StyleFn,
+	) {}
+
+	private clamp(): void {
+		this.selected = Math.max(0, Math.min(this.selected, Math.max(0, this.items.length - 1)));
+		if (this.selected < this.offset) this.offset = this.selected;
+		if (this.selected >= this.offset + this.pageSize) this.offset = this.selected - this.pageSize + 1;
+	}
+
+	handleInput(data: string): void {
+		if (data === "\x1b" || data === "q") return this.done(null);
+		if (data === "a" || data === "\r" || data === "\n") return this.done("apply");
+		if (data === "v" || data === "r") return this.done("report");
+		if (data === "\x1b[A" || data === "k") this.selected -= 1;
+		else if (data === "\x1b[B" || data === "j") this.selected += 1;
+		else if (data === "\x1b[5~") this.selected -= this.pageSize;
+		else if (data === "\x1b[6~") this.selected += this.pageSize;
+		else if (data === " " || data === "x") {
+			const item = this.items[this.selected];
+			if (item) item.selected = !item.selected;
+		}
+		else if (data === "t") {
+			const anyUnselected = this.items.some((item) => !item.selected);
+			for (const item of this.items) item.selected = anyUnselected;
+		}
+		this.clamp();
+	}
+
+	render(width: number): string[] {
+		this.clamp();
+		const selectedCount = this.items.filter((item) => item.selected).length;
+		const title = `reflect-ai approval · ${selectedCount}/${this.items.length} selected`;
+		const rendered = [
+			this.header(panelTop(title, width)),
+			this.header(panelBody(" ↑↓/j/k move · space toggle · t all · a/enter apply · v report · q cancel", width)),
+			this.border(panelMid(width)),
+		];
+		const visible = this.items.slice(this.offset, this.offset + this.pageSize);
+		for (let i = 0; i < visible.length; i++) {
+			const item = visible[i]!;
+			const absolute = this.offset + i;
+			const focused = absolute === this.selected;
+			const style = focused ? this.selectedStyle : this.panel;
+			const box = item.selected ? "☑" : "☐";
+			const typeLabel = item.selected ? this.success(item.type.padEnd(11, " ")) : item.type.padEnd(11, " ");
+			rendered.push(style(panelBody(` ${focused ? ">" : " "} ${box} ${typeLabel} ${clipLine(item.content, Math.max(20, width - 22))}`, width)));
+			const cmd = clipLine(item.command, Math.max(20, width - 8));
+			rendered.push(style(panelBody(`     ${cmd}`, width)));
+		}
+		while (rendered.length < this.pageSize * 2 + 3) rendered.push(this.panel(panelBody("", width)));
+		rendered.push(this.border(panelMid(width)));
+		rendered.push(this.dim(panelBody(` Apply selected memories now, or press v to inspect the full read-only report.`, width)));
+		rendered.push(this.border(panelBottom(width)));
+		return rendered;
+	}
+
+	invalidate(): void {}
+}
+
+async function showReflectAiApproval(ctx: ExtensionContext, root: string, output: string): Promise<string | undefined> {
+	const items = parseReflectAiRememberCommands(output);
+	if (!items.length) return undefined;
+	const result = await ctx.ui.custom<"apply" | "report" | null>((tui, theme, _keybindings, done) => {
+		const panel = (s: string) => theme.bg("customMessageBg", theme.fg("text", s));
+		const header = (s: string) => theme.bg("selectedBg", theme.fg("accent", s));
+		const border = (s: string) => theme.bg("customMessageBg", theme.fg("borderAccent", s));
+		const dim = (s: string) => theme.bg("customMessageBg", theme.fg("dim", s));
+		const selectedStyle = (s: string) => theme.bg("selectedBg", theme.fg("text", s));
+		const success = (s: string) => theme.fg("success", s);
+		const approval = new ReflectApprovalComponent(items, done, panel, header, border, dim, selectedStyle, success);
+		return {
+			render: (width: number) => approval.render(width),
+			handleInput: (data: string) => {
+				approval.handleInput(data);
+				tui.requestRender();
+			},
+			invalidate: () => approval.invalidate(),
+		};
+	}, { overlay: true, overlayOptions: { width: "94%", maxHeight: "85%", anchor: "center", margin: 1 } });
+	if (result === "report") {
+		await showOutputViewer(ctx, "pi-harness: reflect-ai report", output);
+		return "Opened full reflect-ai report. No memories applied.";
+	}
+	if (result !== "apply") return "reflect-ai approval cancelled. No memories applied.";
+	const selected = items.filter((item) => item.selected);
+	if (!selected.length) return "No reflect-ai suggestions selected. No memories applied.";
+	const applied: string[] = [];
+	for (const item of selected) {
+		await rememberMemory(root, `${item.type}: ${item.content}`);
+		applied.push(`- ${item.type}: ${item.content}`);
+	}
+	await appendTrace(root, { type: "reflect_ai_approval", applied: selected.length });
+	return [`Applied ${selected.length} reflect-ai memory suggestion(s):`, ...applied].join("\n");
+}
+
 async function buildTaskList(root: string, includeDone = false): Promise<string> {
 	if (!(await exists(path.join(harnessPath(root), "index.json")))) {
 		return `pi-harness is not initialized in ${root}. Run /harness init or call harness({ action: "init" }).`;
@@ -709,7 +1145,7 @@ async function buildTaskList(root: string, includeDone = false): Promise<string>
 	for (const task of tasks) {
 		const marker = task.id === index.activeTaskId ? "*" : "-";
 		lines.push(`${marker} ${task.title}`);
-		lines.push(`  id: ${task.id}-${task.slug}`);
+		lines.push(`  id: ${taskDisplayId(task)}`);
 		lines.push(`  phase: ${task.phase} ${PHASE_LABELS[task.phase]} | status: ${task.status}`);
 	}
 	return lines.join("\n");
@@ -880,9 +1316,17 @@ async function forgetMemory(root: string, text: string): Promise<string> {
 	return `Removed ${removed} entry(ies) from ${type}.`;
 }
 
-async function reflectOnTask(root: string): Promise<string> {
-	const task = await getActiveTask(root);
-	if (!task) throw new Error("No active task. Use startTask first.");
+async function taskForReflection(root: string, selector?: string): Promise<TaskState> {
+	const trimmed = selector?.trim();
+	const task = trimmed ? await findTask(root, trimmed) : await getActiveTask(root);
+	if (!task) {
+		throw new Error(trimmed ? `Task not found: ${trimmed}` : "No active task. Use startTask first or pass a task id/title.");
+	}
+	return task;
+}
+
+async function reflectOnTask(root: string, selector?: string): Promise<string> {
+	const task = await taskForReflection(root, selector);
 	const dir = taskDir(root, task);
 	const evidence = await readText(path.join(dir, "evidence.md"));
 	const journal = await readText(path.join(dir, "journal.md"));
@@ -916,7 +1360,9 @@ async function reflectOnTask(root: string): Promise<string> {
 	lines.push(
 		"## Task artifacts for manual review",
 		"",
-		`Use \`harness({ action: 'remember', text: 'type: content' })\` for each item worth persisting.`,
+		"Persist only high-signal reusable lessons. Examples:",
+		"  /harness remember mistakes: <reusable lesson to avoid repeating>",
+		"  /harness remember playbooks: <repeatable procedure>",
 		`Valid types: ${MEMORY_TYPES.join(", ")}`,
 		"",
 		"### Evidence (last 20 lines)",
@@ -936,8 +1382,78 @@ async function reflectOnTask(root: string): Promise<string> {
 }
 
 // memoryCandidates now just calls reflect (merged)
-async function memoryCandidates(root: string): Promise<string> {
-	return await reflectOnTask(root);
+async function memoryCandidates(root: string, selector?: string): Promise<string> {
+	return await reflectOnTask(root, selector);
+}
+
+async function reflectOnTaskWithModel(ctx: ExtensionContext, root: string, selector?: string): Promise<string> {
+	const task = await taskForReflection(root, selector);
+	const model = ctx.model ?? ctx.modelRegistry.find("google", "gemini-2.5-flash");
+	if (!model) throw new Error("No model available for AI reflection.");
+	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+	if (!auth.ok) throw new Error(String((auth as any).error));
+	if (!auth.apiKey) throw new Error(`No API key for ${model.provider}.`);
+
+	const [{ complete }] = await Promise.all([
+		import("@earendil-works/pi-ai"),
+	]);
+	const dir = taskDir(root, task);
+	const evidence = truncate(await readText(path.join(dir, "evidence.md")), 6000);
+	const journal = truncate(await readText(path.join(dir, "journal.md")), 5000);
+	const ideas = truncate(await readText(path.join(dir, "ideas.md")), 2500);
+	const decisions = truncate((await recentLines(path.join(harnessPath(root), "decisions.md"), 40)).join("\n"), 4000);
+	const existingMemory = truncate(await recallMemory(root), 6000);
+	const prompt = `You are pi-harness continuous-improvement reviewer. Analyze the completed or active task artifacts and propose ONLY high-signal reusable improvements.
+
+Rules:
+- Read-only: do not claim anything was applied.
+- Prefer 0-5 suggestions total; quality over quantity.
+- Every suggested memory must use exactly one valid type: ${MEMORY_TYPES.join(", ")}.
+- Reject generic operational notes, one-off facts, and anything not useful one month later.
+- Deduplicate against existing memory.
+- Do not include secrets or authentication material.
+- Output Markdown with these sections exactly:
+  1. Suggested memories
+  2. Suggested policy/playbook/code improvements
+  3. Rejected candidates
+  4. Copy-paste commands
+- In copy-paste commands, use executable examples like: /harness remember mistakes: <content>
+
+Task: ${task.title}
+Phase: ${task.phase} (${PHASE_LABELS[task.phase]})
+
+Existing memory:
+${existingMemory || "(none)"}
+
+Recent decisions:
+${decisions || "(none)"}
+
+Evidence:
+${evidence || "(none)"}
+
+Journal:
+${journal || "(none)"}
+
+Ideas:
+${ideas || "(none)"}`;
+	const response = await complete(
+		model,
+		{
+			messages: [{
+				role: "user" as const,
+				content: [{ type: "text" as const, text: prompt }],
+				timestamp: Date.now(),
+			}],
+		},
+		{ apiKey: auth.apiKey, headers: auth.headers, maxTokens: 1800, signal: ctx.signal },
+	);
+	const text = response.content
+		.filter((item): item is { type: "text"; text: string } => item.type === "text")
+		.map((item) => item.text)
+		.join("\n")
+		.trim();
+	await appendTrace(root, { type: "reflect_ai", taskId: task.id, model: `${model.provider}/${model.id}` });
+	return [`# AI Reflection: continuous improvement suggestions`, "", `Model: ${model.provider}/${model.id}`, "", text || "(model returned no text)", "", "This report is read-only. Apply only approved suggestions manually."].join("\n");
 }
 
 async function improveReport(root: string): Promise<string> {
@@ -1107,9 +1623,11 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			if (!params.text) throw new Error("text is required for forget. Format: 'type: content substring'");
 			return await forgetMemory(root, params.text);
 		case "reflect":
-			return await reflectOnTask(root);
+			return await reflectOnTask(root, params.text);
+		case "reflectAi":
+			throw new Error("reflectAi requires Pi extension context; use /harness reflect-ai.");
 		case "memoryCandidates":
-			return await memoryCandidates(root);
+			return await memoryCandidates(root, params.text);
 		case "improveReport":
 			return await improveReport(root);
 		default:
@@ -1124,7 +1642,8 @@ function commandHelp(): string {
 		"Commands:",
 		"  init                         initialize .pi/harness in this project",
 		"  status                       show harness status",
-		"  tasks [all]                  list open tasks; use all to include done tasks",
+		"  tasks [all]                  list tasks; with 'all' opens navigable browser for closed tasks",
+		"  tasks-ui [all]               open navigable task browser without widget truncation",
 		"  context                      show injected context summary",
 		"  task <title>                 start a task in phase P",
 		"  phase <P|R|E|V|C>            set active task phase",
@@ -1147,8 +1666,9 @@ function commandHelp(): string {
 		"  remember <type>: <content>   save to durable memory (types: facts, preferences, patterns, mistakes, playbooks, glossary)",
 		"  recall [type|query]          retrieve memories (all, by type, or substring search)",
 		"  forget <type>: <substring>   remove memory entries matching substring",
-		"  reflect                      review task artifacts and suggest what to memorize",
-		"  memory-candidates            heuristic scan for memorizable lines in current task",
+		"  reflect [task-id]            review active or selected task and suggest what to memorize",
+		"  reflect-ai [task-id]         ask current model for suggestions, then approve memories with checkboxes",
+		"  memory-candidates [task-id]  heuristic scan for memorizable lines in a task",
 		"  improve-report               generate improvement report from mistakes/patterns",
 	].join("\n");
 }
@@ -1166,7 +1686,7 @@ async function evaluateGoalWithModel(ctx: ExtensionContext, goal: GoalState): Pr
 	const model = ctx.modelRegistry.find("google", "gemini-2.5-flash") ?? ctx.model;
 	if (!model) throw new Error("No model available for goal evaluation.");
 	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-	if (!auth.ok) throw new Error(auth.error);
+	if (!auth.ok) throw new Error(String((auth as any).error));
 	if (!auth.apiKey) throw new Error(`No API key for ${model.provider}.`);
 
 	const [{ complete }, { convertToLlm, serializeConversation }] = await Promise.all([
@@ -1312,7 +1832,11 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				output = await handleHarness(root, { action: "status" } as HarnessParamsType);
 				break;
 			case "tasks":
-				output = await handleHarness(root, { action: "tasks", text: rest } as HarnessParamsType);
+				if (rest.split(/\s+/).includes("all") && !rest.split(/\s+/).includes("text")) output = await showTaskBrowser(ctx, root, true);
+				else output = await handleHarness(root, { action: "tasks", text: rest } as HarnessParamsType);
+				break;
+			case "tasks-ui":
+				output = await showTaskBrowser(ctx, root, rest.split(/\s+/).includes("all"));
 				break;
 			case "context":
 				output = await handleHarness(root, { action: "readContext" } as HarnessParamsType);
@@ -1380,10 +1904,23 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				output = await handleHarness(root, { action: "forget", text: rest } as HarnessParamsType);
 				break;
 			case "reflect":
-				output = await handleHarness(root, { action: "reflect" } as HarnessParamsType);
+				output = await handleHarness(root, { action: "reflect", text: rest || undefined } as HarnessParamsType);
 				break;
+			case "reflect-ai": {
+				const target = rest || "active task";
+				const modelLabel = ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : "fallback model";
+				ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, [
+					`pi-harness: reflect-ai analyzing ${target}...`,
+					`model: ${modelLabel}`,
+					"This can take a moment. Result will open in a scrollable panel.",
+				], { placement: "aboveEditor" });
+				ctx.ui.notify("pi-harness reflect-ai: analyzing task", "info");
+				output = await reflectOnTaskWithModel(ctx, root, rest || undefined);
+				output = await showReflectAiApproval(ctx, root, output) ?? output;
+				break;
+			}
 			case "memory-candidates":
-				output = await handleHarness(root, { action: "memoryCandidates" } as HarnessParamsType);
+				output = await handleHarness(root, { action: "memoryCandidates", text: rest || undefined } as HarnessParamsType);
 				break;
 			case "improve-report":
 				output = await handleHarness(root, { action: "improveReport" } as HarnessParamsType);
@@ -1392,7 +1929,13 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				output = commandHelp();
 		}
 		if (await exists(path.join(harnessPath(root), "index.json"))) await refreshHarnessUi(ctx, root);
-		ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, commandOutputLines(output), { placement: "aboveEditor" });
+		const approvalSummary = cmd === "reflect-ai" && !output.startsWith("# AI Reflection");
+		if (shouldUseOutputViewer(cmd, output) && !approvalSummary) {
+			ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, undefined);
+			await showOutputViewer(ctx, `pi-harness: ${cmd}`, output);
+		} else {
+			ctx.ui.setWidget(HARNESS_COMMAND_OUTPUT_WIDGET, commandOutputLines(output), { placement: "aboveEditor" });
+		}
 
 		// Clear the widget automatically at the start of the next turn.
 		// Register once for the whole extension to avoid piling up listeners.
@@ -1417,7 +1960,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerCommand("harness", {
 		description: "Project harness: durable context, PREVC tasks, goals, evidence, and reports",
 		getArgumentCompletions: (prefix) => {
-			const commands = ["init", "status", "tasks", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "note", "idea", "contract", "plan", "goal", "summary", "rebuild-summary", "report", "remember", "recall", "forget", "reflect", "memory-candidates", "improve-report", "help"];
+			const commands = ["init", "status", "tasks", "tasks-ui", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "note", "idea", "contract", "plan", "goal", "summary", "rebuild-summary", "report", "remember", "recall", "forget", "reflect", "reflect-ai", "memory-candidates", "improve-report", "help"];
 			const filtered = commands.filter((cmd) => cmd.startsWith(prefix.trim()));
 			return filtered.length ? filtered.map((cmd) => ({ value: cmd, label: cmd })) : null;
 		},

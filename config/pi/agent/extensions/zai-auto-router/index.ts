@@ -43,7 +43,7 @@ const ZAI_MODELS = {
 // Vision fallback: used when images are detected and GLM-5V-Turbo is unavailable
 const VISION_FALLBACK = {
 	provider: "google",
-	model: "gemini-2.5-flash",
+	model: "gemini-3.5-flash",
 } as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -249,6 +249,15 @@ export default function zaiAutoRouter(pi: ExtensionAPI) {
 	}
 
 	/**
+	 * Apply Pi thinking level that most closely matches Z.ai's enabled/disabled
+	 * thinking modes. Older versions used modelRegistry.setConfig(), but that is
+	 * not part of Pi's public ModelRegistry type.
+	 */
+	function applyThinkingForRoute(reason: RouteReason) {
+		pi.setThinkingLevel(reason === "simple_tasks" ? "off" : "medium");
+	}
+
+	/**
 	 * Apply the routed model.
 	 * For vision, uses cross-provider fallback (google/gemini-2.5-flash).
 	 * For other routes, uses zai models with thinking mode configuration.
@@ -310,14 +319,7 @@ export default function zaiAutoRouter(pi: ExtensionAPI) {
 
 		// Don't switch if already on the target model
 		if (ctx.model && ctx.model.provider === "zai" && ctx.model.id === targetModelId) {
-			// Update thinking mode if needed
-			if (reason === "simple_tasks") {
-				// For fast mode, ensure thinking is disabled
-				ctx.modelRegistry.setConfig(ctx.model.id, { thinking: "disabled" });
-			} else {
-				// For complex tasks, ensure thinking is enabled
-				ctx.modelRegistry.setConfig(ctx.model.id, { thinking: "enabled" });
-			}
+			applyThinkingForRoute(reason);
 			
 			lastRoute = reason;
 			lastModelApplied = targetModelId;
@@ -331,15 +333,11 @@ export default function zaiAutoRouter(pi: ExtensionAPI) {
 			return false;
 		}
 
-		// Set thinking mode based on the route reason
-		if (reason === "simple_tasks") {
-			ctx.modelRegistry.setConfig(model.id, { thinking: "disabled" });
-		} else {
-			ctx.modelRegistry.setConfig(model.id, { thinking: "enabled" });
-		}
+		applyThinkingForRoute(reason);
 
 		const success = await pi.setModel(model);
 		if (success) {
+			applyThinkingForRoute(reason);
 			lastRoute = reason;
 			lastModelApplied = targetModelId;
 			lastProviderApplied = "zai";
