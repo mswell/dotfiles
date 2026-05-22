@@ -104,6 +104,7 @@ symlink|$home/.config/kitty/themes/$theme.conf|$home/.config/kitty/current-theme
 symlink|$home/.config/rofi/colors/$theme.rasi|$home/.config/rofi/colors/current.rasi
 symlink|$home/.config/tmux/themes/$theme.conf|$home/.config/tmux/current-theme.conf
 symlink|$home/.config/fzf/themes/$theme.sh|$home/.config/fzf/current-theme.sh
+symlink|$home/.config/tofi/themes/$theme.conf|$home/.config/tofi/current-configV
 symlink|$home/.config/zsh/themes/$theme.zsh|$home/.config/zsh/current-theme.zsh
 symlink|$home/.config/Kvantum/themes/$theme.kvconfig|$home/.config/Kvantum/kvantum.kvconfig
 symlink|$home/.config/bat/themes/$theme.conf|$home/.config/bat/config
@@ -176,6 +177,8 @@ theme_apply() {
 
     _theme_ln_sf "$tmux_themes/$theme.conf" "$home/.config/tmux/current-theme.conf"
     command -v tmux >/dev/null 2>&1 && tmux source-file "$home/.tmux.conf" 2>/dev/null || true
+
+    _theme_ln_sf "$home/.config/tofi/themes/$theme.conf" "$home/.config/tofi/current-configV"
 
     _theme_ln_sf "$fzf_themes/$theme.sh" "$home/.config/fzf/current-theme.sh"
     if command -v tmux >/dev/null 2>&1 && tmux info >/dev/null 2>&1; then
