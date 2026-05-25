@@ -86,16 +86,6 @@
       "backedUpAt": "2026-05-25T12:53:57.800Z",
       "size": 19589
     },
-    "agent/skills/frontend-design/.my-pi-source.json": {
-      "hash": "sha256:a8097d74cf53d599a91e32fc7df33679ba0fb9f8c5d51070505a1c774db162ba",
-      "backedUpAt": "2026-05-25T12:53:57.962Z",
-      "size": 676
-    },
-    "agent/skills/frontend-design/SKILL.md": {
-      "hash": "sha256:8bf9905dbcd9b1edb47f2a44cadbb9bb66314f73a8e3631ec7feee913777ceb8",
-      "backedUpAt": "2026-05-25T12:53:57.963Z",
-      "size": 4275
-    },
     "agent/themes/tokyonight.json": {
       "hash": "sha256:8324200abc602896c7ec77a3530ef4ba78d4aec76444b17d524f0d935a45f7c4",
       "backedUpAt": "2026-05-25T12:53:57.985Z",
@@ -110,16 +100,6 @@
       "hash": "sha256:363ae2f10fef85cb7ad52f8ad8cbe9dfef572c9c47990fa6752c644e1622ce25",
       "backedUpAt": "2026-05-25T12:53:57.986Z",
       "size": 2135
-    },
-    "agent/skills/obsidian-blog-post-review/SKILL.md": {
-      "hash": "sha256:4798223dcb70691378895e072090cd3df877c4c8ac2974cbdf3069609b61df7e",
-      "backedUpAt": "2026-05-25T12:53:57.963Z",
-      "size": 4561
-    },
-    "agent/skills/obsidian-blog-post-review/scripts/validate-post.mjs": {
-      "hash": "sha256:0332a5ff04c595717f73d5c445731fd31ade768ff6db937ff18d832b0a4c3661",
-      "backedUpAt": "2026-05-25T12:53:57.984Z",
-      "size": 5716
     },
     "agent/extensions/copilot-auto-router/README.md": {
       "hash": "sha256:763d34165de083ba839a2382a7479c35feb8b91fc9d773725572aa18c2d1e822",
@@ -140,61 +120,6 @@
       "hash": "sha256:73de8737789d19e3088b4caff25b9865100049b80ad7d2b5bae3cbfb7bd05466",
       "backedUpAt": "2026-05-22T13:44:08.018Z",
       "size": 14996
-    },
-    "agent/skills/browser-tools/.gitignore": {
-      "hash": "sha256:43bbc08d848017bc3e3cdd7dfd14e9ab48d661302e94c1f7cd30f783b1aaf148",
-      "backedUpAt": "2026-05-25T12:53:57.801Z",
-      "size": 134
-    },
-    "agent/skills/browser-tools/SKILL.md": {
-      "hash": "sha256:abb6f33fc50550b3f4c36378b9b6be09e4d9792b17cf56f8dc80079792543499",
-      "backedUpAt": "2026-05-25T12:53:57.802Z",
-      "size": 5225
-    },
-    "agent/skills/browser-tools/browser-content.js": {
-      "hash": "sha256:97b1d6a7ed27c287a47086d4d6e79be83c0e5a9ab8860adc6014872f16b8125c",
-      "backedUpAt": "2026-05-25T12:53:57.824Z",
-      "size": 3174
-    },
-    "agent/skills/browser-tools/browser-eval.js": {
-      "hash": "sha256:3c1ddd6ab1726d191977a56f3021c470e547653b29959cbe359ac3790bc052ba",
-      "backedUpAt": "2026-05-25T12:53:57.844Z",
-      "size": 1372
-    },
-    "agent/skills/browser-tools/browser-hn-scraper.js": {
-      "hash": "sha256:27b4aefebeba068f789e626989b3756180f7c596587cabed35281642de9ff18f",
-      "backedUpAt": "2026-05-25T12:53:57.867Z",
-      "size": 3054
-    },
-    "agent/skills/browser-tools/browser-nav.js": {
-      "hash": "sha256:7d6bd34f94b07e593735b79c2b48f23aad3a02ae68a8e8000e1829bad5099467",
-      "backedUpAt": "2026-05-25T12:53:57.888Z",
-      "size": 1335
-    },
-    "agent/skills/browser-tools/browser-pick.js": {
-      "hash": "sha256:9a05689c1c45725ca7253d0334f377d5e26d6018d0b5c70bf0dc51161553ee4f",
-      "backedUpAt": "2026-05-25T12:53:57.913Z",
-      "size": 5042
-    },
-    "agent/skills/browser-tools/browser-screenshot.js": {
-      "hash": "sha256:c070ebbb8f865c135a53b5fbfd8cb392ac8e5e766a72e85f1d27816433fefd8a",
-      "backedUpAt": "2026-05-25T12:53:57.935Z",
-      "size": 838
-    },
-    "agent/skills/browser-tools/browser-start.js": {
-      "hash": "sha256:8529f9a762b4a1490b6336be5d7022a0ac2d97fd4c8a3a03061deb084786f61d",
-      "backedUpAt": "2026-05-25T12:53:57.956Z",
-      "size": 2305
-    },
-    "agent/skills/browser-tools/package-lock.json": {
-      "hash": "sha256:96e9a3a5cc90b3f085e65bddabdd984c41d2fd792ff644be353776695ff204b0",
-      "backedUpAt": "2026-05-25T12:53:57.961Z",
-      "size": 84837
-    },
-    "agent/skills/browser-tools/package.json": {
-      "hash": "sha256:70e10b3ed27ad993d5491c91b7326d18cce5035c443590d99230d77cd6feffa7",
-      "backedUpAt": "2026-05-25T12:53:57.962Z",
-      "size": 487
     },
     "agent/extensions/copilot-subagents/README.md": {
       "hash": "sha256:e7dc4a27fe3ed4b33e2c4a29f163692c5bd6890413ed6310979ceebc1b6a02bd",

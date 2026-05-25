@@ -260,7 +260,8 @@ async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResu
 		result.filesSkipped.push({ path: settingsPath, reason: "missing or invalid JSON" });
 	}
 
-	for (const dirName of ["extensions", "skills", "prompts", "themes"]) {
+	// Note: `skills` is intentionally excluded — Pi skills are controlled by a separate project.
+	for (const dirName of ["extensions", "prompts", "themes"]) {
 		await copySanitizedDir(path.join(PI_AGENT_DIR, dirName), path.join(destination, "agent", dirName), result, manifest, destination);
 	}
 
@@ -346,7 +347,8 @@ async function restorePiConfig(params: RestoreParamsType = {}): Promise<RestoreR
 	}
 
 	// Directories
-	for (const dirName of ["extensions", "skills", "prompts", "themes"]) {
+	// Note: `skills` is intentionally excluded — Pi skills are controlled by a separate project.
+	for (const dirName of ["extensions", "prompts", "themes"]) {
 		const srcDir = path.join(agentSrcDir, dirName);
 		const dstDir = path.join(destination, dirName);
 		await collectRestoreFiles(srcDir, dstDir, filesToRestore);
@@ -432,7 +434,7 @@ This directory is intended to be committed to dotfiles. It excludes or redacts s
 
 - \`agent/settings.example.json\` sanitized from \`~/.pi/agent/settings.json\`
 - \`agent/extensions/\` sanitized global Pi extensions
-- \`agent/skills/\`, \`agent/prompts/\`, and \`agent/themes/\` when present
+- \`agent/prompts/\` and \`agent/themes/\` when present (note: \`agent/skills/\` is intentionally excluded — Pi skills are managed in a separate project)
 - \`.backup-manifest.json\` with hashes for divergence detection
 ${includeAgentsSkills ? "- `agents/skills/` sanitized copy of `~/.agents/skills/`\n" : ""}
 ## Intentionally not copied
