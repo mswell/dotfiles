@@ -4,22 +4,21 @@
  * Provider-specific router for GitHub Copilot models, inspired by Amp's
  * purpose-based model table while staying inside the `github-copilot` provider.
  *
- * V1 purposes:
- *   fast      → claude-haiku-4.5        (thinking: low)
- *   main      → claude-sonnet-4.6       (thinking: medium)
- *   think     → gpt-5.5                 (thinking: high)  ← debug + arquitetura
- *   search    → gemini-3-flash-preview  (thinking: low)
- *   vision    → google/gemini-2.0-flash (thinking: medium, external fallback)
+ * Amp-style modes:
+ *   fast/rush    → gpt-5.5                 (thinking: low)
+ *   main/smart   → claude-opus-4.7         (thinking: medium)
+ *   think/deep   → gpt-5.5                 (thinking: high)
+ *   search       → gemini-3.5-flash        (thinking: low)
+ *   vision       → gemini-3.5-flash        (thinking: medium)
  *
- * Only activates when the current model is from `github-copilot`, or when it
- * temporarily moved the session to the Google vision fallback.
+ * Only activates when the current model is from `github-copilot`.
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
-type VisionMode = "off" | "try" | "on";
 type Purpose = "fast" | "main" | "think" | "search" | "vision";
+type PurposeAlias = Purpose | "rush" | "smart" | "deep";
 
 interface RouteResult {
 	purpose: Purpose;
@@ -35,14 +34,14 @@ const ROUTES: Record<Purpose, RouteResult> = {
 	fast: {
 		purpose: "fast",
 		provider: COPILOT_PROVIDER,
-		model: "claude-haiku-4.5",
+		model: "gpt-5.5",
 		thinking: "low",
 		external: false,
 	},
 	main: {
 		purpose: "main",
 		provider: COPILOT_PROVIDER,
-		model: "claude-sonnet-4.6",
+		model: "claude-opus-4.7",
 		thinking: "medium",
 		external: false,
 	},
@@ -56,25 +55,25 @@ const ROUTES: Record<Purpose, RouteResult> = {
 	search: {
 		purpose: "search",
 		provider: COPILOT_PROVIDER,
-		model: "gemini-3-flash-preview",
+		model: "gemini-3.5-flash",
 		thinking: "low",
 		external: false,
 	},
 	vision: {
 		purpose: "vision",
-		provider: "google",
+		provider: COPILOT_PROVIDER,
 		model: "gemini-3.5-flash",
 		thinking: "medium",
-		external: true,
+		external: false,
 	},
 };
 
 const LABELS: Record<Purpose, string> = {
-	fast: "⚡ fast → Haiku",
-	main: "✳️ main → Sonnet",
-	think: "🧠 think → GPT-5.5",
-	search: "🔎 search → Gemini Flash",
-	vision: "🖼️ vision → Google Gemini 3.5 Flash",
+	fast: "⚡ rush/fast → GPT-5.5 low",
+	main: "✳️ smart/main → Opus 4.7",
+	think: "🧠 deep/think → GPT-5.5 high",
+	search: "🔎 search → Gemini 3.5 Flash",
+	vision: "🖼️ vision → Gemini 3.5 Flash",
 };
 
 const EMOJI: Record<Purpose, string> = {
@@ -190,12 +189,20 @@ function routeForCopilotModel(modelId: string | undefined): RouteResult | undefi
 	});
 }
 
+function normalizePurposeAlias(value: string): Purpose | undefined {
+	const alias = value as PurposeAlias;
+	if (alias === "rush") return "fast";
+	if (alias === "smart") return "main";
+	if (alias === "deep") return "think";
+	if (alias in ROUTES) return alias as Purpose;
+	return undefined;
+}
+
 export default function copilotAutoRouter(pi: ExtensionAPI) {
+	if (process.env.COPILOT_SUBAGENT_CHILD === "1") return;
+
 	let autoRouting = true;
-	let visionMode: VisionMode = "off";
 	let lastRoute: RouteResult | undefined;
-	let lastCopilotModelId: string | undefined;
-	let onVisionFallback = false;
 	let copilotRoutingActive = false;
 	let recentToolCalls = 0;
 	let turnsSinceReset = 0;
@@ -212,7 +219,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 	}
 
 	function shouldRoute(ctx: ExtensionContext): boolean {
-		return isCopilotActive(ctx) || (copilotRoutingActive && onVisionFallback);
+		return isCopilotActive(ctx);
 	}
 
 	function getRecentContext(ctx: ExtensionContext, maxEntries = 16): { text: string; sawToolFailure: boolean; toolCalls: number } {
@@ -283,28 +290,6 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 	}
 
 	async function applyRoute(route: RouteResult, ctx: ExtensionContext, options: { manual?: boolean } = {}): Promise<boolean> {
-		if (route.external && route.purpose === "vision") {
-			if (isCopilotActive(ctx) && ctx.model) {
-				lastCopilotModelId = ctx.model.id;
-			}
-			const fallback = ctx.modelRegistry.find(route.provider, route.model);
-			if (!fallback) {
-				ctx.ui.notify(`Vision fallback não encontrado: ${route.provider}/${route.model}`, "error");
-				return false;
-			}
-			pi.setThinkingLevel(route.thinking);
-			const success = await pi.setModel(fallback);
-			if (success) {
-				pi.setThinkingLevel(route.thinking);
-				lastRoute = route;
-				onVisionFallback = true;
-				copilotRoutingActive = true;
-				routeStats[route.purpose]++;
-				updateStatus(ctx);
-			}
-			return success;
-		}
-
 		const model = ctx.modelRegistry.find(route.provider, route.model);
 		if (!model) {
 			ctx.ui.notify(`Modelo não encontrado no Pi registry: ${route.provider}/${route.model}`, "warning");
@@ -315,11 +300,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 
 		if (ctx.model?.provider === route.provider && ctx.model.id === route.model) {
 			lastRoute = route;
-			if (route.provider === COPILOT_PROVIDER) {
-				lastCopilotModelId = route.model;
-				copilotRoutingActive = true;
-				onVisionFallback = false;
-			}
+			if (route.provider === COPILOT_PROVIDER) copilotRoutingActive = true;
 			if (!options.manual) routeStats[route.purpose]++;
 			updateStatus(ctx);
 			return true;
@@ -329,11 +310,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		if (success) {
 			pi.setThinkingLevel(route.thinking);
 			lastRoute = route;
-			if (route.provider === COPILOT_PROVIDER) {
-				lastCopilotModelId = route.model;
-				copilotRoutingActive = true;
-				onVisionFallback = false;
-			}
+			if (route.provider === COPILOT_PROVIDER) copilotRoutingActive = true;
 			if (!options.manual) routeStats[route.purpose]++;
 			updateStatus(ctx);
 		}
@@ -353,7 +330,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		ctx.ui.setStatus("zai-router", undefined);
 
 		if (!autoRouting) {
-			ctx.ui.setStatus("copilot-router", theme.fg("dim", `copilot:manual vision:${visionMode}`));
+			ctx.ui.setStatus("copilot-router", theme.fg("dim", "copilot:manual"));
 			return;
 		}
 
@@ -363,7 +340,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 				: `${EMOJI[lastRoute.purpose]}cop→${lastRoute.purpose}:${shortModel(lastRoute.model)}:${lastRoute.thinking}`;
 			ctx.ui.setStatus("copilot-router", theme.fg(lastRoute.external ? "warning" : "accent", text));
 		} else if (isCopilotActive(ctx)) {
-			ctx.ui.setStatus("copilot-router", theme.fg("dim", `copilot:auto-ready vision:${visionMode}`));
+			ctx.ui.setStatus("copilot-router", theme.fg("dim", "copilot:auto-ready"));
 		}
 	}
 
@@ -373,32 +350,12 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		const prompt = event.prompt ?? "";
 		const hasImages = detectImages(prompt, event.images as unknown[]);
 
-		if (hasImages && visionMode === "on") {
-			const copilotVisionRoute = { ...ROUTES.main };
-			await applyRoute(copilotVisionRoute, ctx);
+		if (hasImages) {
+			await applyRoute(ROUTES.vision, ctx);
 			return;
 		}
 
-		if (hasImages && visionMode === "try") {
-			const copilotGemini = { ...ROUTES.search, purpose: "vision" as Purpose, thinking: "medium" as ThinkingLevel };
-			await applyRoute(copilotGemini, ctx);
-			return;
-		}
-
-		let route = analyzeRoute(prompt, hasImages, ctx);
-
-		// If returning from external vision fallback on an ambiguous continuation,
-		// prefer the last Copilot route as the safety valve instead of staying on
-		// Google or blindly collapsing to main.
-		if (onVisionFallback && route.purpose === "main" && isContinuation(prompt)) {
-			route = routeForCopilotModel(lastCopilotModelId) ?? route;
-		}
-
-		// If returning from external vision fallback, route should go back to Copilot.
-		if (onVisionFallback && route.purpose !== "vision") {
-			onVisionFallback = false;
-		}
-
+		const route = analyzeRoute(prompt, hasImages, ctx);
 		await applyRoute(route, ctx);
 	});
 
@@ -418,12 +375,9 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 	pi.on("model_select", async (event, ctx) => {
 		if (event.source === "set" || event.source === "cycle") {
 			if (event.model.provider === COPILOT_PROVIDER) {
-				lastCopilotModelId = event.model.id;
 				copilotRoutingActive = true;
-				onVisionFallback = false;
-			} else if (!(onVisionFallback && event.model.provider === ROUTES.vision.provider)) {
+			} else {
 				copilotRoutingActive = false;
-				onVisionFallback = false;
 				ctx.ui.setStatus("copilot-router", undefined);
 			}
 			updateStatus(ctx);
@@ -435,30 +389,24 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 			if (entry.type === "custom" && entry.customType === "copilot-router-state") {
 				const data = entry.data as {
 					autoRouting?: boolean;
-					visionMode?: VisionMode;
 					routeStats?: Record<Purpose, number>;
 					copilotRoutingActive?: boolean;
-					lastCopilotModelId?: string;
 				} | undefined;
 				if (data) {
 					if (typeof data.autoRouting === "boolean") autoRouting = data.autoRouting;
-					if (data.visionMode === "off" || data.visionMode === "try" || data.visionMode === "on") visionMode = data.visionMode;
-			if (typeof data.routeStats === 'object' && data.routeStats) {
-					const s = data.routeStats as Record<string, number>;
-					routeStats = { fast: s.fast ?? 0, main: s.main ?? 0, think: (s.think ?? 0) + (s.architect ?? 0), search: s.search ?? 0, vision: s.vision ?? 0 };
-				}
+					if (typeof data.routeStats === "object" && data.routeStats) {
+						const s = data.routeStats as Record<string, number>;
+						routeStats = { fast: s.fast ?? 0, main: s.main ?? 0, think: (s.think ?? 0) + (s.architect ?? 0), search: s.search ?? 0, vision: s.vision ?? 0 };
+					}
 					if (typeof data.copilotRoutingActive === "boolean") copilotRoutingActive = data.copilotRoutingActive;
-					if (typeof data.lastCopilotModelId === "string") lastCopilotModelId = data.lastCopilotModelId;
 				}
 			}
 		}
 
 		recentToolCalls = 0;
 		turnsSinceReset = 0;
-		onVisionFallback = false;
 
 		if (isCopilotActive(ctx)) {
-			lastCopilotModelId = ctx.model?.id;
 			copilotRoutingActive = true;
 		}
 		updateStatus(ctx);
@@ -476,9 +424,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 			info += `  Status: ${autoRouting ? "✅ auto" : "⏸️ manual"}\n`;
 			info += `  Provider atual: ${isCopilotActive(ctx) ? "github-copilot ✓" : provider}\n`;
 			info += `  Modelo atual: ${model}\n`;
-			info += `  Vision mode: ${visionMode}\n`;
-			info += `  Vision fallback: ${onVisionFallback ? "SIM" : "não"}\n`;
-			info += `  Último Copilot: ${lastCopilotModelId ?? "—"}\n`;
+
 			info += `  Última rota: ${route}\n`;
 			info += `  Tool calls recentes: ${recentToolCalls} (${turnsSinceReset} turns)\n\n`;
 			info += `  Purposes:\n`;
@@ -486,7 +432,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 				const route = ROUTES[purpose];
 				info += `    ${EMOJI[purpose]} ${purpose.padEnd(9)} → ${route.provider}/${route.model} (${route.thinking}) [${routeStats[purpose]}]\n`;
 			}
-			info += `\n  Uso: /copilot-route auto|manual|status|vision off|try|on|fast|main|think|search|vision|reset`;
+			info += `\n  Uso: /copilot-route auto|manual|status|rush|smart|deep|fast|main|think|search|vision|reset`; 
 			ctx.ui.notify(info, "info");
 			return;
 		}
@@ -494,7 +440,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		if (cmd === "auto") {
 			autoRouting = true;
 			copilotRoutingActive = true;
-			pi.appendEntry("copilot-router-state", { autoRouting, visionMode, routeStats, copilotRoutingActive, lastCopilotModelId });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive });
 			ctx.ui.notify("Copilot auto-routing ativado ✅", "info");
 			updateStatus(ctx);
 			return;
@@ -502,41 +448,29 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 
 		if (cmd === "manual") {
 			autoRouting = false;
-			pi.appendEntry("copilot-router-state", { autoRouting, visionMode, routeStats, copilotRoutingActive, lastCopilotModelId });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive });
 			ctx.ui.notify("Copilot auto-routing desativado ⏸️", "info");
-			updateStatus(ctx);
-			return;
-		}
-
-		if (cmd === "vision" && value) {
-			if (value !== "off" && value !== "try" && value !== "on") {
-				ctx.ui.notify("Use: /copilot-route vision off|try|on", "error");
-				return;
-			}
-			visionMode = value as VisionMode;
-			pi.appendEntry("copilot-router-state", { autoRouting, visionMode, routeStats, copilotRoutingActive, lastCopilotModelId });
-			ctx.ui.notify(`Copilot vision mode: ${visionMode}`, "info");
 			updateStatus(ctx);
 			return;
 		}
 
 		if (cmd === "reset" || cmd === "stats") {
 			routeStats = { fast: 0, main: 0, think: 0, search: 0, vision: 0 };
-			pi.appendEntry("copilot-router-state", { autoRouting, visionMode, routeStats, copilotRoutingActive, lastCopilotModelId });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive });
 			ctx.ui.notify("Estatísticas do Copilot router resetadas 📊", "info");
 			return;
 		}
 
-		const purpose = cmd as Purpose;
-		if (!(purpose in ROUTES)) {
-			ctx.ui.notify("Purpose não encontrado. Use: fast, main, think, search, vision, auto, manual, status, reset", "error");
+		const purpose = normalizePurposeAlias(cmd);
+		if (!purpose) {
+			ctx.ui.notify("Purpose não encontrado. Use: rush/smart/deep, fast/main/think, search, vision, auto, manual, status, reset", "error");
 			return;
 		}
 
 		autoRouting = false;
 		const success = await applyRoute(ROUTES[purpose], ctx, { manual: true });
 		if (success) {
-			pi.appendEntry("copilot-router-state", { autoRouting, visionMode, routeStats, copilotRoutingActive: true, lastCopilotModelId });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive: true });
 			ctx.ui.notify(`${LABELS[purpose]} aplicado; auto-routing desativado`, "info");
 		}
 		updateStatus(ctx);

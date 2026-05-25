@@ -30,14 +30,12 @@ import { Key } from "@earendil-works/pi-tui";
 // ─── Configuration ────────────────────────────────────────────────────────────
 
 const GEMINI_MODELS = {
-	lite: "gemini-3.1-flash-lite-preview",
 	flash: "gemini-3.5-flash",
 	pro: "gemini-3.1-pro-preview",
 } as const;
 
 // Cost per 1M tokens (output, which dominates cost)
 const OUTPUT_COST: Record<string, number> = {
-	"gemini-3.1-flash-lite-preview": 0.4,
 	"gemini-3.5-flash": 2.5,
 	"gemini-3.1-pro-preview": 12,
 };
@@ -60,8 +58,8 @@ interface RouteResult {
 }
 
 const ROUTE_LABELS: Record<RouteReason, string> = {
-	ultra_simple: "⚡ ultra-simples → lite (off)",
-	simple: "🪶 simples → lite (low)",
+	ultra_simple: "⚡ ultra-simples → flash 3.5 (off)",
+	simple: "🪶 simples → flash 3.5 (low)",
 	medium: "💎 médio → flash 3.5 (medium)",
 	complex: "🧠 complexo → flash 3.5 (high)",
 	critical: "🔥 crítico → flash 3.5 (xhigh)",
@@ -158,11 +156,11 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 		if (promptLength < 30) {
 			for (const pattern of ULTRA_SIMPLE_PATTERNS) {
 				if (pattern.test(promptLower)) {
-					return { reason: "ultra_simple", model: GEMINI_MODELS.lite, thinking: "off" };
+					return { reason: "ultra_simple", model: GEMINI_MODELS.flash, thinking: "off" };
 				}
 			}
 			if (promptLength < 15) {
-				return { reason: "ultra_simple", model: GEMINI_MODELS.lite, thinking: "off" };
+				return { reason: "ultra_simple", model: GEMINI_MODELS.flash, thinking: "off" };
 			}
 		}
 
@@ -179,7 +177,7 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 		if (promptLength < 80) {
 			const isSimple = SIMPLE_KEYWORDS.some((kw) => promptLower.includes(kw));
 			if (isSimple) {
-				return { reason: "simple", model: GEMINI_MODELS.lite, thinking: "low" };
+				return { reason: "simple", model: GEMINI_MODELS.flash, thinking: "low" };
 			}
 		}
 
@@ -221,8 +219,8 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 			return { reason: "medium", model: GEMINI_MODELS.flash, thinking: "medium" };
 		}
 
-		// ── Default: simple → lite ──
-		return { reason: "simple", model: GEMINI_MODELS.lite, thinking: "low" };
+		// ── Default: simple → flash ──
+		return { reason: "simple", model: GEMINI_MODELS.flash, thinking: "low" };
 	}
 
 	/**
@@ -268,10 +266,10 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 
 		const baselineCostPerRoute = OUTPUT_COST[GEMINI_MODELS.pro]; // 12
 		let actualCost = 0;
-		actualCost += routeStats.ultra_simple * OUTPUT_COST[GEMINI_MODELS.lite];
-		actualCost += routeStats.simple * OUTPUT_COST[GEMINI_MODELS.lite];
+		actualCost += routeStats.ultra_simple * OUTPUT_COST[GEMINI_MODELS.flash];
+		actualCost += routeStats.simple * OUTPUT_COST[GEMINI_MODELS.flash];
 		actualCost += routeStats.medium * OUTPUT_COST[GEMINI_MODELS.flash];
-		actualCost += routeStats.complex * OUTPUT_COST[GEMINI_MODELS.pro];
+		actualCost += routeStats.complex * OUTPUT_COST[GEMINI_MODELS.flash];
 		actualCost += routeStats.critical * OUTPUT_COST[GEMINI_MODELS.pro];
 
 		const baselineCost = totalRoutes * baselineCostPerRoute;
@@ -362,15 +360,6 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 				supportsImages: true,
 				supportsThinking: true,
 			});
-
-			(ctx.modelRegistry as any).register({
-				provider: "google",
-				id: "gemini-3.1-flash-lite-preview",
-				maxTokens: 1048576,
-				contextWindow: 1048576,
-				supportsImages: true,
-				supportsThinking: true,
-			});
 		}
 
 		for (const entry of ctx.sessionManager.getEntries()) {
@@ -432,11 +421,11 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 				}
 				info += `\n`;
 				info += `  Roteamento:\n`;
-				info += `    ⚡ ultra-simples → lite (off)        — $${OUTPUT_COST[GEMINI_MODELS.lite]}/1M out\n`;
-				info += `    🪶 simples       → lite (low)        — $${OUTPUT_COST[GEMINI_MODELS.lite]}/1M out\n`;
-				info += `    💎 médio         → flash 3.5 (med)   — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
-				info += `    🧠 complexo      → flash 3.5 (high)  — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
-				info += `    🔥 crítico       → flash 3.5 (xhigh) — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
+				info += `    ⚡ ultra-simples → flash 3.5 (off)     — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
+				info += `    🪶 simples       → flash 3.5 (low)     — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
+				info += `    💎 médio         → flash 3.5 (med)     — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
+				info += `    🧠 complexo      → flash 3.5 (high)    — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
+				info += `    🔥 crítico       → flash 3.5 (xhigh)   — $${OUTPUT_COST[GEMINI_MODELS.flash]}/1M out\n`;
 				info += `\n`;
 				info += `  Uso: /gem-route auto|manual|lite|flash|pro`;
 
@@ -468,9 +457,6 @@ export default function geminiAutoRouter(pi: ExtensionAPI) {
 			}
 
 			const tierMap: Record<string, { model: string; thinking: ThinkingLevel }> = {
-				lite: { model: GEMINI_MODELS.lite, thinking: "low" },
-				leve: { model: GEMINI_MODELS.lite, thinking: "low" },
-				"flash-lite": { model: GEMINI_MODELS.lite, thinking: "low" },
 				flash: { model: GEMINI_MODELS.flash, thinking: "medium" },
 				medio: { model: GEMINI_MODELS.flash, thinking: "medium" },
 				balanced: { model: GEMINI_MODELS.flash, thinking: "medium" },

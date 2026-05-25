@@ -1,34 +1,30 @@
 # Copilot Auto Router
 
-Provider-specific GitHub Copilot router inspired by Amp's model-by-purpose table.
+Provider-specific GitHub Copilot router inspired by Amp's model-by-purpose architecture.
 
-It only routes when the current provider is `github-copilot`, except for the explicit vision fallback to Google while Copilot Enterprise vision is disabled.
+It routes only when the current provider is `github-copilot`. Vision is handled inside Copilot because enterprise vision is available on Gemini 3.5 Flash.
 
-## Purpose table
+## Amp-style purpose table
 
-| Purpose | Model | Thinking | Use |
-| --- | --- | --- | --- |
-| `fast` | `github-copilot/claude-haiku-4.5` | `low` | short/simple answers, summaries, translations |
-| `main` | `github-copilot/claude-sonnet-4.6` | `medium` | default daily coding and normal agent work |
-| `think` | `github-copilot/gpt-5.5` | `high` | hard debugging, architecture, design decisions, deep reasoning |
-| `search` | `github-copilot/gemini-3-flash-preview` | `low` | finder/exploration/synthesis when deterministic search is primary |
-| `vision` | `google/gemini-3.5-flash` | `medium` | external vision fallback while Copilot vision is unavailable |
+| Amp role | Command aliases | Model | Thinking | Use |
+| --- | --- | --- | --- | --- |
+| Rush | `rush`, `fast` | `github-copilot/gpt-5.5` | `low` | fast, low-overhead work and simple prompts |
+| Smart | `smart`, `main` | `github-copilot/claude-opus-4.7` | `medium` | default high-capability agent mode |
+| Deep | `deep`, `think` | `github-copilot/gpt-5.5` | `high` | hard debugging, architecture, design decisions, deep reasoning |
+| Search | `search` | `github-copilot/gemini-3.5-flash` | `low` | retrieval-heavy exploration when deterministic search is primary |
+| View Image | `vision` | `github-copilot/gemini-3.5-flash` | `medium` | image/video-ish prompts inside Copilot |
 
-The router uses only models visible in `pi --list-models github-copilot`. When new Copilot models appear locally, revisit this table.
+The router uses only models visible in `pi --list-models github-copilot`. If GitHub Copilot changes available models, revisit this table.
 
-## Vision modes
+## Vision
 
-Default: `off`.
+Image prompts route directly to the Copilot `vision` route: `github-copilot/gemini-3.5-flash` with `medium` thinking.
 
-- `off`: image prompts route directly to `google/gemini-3.5-flash`.
-- `try`: image prompts stay inside Copilot via the search/Gemini route.
-- `on`: image prompts stay on the Copilot main route.
-
-After external vision fallback, the next non-image prompt returns to Copilot and recalculates the route from the prompt and recent session context.
+No external fallback is configured.
 
 ## Context-aware routing
 
-The v1 router uses cheap deterministic heuristics, not subagents or LLM classifiers:
+The router uses cheap deterministic heuristics, not an LLM classifier:
 
 - image attachments and image file paths
 - current/previous route
@@ -40,10 +36,17 @@ The v1 router uses cheap deterministic heuristics, not subagents or LLM classifi
 Priority:
 
 1. image → `vision`
-2. think/architecture → `think`
+2. think/architecture → `deep` / `think`
 3. search/exploration → `search`
-4. simple prompt → `fast`
-5. default → `main`
+4. simple prompt → `rush` / `fast`
+5. default → `smart` / `main`
+
+## Relationship to `copilot-subagents`
+
+- `copilot-auto-router` controls the **parent/main thread** model.
+- `copilot-subagents` delegates noisy side work to isolated child contexts (`search`, `oracle`, `review`, `librarian`, `handoff`).
+
+This mirrors Amp's split between agent modes and subagents.
 
 ## Commands
 
@@ -52,8 +55,9 @@ Priority:
 /copilot-route status
 /copilot-route auto
 /copilot-route manual
-/copilot-route vision off|try|on
-/copilot-route fast|main|think|search|vision
+/copilot-route rush|smart|deep
+/copilot-route fast|main|think
+/copilot-route search|vision
 /copilot-route reset
 ```
 
@@ -64,5 +68,3 @@ Alias:
 ```
 
 Forcing a purpose manually applies that model/thinking and disables auto-routing. Use `/copilot-route auto` to re-enable.
-
-No shortcut is registered in v1.
