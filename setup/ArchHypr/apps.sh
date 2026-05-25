@@ -62,6 +62,7 @@ yay_packages="
     python-setuptools
     neovim
     ripgrep
+    ast-grep
     docker
     docker-compose
     tree

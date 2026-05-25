@@ -48,10 +48,6 @@
       "reason": "not a regular file or directory"
     },
     {
-      "path": "/home/mswell/.pi/agent/skills/grill-me",
-      "reason": "not a regular file or directory"
-    },
-    {
       "path": "/home/mswell/.pi/agent/skills/grill-with-docs",
       "reason": "not a regular file or directory"
     },
@@ -60,27 +56,11 @@
       "reason": "not a regular file or directory"
     },
     {
-      "path": "/home/mswell/.pi/agent/skills/improve-codebase-architecture",
-      "reason": "not a regular file or directory"
-    },
-    {
       "path": "/home/mswell/.pi/agent/skills/prototype",
       "reason": "not a regular file or directory"
     },
     {
       "path": "/home/mswell/.pi/agent/skills/setup-matt-pocock-skills",
-      "reason": "not a regular file or directory"
-    },
-    {
-      "path": "/home/mswell/.pi/agent/skills/tdd",
-      "reason": "not a regular file or directory"
-    },
-    {
-      "path": "/home/mswell/.pi/agent/skills/to-issues",
-      "reason": "not a regular file or directory"
-    },
-    {
-      "path": "/home/mswell/.pi/agent/skills/to-prd",
       "reason": "not a regular file or directory"
     },
     {
