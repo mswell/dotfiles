@@ -39,8 +39,10 @@
 }
 
 #workspaces button.urgent {
-  color: @urgent;
+  color: #000000;
+  background: @attention;
   border-radius: 5px;
+  box-shadow: 0 0 18px alpha(@attention, 0.45);
 }
 
 #custom-music,

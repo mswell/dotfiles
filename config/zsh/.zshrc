@@ -76,18 +76,20 @@ bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
 
-# History
-HISTSIZE=5000
-HISTFILE=~/.zsh_history
-SAVEHIST=$HISTSIZE
-HISTDUP=erase
+# History — preserve existing user history across dotfiles sync.
+# Keep these overridable so machine-local additions below the shim can tune them.
+: ${HISTFILE:=$HOME/.zsh_history}
+: ${HISTSIZE:=100000}
+: ${SAVEHIST:=100000}
 setopt appendhistory
 setopt sharehistory
+setopt extended_history
 setopt hist_ignore_space
-setopt hist_ignore_all_dups
-setopt hist_save_no_dups
 setopt hist_ignore_dups
 setopt hist_find_no_dups
+setopt hist_reduce_blanks
+# Avoid destructive dedupe/truncation surprises: hist_ignore_all_dups and
+# hist_save_no_dups remove older duplicate entries from the persisted file.
 
 # Completion styling
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'

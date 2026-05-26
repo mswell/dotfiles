@@ -2,9 +2,10 @@
 @define-color bg      #000000;
 @define-color fg      #ffffff;
 @define-color muted   #8d8d8d;
-@define-color accent  #6366f1;
-@define-color hover   #818cf8;
-@define-color urgent  #a4a4a4;
-@define-color warning #cecece;
-@define-color success #b6b6b6;
+@define-color accent    #6366f1;
+@define-color hover     #818cf8;
+@define-color attention #fcd34d;
+@define-color urgent    #fcd34d;
+@define-color warning   #fcd34d;
+@define-color success   #b6b6b6;
 @define-color special #9b9b9b;
