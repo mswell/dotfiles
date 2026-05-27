@@ -89,6 +89,53 @@ theme_mako_values() {
     esac
 }
 
+theme_portal_color_scheme() {
+    local theme="$1"
+    if [[ "$theme" == "wellpunk-light" ]]; then
+        printf '2\n' # org.freedesktop.appearance color-scheme: prefer-light
+    else
+        printf '1\n' # org.freedesktop.appearance color-scheme: prefer-dark
+    fi
+}
+
+_theme_portal_current_color_scheme() {
+    dbus-send --print-reply --dest=org.freedesktop.portal.Desktop \
+        /org/freedesktop/portal/desktop \
+        org.freedesktop.portal.Settings.Read \
+        string:"org.freedesktop.appearance" string:"color-scheme" 2>/dev/null \
+        | awk '/uint32/ {print $NF; exit}'
+}
+
+_theme_restart_portals_if_mismatched() {
+    local expected="$1" current
+    command -v dbus-send >/dev/null 2>&1 || return 0
+    current="$(_theme_portal_current_color_scheme || true)"
+    [[ "$current" == "$expected" ]] && return 0
+    command -v systemctl >/dev/null 2>&1 || return 0
+    systemctl --user restart xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland 2>/dev/null || true
+}
+
+_theme_enable_chromium_system_theme() {
+    local home="$1" uid pref tmp
+    command -v jq >/dev/null 2>&1 || return 0
+    uid="$(id -u 2>/dev/null || echo "")"
+
+    # Do not edit live Chromium-family profiles; Chrome may overwrite Preferences on exit.
+    if [[ -n "$uid" ]] && pgrep -u "$uid" -f '/(chrome|chrome-stable|chromium|brave|vivaldi)( |$)' >/dev/null 2>&1; then
+        return 0
+    fi
+
+    for pref in \
+        "$home/.config/google-chrome"/*/Preferences \
+        "$home/.config/chromium"/*/Preferences \
+        "$home/.config/BraveSoftware/Brave-Browser"/*/Preferences \
+        "$home/.config/vivaldi"/*/Preferences; do
+        [[ -f "$pref" ]] || continue
+        tmp=$(mktemp)
+        jq '.extensions.theme.system_theme = 1 | .extensions.theme.id = ""' "$pref" > "$tmp" && mv "$tmp" "$pref"
+    done
+}
+
 # Emit a host-independent plan. Tests consume this instead of touching a real desktop.
 theme_plan() {
     local theme="$1"
@@ -112,7 +159,10 @@ symlink|$home/.config/git/themes/$theme.gitconfig|$home/.config/git/current-them
 write|$home/.config/gtk-3.0/settings.ini|gtk3-settings
 write|$home/.config/gtk-4.0/settings.ini|gtk4-settings
 write|$home/.gtkrc-2.0|gtk2-settings
+write|$home/.config/xsettingsd/xsettingsd.conf|xsettingsd-settings
 write|$home/.icons/default/index.theme|cursor-index
+set|gsettings org.gnome.desktop.interface color-scheme|$(theme_portal_color_scheme "$theme")
+reload|xdg-desktop-portal Settings backend if mismatched
 reload|hyprctl reload
 reload|waybar SIGUSR2-or-restart
 reload|kitty SIGUSR1
@@ -256,6 +306,17 @@ EOF
 Inherits=$gtk_cursor
 EOF
 
+    mkdir -p "$home/.config/xsettingsd"
+    cat > "$home/.config/xsettingsd/xsettingsd.conf" <<EOF
+# Managed by theme_orchestrator.sh
+Net/ThemeName "$gtk_theme_name"
+Net/IconThemeName "$gtk_icons"
+Gtk/CursorThemeName "$gtk_cursor"
+Gtk/CursorThemeSize 24
+Gtk/ApplicationPreferDarkTheme $gtk_dark
+EOF
+    pkill -HUP -x xsettingsd 2>/dev/null || true
+
     if command -v gsettings >/dev/null 2>&1; then
         gsettings set org.gnome.desktop.interface color-scheme "$gtk_color_scheme" || true
         gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme_name" || true
@@ -263,6 +324,8 @@ EOF
         gsettings set org.gnome.desktop.interface cursor-theme "$gtk_cursor" || true
         gsettings set org.gnome.desktop.interface cursor-size 24 || true
     fi
+    _theme_restart_portals_if_mismatched "$(theme_portal_color_scheme "$theme")"
+    _theme_enable_chromium_system_theme "$home"
     command -v hyprctl >/dev/null 2>&1 && hyprctl setcursor "$gtk_cursor" 24 || true
     command -v nautilus >/dev/null 2>&1 && nautilus -q 2>/dev/null || true
 
@@ -275,6 +338,25 @@ EOF
             sed -i "s/^background-color=.*/background-color=$mako_bg/" "$mako_cfg"
             command -v makoctl >/dev/null 2>&1 && makoctl reload 2>/dev/null || true
         fi
+    fi
+
+    # Update Obsidian vault themes if they exist
+    local obsidian_vaults_config="$home/.config/obsidian/obsidian.json"
+    if [[ -f "$obsidian_vaults_config" ]] && command -v jq >/dev/null 2>&1; then
+        local obsidian_theme
+        if [[ "$theme" == "wellpunk-light" ]]; then
+            obsidian_theme="moonstone"
+        else
+            obsidian_theme="obsidian"
+        fi
+        # Read paths from .config/obsidian/obsidian.json and update appearance.json in each vault
+        jq -r '.vaults[].path' "$obsidian_vaults_config" 2>/dev/null | while read -r vault_path; do
+            local app_json="$vault_path/.obsidian/appearance.json"
+            if [[ -f "$app_json" ]]; then
+                tmp=$(mktemp)
+                jq --arg t "$obsidian_theme" '.theme = $t' "$app_json" > "$tmp" && mv "$tmp" "$app_json"
+            fi
+        done
     fi
 
     pi_settings="$home/.pi/agent/settings.json"

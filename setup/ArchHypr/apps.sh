@@ -9,6 +9,8 @@ yay_packages="
     qt5-wayland
     hyprland
     xdg-desktop-portal-hyprland
+    xdg-desktop-portal-gtk
+    xsettingsd
     mako
     waybar
     zoxide
