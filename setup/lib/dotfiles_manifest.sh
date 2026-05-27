@@ -78,6 +78,7 @@ copy_dir|$root/config/wpaperd|$config_dir/wpaperd
 copy_dir|$root/config/rofi|$config_dir/rofi
 copy_dir|$root/config/tofi|$config_dir/tofi
 copy_dir|$root/config/Kvantum|$config_dir/Kvantum
+copy_file|$root/config/xdg-desktop-portal/portals.conf|$config_dir/xdg-desktop-portal/portals.conf
 dir||$config_dir/fzf/themes
 copy_dir|$root/config/fzf/themes|$config_dir/fzf/themes
 dir||$config_dir/tmux/themes
