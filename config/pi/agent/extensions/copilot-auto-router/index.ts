@@ -19,24 +19,43 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 type Purpose = "fast" | "main" | "think" | "search" | "vision";
 type PurposeAlias = Purpose | "rush" | "smart" | "deep";
+type Workflow = "rush" | "smart" | "deep" | "search" | "vision";
+type ValidationLevel = "none" | "light" | "standard" | "strict";
+type SubagentRole = "search" | "oracle" | "review" | "librarian" | "handoff";
 
-interface RouteResult {
+interface RoutePlan {
 	purpose: Purpose;
 	provider: string;
 	model: string;
 	thinking: ThinkingLevel;
 	external: boolean;
+	workflow: Workflow;
+	subagents: SubagentRole[];
+	requiresPlanSignoff: boolean;
+	requiresReviewTour: boolean;
+	validationLevel: ValidationLevel;
+	reason: string;
+	confidence: number;
+	signals: string[];
 }
 
 const COPILOT_PROVIDER = "github-copilot";
 
-const ROUTES: Record<Purpose, RouteResult> = {
+const ROUTES: Record<Purpose, RoutePlan> = {
 	fast: {
 		purpose: "fast",
 		provider: COPILOT_PROVIDER,
 		model: "gpt-5.5",
 		thinking: "low",
 		external: false,
+		workflow: "rush",
+		subagents: [],
+		requiresPlanSignoff: false,
+		requiresReviewTour: false,
+		validationLevel: "light",
+		reason: "simple/low-overhead prompt",
+		confidence: 1,
+		signals: [],
 	},
 	main: {
 		purpose: "main",
@@ -44,6 +63,14 @@ const ROUTES: Record<Purpose, RouteResult> = {
 		model: "claude-opus-4.7",
 		thinking: "medium",
 		external: false,
+		workflow: "smart",
+		subagents: [],
+		requiresPlanSignoff: false,
+		requiresReviewTour: false,
+		validationLevel: "standard",
+		reason: "default smart coding workflow",
+		confidence: 1,
+		signals: [],
 	},
 	think: {
 		purpose: "think",
@@ -51,6 +78,14 @@ const ROUTES: Record<Purpose, RouteResult> = {
 		model: "gpt-5.5",
 		thinking: "high",
 		external: false,
+		workflow: "deep",
+		subagents: [],
+		requiresPlanSignoff: false,
+		requiresReviewTour: false,
+		validationLevel: "strict",
+		reason: "deep reasoning/debug/architecture workflow",
+		confidence: 1,
+		signals: [],
 	},
 	search: {
 		purpose: "search",
@@ -58,6 +93,14 @@ const ROUTES: Record<Purpose, RouteResult> = {
 		model: "gemini-3.5-flash",
 		thinking: "low",
 		external: false,
+		workflow: "search",
+		subagents: [],
+		requiresPlanSignoff: false,
+		requiresReviewTour: false,
+		validationLevel: "none",
+		reason: "retrieval-heavy prompt",
+		confidence: 1,
+		signals: [],
 	},
 	vision: {
 		purpose: "vision",
@@ -65,6 +108,14 @@ const ROUTES: Record<Purpose, RouteResult> = {
 		model: "gemini-3.5-flash",
 		thinking: "medium",
 		external: false,
+		workflow: "vision",
+		subagents: [],
+		requiresPlanSignoff: false,
+		requiresReviewTour: false,
+		validationLevel: "standard",
+		reason: "image/visual prompt",
+		confidence: 1,
+		signals: [],
 	},
 };
 
@@ -111,6 +162,22 @@ const SEARCH_KEYWORDS = [
 	"explorar", "mapear", "liste arquivos", "list files",
 ];
 
+const RISKY_KEYWORDS = [
+	"auth", "authentication", "authorization", "oauth", "token", "secret", "password",
+	"segurança", "security", "permission", "permissão", "encrypt", "criptografia",
+	"migration", "migração", "schema", "database", "produção", "production",
+];
+
+const LARGE_CHANGE_KEYWORDS = [
+	"refactor", "refatorar", "reestruture", "restructure", "rewrite", "reescrever",
+	"migrate", "migrar", "large", "amplo", "todos os arquivos", "whole codebase",
+];
+
+const EXTERNAL_RESEARCH_KEYWORDS = [
+	"docs", "documentação", "library", "biblioteca", "api externa", "framework",
+	"versão", "release notes", "changelog", "github", "npm", "pypi",
+];
+
 const FAST_KEYWORDS = [
 	"what is", "o que é", "define", "explique", "explain", "resuma", "summary",
 	"traduz", "translate", "formata", "format", "lista", "list", "mostra", "show",
@@ -151,6 +218,14 @@ function includesAny(text: string, keywords: string[]): boolean {
 	return keywords.some((keyword) => lower.includes(keyword.toLowerCase()));
 }
 
+function stripRouterArtifacts(text: string): string {
+	return text
+		.replace(/# Copilot Route Plan[\s\S]*?Guidance:.*?(?:\n|$)/gi, "\n")
+		.replace(/^\s*(Purpose|Reason|Model|Suggested subagents|Plan sign-off|Validation level|Review tour):.*$/gim, "")
+		.replace(/Guidance: treat this as a workflow route.*$/gim, "")
+		.trim();
+}
+
 function isContinuation(prompt: string): boolean {
 	const trimmed = prompt.trim();
 	if (trimmed.length > 40) return false;
@@ -182,9 +257,9 @@ function shortModel(model: string): string {
 		.replace("-flash", "-fl");
 }
 
-function routeForCopilotModel(modelId: string | undefined): RouteResult | undefined {
+function routeForCopilotModel(modelId: string | undefined): RoutePlan | undefined {
 	if (!modelId) return undefined;
-	return (Object.values(ROUTES) as RouteResult[]).find((route) => {
+	return (Object.values(ROUTES) as RoutePlan[]).find((route) => {
 		return route.provider === COPILOT_PROVIDER && route.model === modelId;
 	});
 }
@@ -202,7 +277,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 	if (process.env.COPILOT_SUBAGENT_CHILD === "1") return;
 
 	let autoRouting = true;
-	let lastRoute: RouteResult | undefined;
+	let lastRoute: RoutePlan | undefined;
 	let copilotRoutingActive = false;
 	let recentToolCalls = 0;
 	let turnsSinceReset = 0;
@@ -212,6 +287,13 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		think: 0,
 		search: 0,
 		vision: 0,
+	};
+	let workflowStats = {
+		autoSearchHints: 0,
+		oracleHints: 0,
+		reviewTourHints: 0,
+		planSignoffHints: 0,
+		manualOverrides: 0,
 	};
 
 	function isCopilotActive(ctx: ExtensionContext): boolean {
@@ -229,21 +311,23 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		let toolCalls = 0;
 
 		for (const entry of entries) {
+			if (entry.customType === "copilot-router-plan") continue;
+
 			if (entry.type === "message" && entry.message) {
 				const role = entry.message.role ?? "";
-				const text = textFromContent(entry.message.content);
-				if (role === "user" || role === "assistant") texts.push(text);
+				const text = stripRouterArtifacts(textFromContent(entry.message.content));
+				if ((role === "user" || role === "assistant") && text) texts.push(text);
 				if (entry.message.errorMessage || entry.message.stopReason === "error") sawToolFailure = true;
 				continue;
 			}
 
-			const entryText = [entry.content, entry.result, entry.output, entry.data]
+			const entryText = stripRouterArtifacts([entry.content, entry.result, entry.output, entry.data]
 				.map((value) => typeof value === "string" ? value : "")
 				.filter(Boolean)
-				.join("\n");
+				.join("\n"));
 			if (entry.type?.includes("tool") || entry.toolName || entry.name) {
 				toolCalls++;
-				texts.push(entryText.slice(0, 2000));
+				if (entryText) texts.push(entryText.slice(0, 2000));
 				if (FAILURE_PATTERN.test(entryText)) sawToolFailure = true;
 			}
 		}
@@ -251,45 +335,103 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		return { text: texts.join("\n").slice(-8000), sawToolFailure, toolCalls };
 	}
 
-	function analyzeRoute(prompt: string, hasImages: boolean, ctx: ExtensionContext): RouteResult {
-		if (hasImages) return ROUTES.vision;
-
-		const recent = getRecentContext(ctx);
-		const promptLower = prompt.toLowerCase().trim();
-		const contextText = `${prompt}\n${recent.text}`;
-		const continuation = isContinuation(prompt);
-
-		if (continuation && lastRoute && lastRoute.purpose !== "vision") {
-			return lastRoute;
-		}
-
-		// Priority order: think/architecture → search → fast → main.
-		if (includesAny(contextText, ARCHITECT_KEYWORDS)) return ROUTES.think;
-
-		if (
-			recent.sawToolFailure ||
-			FAILURE_PATTERN.test(contextText) ||
-			includesAny(contextText, THINK_KEYWORDS) ||
-			(prompt.includes("```") && prompt.length > 500)
-		) {
-			return ROUTES.think;
-		}
-
-		const hasSearchIntent = includesAny(contextText, SEARCH_KEYWORDS);
-		const hasEditIntent = /\b(implement|implementar|edit|editar|altere|alterar|change|fix|corrigir|write|crie|criar|refactor|refatorar)\b/i.test(prompt);
-		if (hasSearchIntent && !hasEditIntent) return ROUTES.search;
-
-		const hasCode = prompt.includes("```") || CODE_FILE_PATTERN.test(prompt) || CODE_TOKEN_PATTERN.test(prompt);
-		if (!hasCode && prompt.length < 90 && (includesAny(promptLower, FAST_KEYWORDS) || prompt.length < 25)) {
-			return ROUTES.fast;
-		}
-
-		if (recent.toolCalls >= 8 && turnsSinceReset <= 3) return ROUTES.think;
-
-		return ROUTES.main;
+	function withReason(route: RoutePlan, reason: string, overrides: Partial<RoutePlan> = {}): RoutePlan {
+		return {
+			...route,
+			...overrides,
+			subagents: overrides.subagents ?? [...route.subagents],
+			reason,
+			confidence: overrides.confidence ?? route.confidence,
+			signals: overrides.signals ?? [...route.signals],
+		};
 	}
 
-	async function applyRoute(route: RouteResult, ctx: ExtensionContext, options: { manual?: boolean } = {}): Promise<boolean> {
+	function analyzeRoute(prompt: string, hasImages: boolean, ctx: ExtensionContext): RoutePlan {
+		if (hasImages) return withReason(ROUTES.vision, "image attachment/path detected", { confidence: 1, signals: ["image"] });
+
+		const recent = getRecentContext(ctx);
+		const cleanPrompt = stripRouterArtifacts(prompt);
+		const promptLower = cleanPrompt.toLowerCase().trim();
+		const continuation = isContinuation(cleanPrompt || prompt);
+
+		if (continuation && lastRoute && lastRoute.purpose !== "vision") {
+			return withReason(lastRoute, "short continuation; preserving previous route", { confidence: 0.9, signals: ["continuation"] });
+		}
+
+		const scores: Record<Purpose, number> = { fast: 0, main: 1.5, think: 0, search: 0, vision: 0 };
+		const signals: string[] = [];
+		const add = (purpose: Purpose, points: number, signal: string) => {
+			scores[purpose] += points;
+			signals.push(`${purpose}+${points}:${signal}`);
+		};
+
+		const hasPromptArchitecture = includesAny(cleanPrompt, ARCHITECT_KEYWORDS);
+		const hasRecentArchitecture = includesAny(recent.text, ARCHITECT_KEYWORDS);
+		const hasPromptFailure = FAILURE_PATTERN.test(cleanPrompt);
+		const hasRecentFailure = FAILURE_PATTERN.test(recent.text) || recent.sawToolFailure;
+		const hasPromptThink = includesAny(cleanPrompt, THINK_KEYWORDS);
+		const hasRecentThink = includesAny(recent.text, THINK_KEYWORDS);
+		const risky = includesAny(cleanPrompt, RISKY_KEYWORDS);
+		const recentRisky = includesAny(recent.text, RISKY_KEYWORDS);
+		const largeChange = includesAny(cleanPrompt, LARGE_CHANGE_KEYWORDS);
+		const recentLargeChange = includesAny(recent.text, LARGE_CHANGE_KEYWORDS);
+		const externalResearch = includesAny(cleanPrompt, EXTERNAL_RESEARCH_KEYWORDS);
+		const recentExternalResearch = includesAny(recent.text, EXTERNAL_RESEARCH_KEYWORDS);
+		const hasSearchIntent = includesAny(cleanPrompt, SEARCH_KEYWORDS);
+		const recentSearchIntent = includesAny(recent.text, SEARCH_KEYWORDS);
+		const hasEditIntent = /\b(implement|implementar|implemente|edit|editar|altere|alterar|ajuste|ajustar|change|fix|corrigir|write|crie|criar|refactor|refatorar|seguir|siga|pode seguir)\b/i.test(cleanPrompt);
+		const hasCode = cleanPrompt.includes("```") || CODE_FILE_PATTERN.test(cleanPrompt) || CODE_TOKEN_PATTERN.test(cleanPrompt);
+		const lightDiscussion = !hasEditIntent && !hasPromptFailure && !risky && !largeChange && /[?？]|\b(como|quanto|what|how|why|por que|poder[ií]amos|could|should|vale a pena)\b/i.test(cleanPrompt);
+
+		if (hasPromptArchitecture) add("think", lightDiscussion ? 1.25 : 3, lightDiscussion ? "architecture discussion" : "architecture signal");
+		if (hasRecentArchitecture) add("think", continuation ? 1 : 0.35, "recent architecture signal");
+		if (hasPromptFailure) add("think", 4, "failure/log in prompt");
+		if (hasRecentFailure) add("think", continuation ? 2.5 : 1, "recent failure/tool error");
+		if (hasPromptThink) add("think", 3, "debug/deep-reasoning signal");
+		if (hasRecentThink) add("think", continuation ? 1.25 : 0.4, "recent debug signal");
+		if (risky) add("think", 3.5, "security/data/production risk");
+		if (recentRisky) add("think", continuation ? 1.5 : 0.4, "recent risk signal");
+		if (largeChange) add("think", 3, "large-change signal");
+		if (recentLargeChange) add("think", continuation ? 1.25 : 0.35, "recent large-change signal");
+		if (cleanPrompt.includes("```") && cleanPrompt.length > 500) add("think", 2, "large code block");
+		if (recent.toolCalls >= 8 && turnsSinceReset <= 3) add("think", 2, "many recent tool calls");
+
+		if (hasSearchIntent && !hasEditIntent) add("search", 3, "search/exploration intent without edit");
+		if (recentSearchIntent && continuation && !hasEditIntent) add("search", 1, "recent search intent");
+		if (externalResearch) add("main", 2, "external docs/library signal");
+		if (recentExternalResearch && continuation) add("main", 0.75, "recent external docs/library signal");
+		if (hasEditIntent) add("main", 1.75, "edit/implementation intent");
+		if (hasCode) add("main", 1, "code/file signal");
+		if (lightDiscussion) add("main", 2, "light discussion/question");
+		if (!hasCode && cleanPrompt.length < 90 && (includesAny(promptLower, FAST_KEYWORDS) || cleanPrompt.length < 25)) add("fast", 3, "short/simple prompt");
+
+		const ranked = (Object.keys(scores) as Purpose[])
+			.filter((purpose) => purpose !== "vision")
+			.sort((a, b) => scores[b] - scores[a]);
+		let best = ranked[0];
+		const second = ranked[1];
+		const margin = scores[best] - scores[second];
+
+		if (best === "think" && lightDiscussion && !hasPromptFailure && !risky && !largeChange && margin < 1.5) {
+			best = "main";
+			signals.push("main override: light discussion avoided deep route");
+		}
+		if (best === "search" && hasEditIntent) {
+			best = "main";
+			signals.push("main override: edit intent beats search-only route");
+		}
+
+		const confidence = Math.max(0.35, Math.min(0.99, 0.55 + Math.max(0, margin) / 6));
+		const scoreSummary = `scores fast=${scores.fast.toFixed(1)} main=${scores.main.toFixed(1)} think=${scores.think.toFixed(1)} search=${scores.search.toFixed(1)} margin=${margin.toFixed(1)}`;
+		const reason = `${best} selected by scored heuristics (${scoreSummary})`;
+
+		if (best === "think") return withReason(ROUTES.think, reason, { confidence, signals });
+		if (best === "search") return withReason(ROUTES.search, reason, { confidence, signals });
+		if (best === "fast") return withReason(ROUTES.fast, reason, { confidence, signals });
+		return withReason(ROUTES.main, reason, { confidence, signals });
+	}
+
+	async function applyRoute(route: RoutePlan, ctx: ExtensionContext, options: { manual?: boolean } = {}): Promise<boolean> {
 		const model = ctx.modelRegistry.find(route.provider, route.model);
 		if (!model) {
 			ctx.ui.notify(`Modelo não encontrado no Pi registry: ${route.provider}/${route.model}`, "warning");
@@ -301,7 +443,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		if (ctx.model?.provider === route.provider && ctx.model.id === route.model) {
 			lastRoute = route;
 			if (route.provider === COPILOT_PROVIDER) copilotRoutingActive = true;
-			if (!options.manual) routeStats[route.purpose]++;
+			if (!options.manual) routeStats[route.purpose]++; else workflowStats.manualOverrides++;
 			updateStatus(ctx);
 			return true;
 		}
@@ -311,7 +453,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 			pi.setThinkingLevel(route.thinking);
 			lastRoute = route;
 			if (route.provider === COPILOT_PROVIDER) copilotRoutingActive = true;
-			if (!options.manual) routeStats[route.purpose]++;
+			if (!options.manual) routeStats[route.purpose]++; else workflowStats.manualOverrides++;
 			updateStatus(ctx);
 		}
 		return success;
@@ -350,13 +492,13 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		const prompt = event.prompt ?? "";
 		const hasImages = detectImages(prompt, event.images as unknown[]);
 
-		if (hasImages) {
-			await applyRoute(ROUTES.vision, ctx);
-			return;
-		}
-
 		const route = analyzeRoute(prompt, hasImages, ctx);
-		await applyRoute(route, ctx);
+		const success = await applyRoute(route, ctx);
+		if (!success) return;
+
+		// Keep routing lightweight: model/thinking selection is reflected in the status bar.
+		// Do not inject workflow-plan messages by default; they add noise and can encourage
+		// expensive subagent behavior on infrastructure that is not optimized for it.
 	});
 
 	pi.on("turn_end", async (event, ctx) => {
@@ -390,6 +532,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 				const data = entry.data as {
 					autoRouting?: boolean;
 					routeStats?: Record<Purpose, number>;
+					workflowStats?: typeof workflowStats;
 					copilotRoutingActive?: boolean;
 				} | undefined;
 				if (data) {
@@ -398,6 +541,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 						const s = data.routeStats as Record<string, number>;
 						routeStats = { fast: s.fast ?? 0, main: s.main ?? 0, think: (s.think ?? 0) + (s.architect ?? 0), search: s.search ?? 0, vision: s.vision ?? 0 };
 					}
+					if (typeof data.workflowStats === "object" && data.workflowStats) workflowStats = { ...workflowStats, ...data.workflowStats };
 					if (typeof data.copilotRoutingActive === "boolean") copilotRoutingActive = data.copilotRoutingActive;
 				}
 			}
@@ -426,12 +570,19 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 			info += `  Modelo atual: ${model}\n`;
 
 			info += `  Última rota: ${route}\n`;
-			info += `  Tool calls recentes: ${recentToolCalls} (${turnsSinceReset} turns)\n\n`;
+			info += `  Tool calls recentes: ${recentToolCalls} (${turnsSinceReset} turns)\n`;
+			if (lastRoute) {
+				info += `  Confiança: ${Math.round(lastRoute.confidence * 100)}%\n`;
+				info += `  Motivo: ${lastRoute.reason}\n`;
+				info += `  Sinais: ${lastRoute.signals.slice(0, 6).join("; ") || "default"}\n`;
+			}
+			info += `\n`;
 			info += `  Purposes:\n`;
 			for (const purpose of ["fast", "main", "think", "search", "vision"] as Purpose[]) {
 				const route = ROUTES[purpose];
 				info += `    ${EMOJI[purpose]} ${purpose.padEnd(9)} → ${route.provider}/${route.model} (${route.thinking}) [${routeStats[purpose]}]\n`;
 			}
+			info += `\n  Manual overrides: ${workflowStats.manualOverrides}\n`;
 			info += `\n  Uso: /copilot-route auto|manual|status|rush|smart|deep|fast|main|think|search|vision|reset`; 
 			ctx.ui.notify(info, "info");
 			return;
@@ -440,7 +591,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		if (cmd === "auto") {
 			autoRouting = true;
 			copilotRoutingActive = true;
-			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, workflowStats, copilotRoutingActive });
 			ctx.ui.notify("Copilot auto-routing ativado ✅", "info");
 			updateStatus(ctx);
 			return;
@@ -448,7 +599,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 
 		if (cmd === "manual") {
 			autoRouting = false;
-			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, workflowStats, copilotRoutingActive });
 			ctx.ui.notify("Copilot auto-routing desativado ⏸️", "info");
 			updateStatus(ctx);
 			return;
@@ -456,7 +607,8 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 
 		if (cmd === "reset" || cmd === "stats") {
 			routeStats = { fast: 0, main: 0, think: 0, search: 0, vision: 0 };
-			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive });
+			workflowStats = { autoSearchHints: 0, oracleHints: 0, reviewTourHints: 0, planSignoffHints: 0, manualOverrides: 0 };
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, workflowStats, copilotRoutingActive });
 			ctx.ui.notify("Estatísticas do Copilot router resetadas 📊", "info");
 			return;
 		}
@@ -470,7 +622,7 @@ export default function copilotAutoRouter(pi: ExtensionAPI) {
 		autoRouting = false;
 		const success = await applyRoute(ROUTES[purpose], ctx, { manual: true });
 		if (success) {
-			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, copilotRoutingActive: true });
+			pi.appendEntry("copilot-router-state", { autoRouting, routeStats, workflowStats, copilotRoutingActive: true });
 			ctx.ui.notify(`${LABELS[purpose]} aplicado; auto-routing desativado`, "info");
 		}
 		updateStatus(ctx);

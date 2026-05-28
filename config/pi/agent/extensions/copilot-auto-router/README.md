@@ -4,15 +4,17 @@ Provider-specific GitHub Copilot router inspired by Amp's model-by-purpose archi
 
 It routes only when the current provider is `github-copilot`. Vision is handled inside Copilot because enterprise vision is available on Gemini 3.5 Flash.
 
-## Amp-style purpose table
+## Purpose table
 
-| Amp role | Command aliases | Model | Thinking | Use |
+The router is intentionally lightweight again: it chooses only the parent model and thinking level. It does not promise Amp/Claude-Code-style subagent orchestration.
+
+| Role | Command aliases | Model | Thinking | Use |
 | --- | --- | --- | --- | --- |
 | Rush | `rush`, `fast` | `github-copilot/gpt-5.5` | `low` | fast, low-overhead work and simple prompts |
 | Smart | `smart`, `main` | `github-copilot/claude-opus-4.7` | `medium` | default high-capability agent mode |
-| Deep | `deep`, `think` | `github-copilot/gpt-5.5` | `high` | hard debugging, architecture, design decisions, deep reasoning |
-| Search | `search` | `github-copilot/gemini-3.5-flash` | `low` | retrieval-heavy exploration when deterministic search is primary |
-| View Image | `vision` | `github-copilot/gemini-3.5-flash` | `medium` | image/video-ish prompts inside Copilot |
+| Deep | `deep`, `think` | `github-copilot/gpt-5.5` | `high` | hard debugging, architecture, risky/broad changes |
+| Search | `search` | `github-copilot/gemini-3.5-flash` | `low` | retrieval-heavy/exploration prompts |
+| View Image | `vision` | `github-copilot/gemini-3.5-flash` | `medium` | image prompts inside Copilot |
 
 The router uses only models visible in `pi --list-models github-copilot`. If GitHub Copilot changes available models, revisit this table.
 
@@ -22,31 +24,40 @@ Image prompts route directly to the Copilot `vision` route: `github-copilot/gemi
 
 No external fallback is configured.
 
-## Context-aware routing
+## Context-aware workflow routing
 
-The router uses cheap deterministic heuristics, not an LLM classifier:
+The router uses cheap deterministic scored heuristics, not an LLM classifier. This keeps routing fast while avoiding the older rigid `if keyword then deep` behaviour:
 
 - image attachments and image file paths
 - current/previous route
 - continuation prompts like `continua`, `segue`, `faz isso`, `ok`
-- recent session text and tool results
+- recent session text and tool results, with lower weight unless the prompt is a continuation
+- self-contamination filtering for previous `Copilot Route Plan` blocks
 - failure signals from tests/build/logs
 - architecture/debug/search/simple keyword groups
+- risky domains such as auth, permissions, production, database/schema, secrets, security
+- broad-change signals such as migration, rewrite, refactor, whole-codebase edits
+- external-research signals such as docs, release notes, libraries, frameworks
 
-Priority:
+Scoring shape:
 
-1. image → `vision`
-2. think/architecture → `deep` / `think`
-3. search/exploration → `search`
-4. simple prompt → `rush` / `fast`
-5. default → `smart` / `main`
+1. image still short-circuits to `vision`
+2. current prompt signals are weighted strongly
+3. recent context signals are weighted lightly unless this is a short continuation
+4. light discussion/questions can keep architecture-adjacent prompts on `smart` instead of over-routing to `deep`
+5. search-only prompts route to `search`, but edit intent beats search-only routing
+6. external docs/library signals keep `smart`; use subagents manually only when worth the overhead
+7. default bias remains `smart` / `main`
 
-## Relationship to `pi-subagents`
+The selected route is shown in the status bar. The extension no longer injects verbose `Copilot Route Plan` messages by default because they created noise and encouraged expensive subagent calls.
 
-- `copilot-auto-router` controls the **parent/main thread** model.
-- `pi-subagents` handles isolated child contexts. User agents/overrides in `~/.pi/agent/settings.json` and `~/.pi/agent/agents/` map Amp-style roles (`search`, `oracle`, `reviewer`, `librarian`, `handoff`) to Copilot models.
+## Subagents
 
-This mirrors Amp's split between agent modes and subagents while using the maintained `pi-subagents` runtime for fallback handling, diagnostics, async runs, chains, and parallel reviews.
+`copilot-subagents` was removed from active extensions. `copilot-auto-router` controls only the **parent/main thread** model and thinking level.
+
+## Metrics
+
+`/copilot-route status` reports route counts and manual overrides.
 
 ## Commands
 
