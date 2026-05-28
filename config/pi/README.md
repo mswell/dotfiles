@@ -8,7 +8,7 @@ This directory is intended to be committed to dotfiles. It excludes or redacts s
 
 - `agent/settings.example.json` sanitized from `~/.pi/agent/settings.json`
 - `agent/extensions/` sanitized global Pi extensions
-- `agent/skills/`, `agent/prompts/`, and `agent/themes/` when present
+- `agent/prompts/` and `agent/themes/` when present (note: `agent/skills/` is intentionally excluded — Pi skills are managed in a separate project)
 - `.backup-manifest.json` with hashes for divergence detection
 
 ## Intentionally not copied

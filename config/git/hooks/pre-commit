@@ -41,9 +41,9 @@ BLOCKED_FILES=(
 TEMPLATE_SUFFIX_RE='\.(example|sample|template|dist|tpl)$'
 
 while IFS= read -r -d '' file; do
-    echo "$file" | grep -qiE "$TEMPLATE_SUFFIX_RE" && continue
+    grep -qiE "$TEMPLATE_SUFFIX_RE" <<< "$file" && continue
     for pattern in "${BLOCKED_FILES[@]}"; do
-        if echo "$file" | grep -qiE "$pattern"; then
+        if grep -qiE "$pattern" <<< "$file"; then
             err "Sensitive filename: $file  (matches: $pattern)"
         fi
     done
@@ -98,16 +98,16 @@ while IFS= read -r -d '' file; do
 
     # Skip by extension
     ext=".${file##*.}"
-    echo "$ext" | grep -qiE "$SKIP_EXTENSIONS" && continue
+    grep -qiE "$SKIP_EXTENSIONS" <<< "$ext" && continue
 
     # Skip template/sample/example files — those are documentation, not secrets.
-    echo "$file" | grep -qiE "$TEMPLATE_SUFFIX_RE" && continue
+    grep -qiE "$TEMPLATE_SUFFIX_RE" <<< "$file" && continue
 
     # Skip GF grep pattern files (they contain regex fragments, not real secrets)
-    echo "$file" | grep -q '\.gf/' && continue
+    grep -q '\.gf/' <<< "$file" && continue
 
     # Skip manifest/hash files — they contain hex digests, not secrets
-    echo "$file" | grep -qiE '(manifest\.json|checksums|SHASUMS|\.lock)$' && continue
+    grep -qiE '(manifest\.json|checksums|SHASUMS|\.lock)$' <<< "$file" && continue
 
     # Get staged content
     content=$(git show ":$file" 2>/dev/null) || continue
@@ -116,13 +116,17 @@ while IFS= read -r -d '' file; do
         label="${entry%%|||*}"
         regex="${entry##*|||}"
 
-        # grep with line numbers; suppress errors for binary files
-        matches=$(echo "$content" | grep -inE "$regex" 2>/dev/null) || continue
+        # grep with line numbers; suppress errors for binary files.
+        # Use here-strings instead of `echo ... | grep` so large staged content
+        # cannot make echo report a Broken pipe if grep exits early.
+        matches=$(grep -inE "$regex" <<< "$content" 2>/dev/null) || continue
         if [[ -n "$matches" ]]; then
             while IFS= read -r match; do
-                lineno=$(echo "$match" | cut -d: -f1)
+                lineno="${match%%:*}"
+                line_text="${match#*:}"
+                line_text=$(sed 's/^[[:space:]]*//' <<< "$line_text")
                 err "$label in ${CYAN}$file:$lineno${RESET}"
-                echo "         $(echo "$match" | cut -d: -f2- | sed 's/^\s*//' | head -c 120)"
+                echo "         ${line_text:0:120}"
             done <<< "$matches"
         fi
     done

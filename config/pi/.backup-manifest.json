@@ -1,114 +1,114 @@
 {
   "manifestVersion": 1,
-  "lastBackupAt": "2026-05-25T12:53:57.986Z",
+  "lastBackupAt": "2026-05-28T12:06:58.842Z",
   "files": {
     "agent/settings.example.json": {
-      "hash": "sha256:06c9cd1688e32b6665ef9fd9e198dc48e3b49d33e6b5698194d01368484843b7",
-      "backedUpAt": "2026-05-25T12:53:57.554Z",
-      "size": 308
+      "hash": "sha256:1c72e5bdb93b4bdebec6f476a2db5b6a99aaba5399be6b3f84acc1bbbbcb322a",
+      "backedUpAt": "2026-05-28T12:06:58.590Z",
+      "size": 1784
     },
     "agent/extensions/gemini-auto-router/README.md": {
       "hash": "sha256:4ca7238e8f49b673208ee361c144e7edccfa913d48eb72e1f92c7c6859b39ad7",
-      "backedUpAt": "2026-05-25T12:53:57.599Z",
+      "backedUpAt": "2026-05-28T12:06:58.619Z",
       "size": 1127
     },
     "agent/extensions/gemini-auto-router/index.ts": {
       "hash": "sha256:a9b099560d5b55cd80effe75025a25da6266e1728749977ef51d7328f4fbfab4",
-      "backedUpAt": "2026-05-25T12:53:57.621Z",
+      "backedUpAt": "2026-05-28T12:06:58.642Z",
       "size": 18310
     },
     "agent/extensions/gpt-auto-router/README.md": {
       "hash": "sha256:dc85df6e7a00da1828855e4b223a82ff1c48bb06499ec13aac285f3c08f93b1b",
-      "backedUpAt": "2026-05-25T12:53:57.622Z",
+      "backedUpAt": "2026-05-28T12:06:58.643Z",
       "size": 2497
     },
     "agent/extensions/gpt-auto-router/index.ts": {
       "hash": "sha256:d11e3d179ed41061441f2f4941a5095a25391609a113baf8f117c7cb07ab7f10",
-      "backedUpAt": "2026-05-25T12:53:57.642Z",
+      "backedUpAt": "2026-05-28T12:06:58.666Z",
       "size": 19083
     },
     "agent/extensions/guardrails.json": {
       "hash": "sha256:81a73fc0f872991b72496c9f76c4d6210adb293e38a27a48abba99c846fe6fc6",
-      "backedUpAt": "2026-05-25T12:53:57.643Z",
+      "backedUpAt": "2026-05-28T12:06:58.667Z",
       "size": 191
     },
     "agent/extensions/hypr-theme-sync.js": {
       "hash": "sha256:576a2dfbf6b9b2a4c209dc5dd57e7afc33c1966aea5a938e633d43251983bd11",
-      "backedUpAt": "2026-05-25T12:53:57.663Z",
+      "backedUpAt": "2026-05-28T12:06:58.689Z",
       "size": 2412
     },
     "agent/extensions/list-google-models.js": {
       "hash": "sha256:ff8bcfbb01232b0678121f143446943c13332f55da69d53ac74f53d7b243a5cb",
-      "backedUpAt": "2026-05-25T12:53:57.686Z",
+      "backedUpAt": "2026-05-28T12:06:58.713Z",
       "size": 362
     },
     "agent/extensions/pi-config-backup/index.ts": {
-      "hash": "sha256:29aa0e9b431ebd99fdf38a60e3b97396b4ef73a51be92775d4cb711e58c16a20",
+      "hash": "sha256:140dbb68d940e76091b73bdf5409ea42913bf24fe3b3283347bee5b845b0844d",
       "version": "0.2.0",
-      "backedUpAt": "2026-05-25T12:53:57.709Z",
-      "size": 22849
+      "backedUpAt": "2026-05-28T12:06:58.736Z",
+      "size": 23103
     },
     "agent/extensions/pi-harness/README.md": {
       "hash": "sha256:5d19b370220ff03ee9f70a5c94767ac3fa72069023173bf3ae96a4462a9e8a83",
-      "backedUpAt": "2026-05-25T12:53:57.710Z",
+      "backedUpAt": "2026-05-28T12:06:58.737Z",
       "size": 5755
     },
     "agent/extensions/pi-harness/index.ts": {
       "hash": "sha256:00c5b37342d4b8e7d9fc881b610809e1b1ac62536317559e015ed84275620911",
       "version": "0.4.3",
-      "backedUpAt": "2026-05-25T12:53:57.732Z",
+      "backedUpAt": "2026-05-28T12:06:58.761Z",
       "size": 86660
     },
     "agent/extensions/pi-skill-audit/README.md": {
       "hash": "sha256:c22331bbdc547127bc016201e5c212b3c1e9a80ec6e1d5c82187d48b05eb7fe0",
-      "backedUpAt": "2026-05-25T12:53:57.733Z",
+      "backedUpAt": "2026-05-28T12:06:58.763Z",
       "size": 2935
     },
     "agent/extensions/pi-skill-audit/index.ts": {
       "hash": "sha256:551766e0287f732e4875d910ebb8af2c5a21d8b04684e103d009f21294496085",
       "version": "0.1.0",
-      "backedUpAt": "2026-05-25T12:53:57.755Z",
+      "backedUpAt": "2026-05-28T12:06:58.790Z",
       "size": 39765
     },
     "agent/extensions/ui-ux-design/index.ts": {
       "hash": "sha256:c60890b8943328d6d31ca770ab6d4a33a6413fdedca3fb3ce8842a3ea66cf2c1",
       "version": "0.1.0",
-      "backedUpAt": "2026-05-25T12:53:57.778Z",
+      "backedUpAt": "2026-05-28T12:06:58.813Z",
       "size": 16961
     },
     "agent/extensions/zai-auto-router/README.md": {
       "hash": "sha256:c614efee92f3b9a7f1109817a6826380343c78baabfa8dc416872a0f64851aa5",
-      "backedUpAt": "2026-05-25T12:53:57.778Z",
+      "backedUpAt": "2026-05-28T12:06:58.815Z",
       "size": 2236
     },
     "agent/extensions/zai-auto-router/index.ts": {
       "hash": "sha256:8f8e45edebb9cdb89ccb18821334c5f67399c306f364f026b93d729cbe8a9cc7",
-      "backedUpAt": "2026-05-25T12:53:57.800Z",
+      "backedUpAt": "2026-05-28T12:06:58.838Z",
       "size": 19589
     },
     "agent/themes/tokyonight.json": {
       "hash": "sha256:8324200abc602896c7ec77a3530ef4ba78d4aec76444b17d524f0d935a45f7c4",
-      "backedUpAt": "2026-05-25T12:53:57.985Z",
+      "backedUpAt": "2026-05-28T12:06:58.840Z",
       "size": 2197
     },
     "agent/themes/wellpunk-dark.json": {
-      "hash": "sha256:4ae066db19c6807570e7d40a656dea74933d7ad65c8a8c260154fa88d85b668f",
-      "backedUpAt": "2026-05-25T12:53:57.985Z",
+      "hash": "sha256:c0b86806ea27183692956d916304bcdb488ce99fb1d4fae4722f0f8a010ed528",
+      "backedUpAt": "2026-05-28T12:06:58.841Z",
       "size": 2178
     },
     "agent/themes/wellpunk-light.json": {
-      "hash": "sha256:363ae2f10fef85cb7ad52f8ad8cbe9dfef572c9c47990fa6752c644e1622ce25",
-      "backedUpAt": "2026-05-25T12:53:57.986Z",
+      "hash": "sha256:2359f1c7b1eb38da88fe1396870c21d0d954fb0a67f95c2e854f39b57e36d192",
+      "backedUpAt": "2026-05-28T12:06:58.842Z",
       "size": 2135
     },
     "agent/extensions/copilot-auto-router/README.md": {
-      "hash": "sha256:763d34165de083ba839a2382a7479c35feb8b91fc9d773725572aa18c2d1e822",
-      "backedUpAt": "2026-05-25T12:53:57.555Z",
-      "size": 2496
+      "hash": "sha256:3c4d9ff3b2e6e758e13b1ff98346cab672ac6f7a36487a70bcf9895e23dd44ef",
+      "backedUpAt": "2026-05-28T12:06:58.592Z",
+      "size": 2712
     },
     "agent/extensions/copilot-auto-router/index.ts": {
       "hash": "sha256:0071a8731300f837b9a27b75b7ab6ec7d1405233d5c2fd0f74929e83433afa21",
-      "backedUpAt": "2026-05-25T12:53:57.576Z",
+      "backedUpAt": "2026-05-28T12:06:58.618Z",
       "size": 16214
     },
     "agent/extensions/copilot-context/README.md": {

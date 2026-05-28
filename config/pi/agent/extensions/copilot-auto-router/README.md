@@ -41,12 +41,12 @@ Priority:
 4. simple prompt → `rush` / `fast`
 5. default → `smart` / `main`
 
-## Relationship to `copilot-subagents`
+## Relationship to `pi-subagents`
 
 - `copilot-auto-router` controls the **parent/main thread** model.
-- `copilot-subagents` delegates noisy side work to isolated child contexts (`search`, `oracle`, `review`, `librarian`, `handoff`).
+- `pi-subagents` handles isolated child contexts. User agents/overrides in `~/.pi/agent/settings.json` and `~/.pi/agent/agents/` map Amp-style roles (`search`, `oracle`, `reviewer`, `librarian`, `handoff`) to Copilot models.
 
-This mirrors Amp's split between agent modes and subagents.
+This mirrors Amp's split between agent modes and subagents while using the maintained `pi-subagents` runtime for fallback handling, diagnostics, async runs, chains, and parallel reviews.
 
 ## Commands
 
