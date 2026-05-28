@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agent safety
+
+- Never close, kill, restart, or log out user applications/processes (for example Chrome, Teams, browsers, portals, Hyprland/session services) without explicit user confirmation immediately before the command.
+- Treat `kill`, `killall`, `pkill`, `systemctl --user restart`, session reloads, and commands that may interrupt calls/screen sharing as risky even when they look harmless.
+- For Chrome/Chromium theme debugging, do not edit browser `Preferences` or close the browser. Validate via `gsettings` and `org.freedesktop.portal.Settings` instead.
+
 ## Agent skills
 
 ### Issue tracker

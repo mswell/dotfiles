@@ -71,12 +71,21 @@ theme_resolve() {
     esac
 }
 
+theme_gsettings_color_scheme() {
+    local theme="$1"
+    if [[ "$theme" == "wellpunk-light" ]]; then
+        printf 'prefer-light\n'
+    else
+        printf 'prefer-dark\n'
+    fi
+}
+
 theme_gtk_values() {
     local theme="$1"
     if [[ "$theme" == "wellpunk-light" ]]; then
-        printf '%s|%s|%s|%s|%s\n' "Adwaita" "0" "prefer-light" "Papirus-Light" "Bibata-Modern-Ice"
+        printf '%s|%s|%s|%s|%s\n' "Adwaita" "0" "$(theme_gsettings_color_scheme "$theme")" "Papirus-Light" "Bibata-Modern-Ice"
     else
-        printf '%s|%s|%s|%s|%s\n' "Adwaita-dark" "1" "prefer-dark" "Papirus-Dark" "Bibata-Modern-Classic"
+        printf '%s|%s|%s|%s|%s\n' "Adwaita-dark" "1" "$(theme_gsettings_color_scheme "$theme")" "Papirus-Dark" "Bibata-Modern-Classic"
     fi
 }
 
@@ -106,34 +115,16 @@ _theme_portal_current_color_scheme() {
         | awk '/uint32/ {print $NF; exit}'
 }
 
-_theme_restart_portals_if_mismatched() {
-    local expected="$1" current
+_theme_validate_portal_color_scheme() {
+    local theme="$1" expected="$2" current message
     command -v dbus-send >/dev/null 2>&1 || return 0
+
     current="$(_theme_portal_current_color_scheme || true)"
     [[ "$current" == "$expected" ]] && return 0
-    command -v systemctl >/dev/null 2>&1 || return 0
-    systemctl --user restart xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland 2>/dev/null || true
-}
 
-_theme_enable_chromium_system_theme() {
-    local home="$1" uid pref tmp
-    command -v jq >/dev/null 2>&1 || return 0
-    uid="$(id -u 2>/dev/null || echo "")"
-
-    # Do not edit live Chromium-family profiles; Chrome may overwrite Preferences on exit.
-    if [[ -n "$uid" ]] && pgrep -u "$uid" -f '/(chrome|chrome-stable|chromium|brave|vivaldi)( |$)' >/dev/null 2>&1; then
-        return 0
-    fi
-
-    for pref in \
-        "$home/.config/google-chrome"/*/Preferences \
-        "$home/.config/chromium"/*/Preferences \
-        "$home/.config/BraveSoftware/Brave-Browser"/*/Preferences \
-        "$home/.config/vivaldi"/*/Preferences; do
-        [[ -f "$pref" ]] || continue
-        tmp=$(mktemp)
-        jq '.extensions.theme.system_theme = 1 | .extensions.theme.id = ""' "$pref" > "$tmp" && mv "$tmp" "$pref"
-    done
+    message="XDG portal color-scheme mismatch after switching to $theme: expected $expected, got ${current:-unavailable}. Chrome/GTK apps in Device/System mode may not follow the theme until the portal is healthy. Restart xdg-desktop-portal only when it is safe."
+    printf 'theme-switch warning: %s\n' "$message" >&2
+    command -v notify-send >/dev/null 2>&1 && notify-send "Theme portal mismatch" "$message" --icon=dialog-warning -t 6000 || true
 }
 
 # Emit a host-independent plan. Tests consume this instead of touching a real desktop.
@@ -161,8 +152,8 @@ write|$home/.config/gtk-4.0/settings.ini|gtk4-settings
 write|$home/.gtkrc-2.0|gtk2-settings
 write|$home/.config/xsettingsd/xsettingsd.conf|xsettingsd-settings
 write|$home/.icons/default/index.theme|cursor-index
-set|gsettings org.gnome.desktop.interface color-scheme|$(theme_portal_color_scheme "$theme")
-reload|xdg-desktop-portal Settings backend if mismatched
+set|gsettings org.gnome.desktop.interface color-scheme|$(theme_gsettings_color_scheme "$theme")
+check|xdg-desktop-portal Settings color-scheme|$(theme_portal_color_scheme "$theme")
 reload|hyprctl reload
 reload|waybar SIGUSR2-or-restart
 reload|kitty SIGUSR1
@@ -324,8 +315,7 @@ EOF
         gsettings set org.gnome.desktop.interface cursor-theme "$gtk_cursor" || true
         gsettings set org.gnome.desktop.interface cursor-size 24 || true
     fi
-    _theme_restart_portals_if_mismatched "$(theme_portal_color_scheme "$theme")"
-    _theme_enable_chromium_system_theme "$home"
+    _theme_validate_portal_color_scheme "$theme" "$(theme_portal_color_scheme "$theme")"
     command -v hyprctl >/dev/null 2>&1 && hyprctl setcursor "$gtk_cursor" 24 || true
     command -v nautilus >/dev/null 2>&1 && nautilus -q 2>/dev/null || true
 

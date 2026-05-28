@@ -20,9 +20,37 @@ if theme_resolve invalid >/tmp/theme-invalid.out 2>&1; then
   echo "invalid theme unexpectedly succeeded" >&2
   exit 1
 fi
-plan=$(THEME_HOME=/tmp/dotfiles-home theme_plan white)
-assert_contains "$plan" "persist|/tmp/dotfiles-home/.config/hypr/current-theme|white"
-assert_contains "$plan" "symlink|/tmp/dotfiles-home/.config/waybar/themes/white.css|/tmp/dotfiles-home/.config/waybar/themes/current.css"
+plan=$(THEME_HOME=/tmp/dotfiles-home theme_plan wellpunk-light)
+assert_contains "$plan" "persist|/tmp/dotfiles-home/.config/hypr/current-theme|wellpunk-light"
+assert_contains "$plan" "symlink|/tmp/dotfiles-home/.config/waybar/themes/wellpunk-light.css|/tmp/dotfiles-home/.config/waybar/themes/current.css"
+assert_contains "$plan" "set|gsettings org.gnome.desktop.interface color-scheme|prefer-light"
+assert_contains "$plan" "check|xdg-desktop-portal Settings color-scheme|2"
+if grep -Eq 'google-chrome|chromium.*/Preferences|extensions\.theme\.system_theme' "$ROOT/setup/lib/theme_orchestrator.sh"; then
+  echo "theme orchestrator must not edit Chromium-family browser profiles" >&2
+  exit 1
+fi
+
+mockbin=$(mktemp -d)
+trap 'rm -rf "$mockbin"' EXIT
+cat > "$mockbin/dbus-send" <<'EOF'
+#!/usr/bin/env bash
+printf 'method return\n   variant       variant          uint32 1\n'
+EOF
+cat > "$mockbin/notify-send" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "${THEME_NOTIFY_LOG:?}"
+EOF
+chmod +x "$mockbin/dbus-send" "$mockbin/notify-send"
+THEME_NOTIFY_LOG="$mockbin/notify.log" PATH="$mockbin:$PATH" _theme_validate_portal_color_scheme wellpunk-light 2 2>"$mockbin/portal.err"
+assert_contains "$(cat "$mockbin/portal.err")" "XDG portal color-scheme mismatch after switching to wellpunk-light"
+assert_contains "$(cat "$mockbin/notify.log")" "Theme portal mismatch"
+: > "$mockbin/portal.err"
+: > "$mockbin/notify.log"
+THEME_NOTIFY_LOG="$mockbin/notify.log" PATH="$mockbin:$PATH" _theme_validate_portal_color_scheme wellpunk-dark 1 2>"$mockbin/portal.err"
+if [[ -s "$mockbin/portal.err" || -s "$mockbin/notify.log" ]]; then
+  echo "portal validation warned despite matching expected color-scheme" >&2
+  exit 1
+fi
 
 source "$ROOT/setup/lib/dotfiles_manifest.sh"
 manifest=$(DOTFILES="$ROOT" HOME=/tmp/dotfiles-home dotfiles_plan)
