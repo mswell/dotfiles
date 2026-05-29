@@ -6,7 +6,7 @@ import * as os from "node:os";
 import * as crypto from "node:crypto";
 import { execSync } from "node:child_process";
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.1";
 const DEFAULT_DESTINATION = "~/Projects/dotfiles/config/pi";
 const PI_AGENT_DIR = path.join(os.homedir(), ".pi", "agent");
 const AGENTS_SKILLS_DIR = path.join(os.homedir(), ".agents", "skills");
@@ -43,6 +43,7 @@ type BackupResult = {
 	destination: string;
 	filesWritten: string[];
 	filesSkipped: Array<{ path: string; reason: string }>;
+	filesPruned: string[];
 	dryRun: boolean;
 };
 
@@ -243,7 +244,7 @@ async function copySanitizedDir(source: string, destination: string, result: Bac
 
 async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResult> {
 	const destination = path.resolve(expandHome(params.destination || DEFAULT_DESTINATION));
-	const result: BackupResult = { destination, filesWritten: [], filesSkipped: [], dryRun: Boolean(params.dryRun) };
+	const result: BackupResult = { destination, filesWritten: [], filesSkipped: [], filesPruned: [], dryRun: Boolean(params.dryRun) };
 	const manifest = await loadManifest(destination);
 
 	await ensureDir(destination, result.dryRun);
@@ -269,6 +270,21 @@ async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResu
 		await copySanitizedDir(AGENTS_SKILLS_DIR, path.join(destination, "agents", "skills"), result, manifest, destination);
 	}
 
+	// Prune destination files that no longer exist locally so removed extensions/themes don't get restored later.
+	const writtenSet = new Set(result.filesWritten.map((p) => path.resolve(p)));
+	const managedDirs = [
+		path.join(destination, "agent", "extensions"),
+		path.join(destination, "agent", "prompts"),
+		path.join(destination, "agent", "themes"),
+	];
+	if (params.includeAgentsSkills) {
+		managedDirs.push(path.join(destination, "agents", "skills"));
+	}
+	for (const dir of managedDirs) {
+		await pruneOrphans(dir, writtenSet, result, manifest, destination);
+	}
+	pruneStaleManifestEntries(destination, writtenSet, manifest, Boolean(params.includeAgentsSkills));
+
 	// Update manifest
 	manifest.lastBackupAt = new Date().toISOString();
 	await saveManifest(destination, manifest, result.dryRun);
@@ -279,6 +295,57 @@ async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResu
 }
 
 // --- Restore logic with guardrails ---
+
+function isManagedManifestPath(relPath: string, includeAgentsSkills: boolean): boolean {
+	if (relPath === "agent/settings.example.json") return true;
+	if (relPath.startsWith("agent/extensions/")) return true;
+	if (relPath.startsWith("agent/prompts/")) return true;
+	if (relPath.startsWith("agent/themes/")) return true;
+	if (includeAgentsSkills && relPath.startsWith("agents/skills/")) return true;
+	return false;
+}
+
+function pruneStaleManifestEntries(dotfilesDir: string, writtenSet: Set<string>, manifest: BackupManifest, includeAgentsSkills: boolean): void {
+	for (const relPath of Object.keys(manifest.files)) {
+		if (!isManagedManifestPath(relPath, includeAgentsSkills)) continue;
+		const absolutePath = path.resolve(path.join(dotfilesDir, relPath));
+		if (!writtenSet.has(absolutePath)) delete manifest.files[relPath];
+	}
+}
+
+async function pruneOrphans(dir: string, writtenSet: Set<string>, result: BackupResult, manifest: BackupManifest, dotfilesDir: string): Promise<boolean> {
+	if (!(await exists(dir))) return true;
+	const entries = await fs.readdir(dir, { withFileTypes: true });
+	let emptied = true;
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) {
+			const childEmpty = await pruneOrphans(full, writtenSet, result, manifest, dotfilesDir);
+			if (childEmpty) {
+				result.filesPruned.push(full);
+				if (!result.dryRun) {
+					try { await fs.rm(full, { recursive: true, force: true }); } catch {}
+				}
+			} else {
+				emptied = false;
+			}
+		} else if (entry.isFile()) {
+			if (writtenSet.has(path.resolve(full))) {
+				emptied = false;
+				continue;
+			}
+			result.filesPruned.push(full);
+			if (!result.dryRun) {
+				try { await fs.rm(full, { force: true }); } catch {}
+			}
+			const relPath = path.relative(dotfilesDir, full);
+			delete manifest.files[relPath];
+		} else {
+			emptied = false;
+		}
+	}
+	return emptied;
+}
 
 async function createPreRestoreSnapshot(filesToRestore: string[], dryRun: boolean): Promise<string | undefined> {
 	if (dryRun || filesToRestore.length === 0) return undefined;
@@ -458,7 +525,9 @@ function formatBackupResult(result: BackupResult): string {
 	const verb = result.dryRun ? "dry-run" : "complete";
 	const fileLabel = result.dryRun ? "would write" : "written";
 	const skipped = result.filesSkipped.length ? `, ${result.filesSkipped.length} skipped` : "";
-	return `Pi config backup ${verb}: ${result.filesWritten.length} files ${fileLabel}${skipped} → ${result.destination}`;
+	const prunedLabel = result.dryRun ? "would prune" : "pruned";
+	const pruned = result.filesPruned.length ? `, ${result.filesPruned.length} ${prunedLabel}` : "";
+	return `Pi config backup ${verb}: ${result.filesWritten.length} files ${fileLabel}${skipped}${pruned} → ${result.destination}`;
 }
 
 function formatRestoreResult(result: RestoreResult): string {
