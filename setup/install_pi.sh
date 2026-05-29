@@ -102,12 +102,15 @@ install_pi() {
 
     if command_exists pi; then
         pi_ok "pi already available: $(command -v pi)"
-        pi_info "Updating @mariozechner/pi-coding-agent..."
+        pi_info "Updating @earendil-works/pi-coding-agent..."
     else
-        pi_info "Installing @mariozechner/pi-coding-agent..."
+        pi_info "Installing @earendil-works/pi-coding-agent..."
     fi
 
-    npm install -g @mariozechner/pi-coding-agent@latest
+    # Project was renamed from @mariozechner/* to @earendil-works/* (v0.74+).
+    # Remove the stale old-scope package so extensions resolve the new scope.
+    npm uninstall -g @mariozechner/pi-coding-agent >/dev/null 2>&1 || true
+    npm install -g @earendil-works/pi-coding-agent@latest
     add_runtime_paths
     hash -r 2>/dev/null || true
 
