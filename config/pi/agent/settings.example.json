@@ -1,9 +1,9 @@
 {
   "lastChangelogVersion": "0.77.0",
-  "theme": "tokyonight",
+  "theme": "wellpunk-dark",
   "defaultProvider": "github-copilot",
   "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "medium",
+  "defaultThinkingLevel": "xhigh",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
