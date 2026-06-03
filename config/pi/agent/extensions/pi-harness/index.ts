@@ -86,6 +86,7 @@ const HarnessParams = Type.Object({
 		Type.Literal("closeTask"),
 		Type.Literal("recordDecision"),
 		Type.Literal("recordEvidence"),
+		Type.Literal("recordCheck"),
 		Type.Literal("recordNote"),
 		Type.Literal("appendIdea"),
 		Type.Literal("readContext"),
@@ -108,10 +109,15 @@ const HarnessParams = Type.Object({
 		Type.Literal("reflect"),
 		Type.Literal("reflectAi"),
 		Type.Literal("memoryCandidates"),
+		Type.Literal("memoryAudit"),
+		Type.Literal("memoryDedupe"),
 		Type.Literal("improveReport"),
 	], { description: "Harness action to run." }),
 	title: Type.Optional(Type.String({ description: "Task title for startTask." })),
-	text: Type.Optional(Type.String({ description: "Text for decisions, evidence, notes, ideas, project context, policy, contract, plan, report note, or memory content. For remember: 'type: content'. For recall: optional type filter. For forget: 'type: content substring'." })),
+	text: Type.Optional(Type.String({ description: "Text for decisions, evidence, checks, notes, ideas, project context, policy, contract, plan, report note, or memory content. For remember: 'type: content'. For recall: optional type filter. For forget: 'type: content substring'." })),
+	command: Type.Optional(Type.String({ description: "Command or check name for recordCheck." })),
+	exitCode: Type.Optional(Type.Number({ description: "Process exit code for recordCheck." })),
+	passed: Type.Optional(Type.Boolean({ description: "Whether recordCheck passed." })),
 	phase: Type.Optional(Type.Union(PHASES.map((p) => Type.Literal(p)) as any, { description: "PREVC phase: P, R, E, V, C." })),
 });
 
@@ -422,6 +428,43 @@ function summarizeToolInput(toolName: string, input: unknown): Record<string, un
 	return {};
 }
 
+function shellCommandFromInput(input: unknown): string | undefined {
+	const data = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+	return typeof data.command === "string" ? data.command : undefined;
+}
+
+function isLikelyMutatingShellCommand(command: string): boolean {
+	return [
+		/(^|[;&|\n]\s*)(cp|mv|mkdir|touch|ln|tee|truncate)\b/i,
+		/(^|[;&|\n]\s*)(sed\s+-i|perl\s+-pi)\b/i,
+		/(^|\s)(>|>>)\s*\S+/i,
+		/\bgit\s+(add|commit|rm|clean|reset|restore|checkout|switch|rebase|merge|stash|tag|push)\b/i,
+		/\b(npm|pnpm|yarn)\s+(install|i|ci|add|remove|rm|uninstall|unlink|publish)\b/i,
+		/\b(npm|pnpm|yarn)\s+(run\s+)?build\b/i,
+		/\b(vite|rollup|webpack|next)\s+build\b/i,
+		/(^|[;&|\n]\s*)tsc\b(?![^;&|\n]*\s--noEmit\b)/i,
+	].some((pattern) => pattern.test(command));
+}
+
+function mutatingToolReason(toolName: string, input: unknown): string | undefined {
+	if (toolName === "edit" || toolName === "write") return `${toolName} modifies files`;
+	if (toolName === "bash") {
+		const command = shellCommandFromInput(input);
+		if (command && isLikelyMutatingShellCommand(command)) return `bash appears mutating: ${redact(command)}`;
+	}
+	return undefined;
+}
+
+async function recordPhaseActionNotice(root: string, toolName: string, input: unknown): Promise<void> {
+	const task = await getActiveTask(root);
+	if (!task || task.status !== "active" || task.phase === "E") return;
+	const reason = mutatingToolReason(toolName, input);
+	if (!reason) return;
+	const note = `Phase notice: mutating action during ${task.phase} (${PHASE_LABELS[task.phase]}): ${reason}. Treat this as execution work; validate before claiming done.`;
+	await appendText(path.join(taskDir(root, task), "journal.md"), `\n## ${now()}\n\n${note}\n`);
+	await appendTrace(root, { type: "phase_action_notice", taskId: task.id, phase: task.phase, toolName, reason });
+}
+
 async function autoInferPhase(root: string, inferredPhase: Phase): Promise<void> {
 	const task = await getActiveTask(root);
 	if (!task || task.status !== "active") return;
@@ -455,6 +498,33 @@ async function recordEvidence(root: string, text: string): Promise<void> {
 	if (!task) throw new Error("No active task. Use startTask first.");
 	await appendText(path.join(taskDir(root, task), "evidence.md"), `\n## ${now()}\n\n${text}\n`);
 	await appendTrace(root, { type: "evidence", text: redact(text) });
+	await autoInferPhase(root, "V");
+}
+
+async function recordCheck(root: string, check: { command?: string; exitCode?: number; passed?: boolean; text?: string }): Promise<void> {
+	const task = await getActiveTask(root);
+	if (!task) throw new Error("No active task. Use startTask first.");
+	const passed = typeof check.passed === "boolean"
+		? check.passed
+		: typeof check.exitCode === "number"
+			? check.exitCode === 0
+			: undefined;
+	const status = passed === undefined ? "UNKNOWN" : passed ? "PASS" : "FAIL";
+	const lines = [
+		`\n## ${now()}`,
+		`Check: ${status}`,
+	];
+	if (check.command?.trim()) lines.push(`Command: \`${redact(check.command.trim())}\``);
+	if (typeof check.exitCode === "number") lines.push(`Exit code: ${check.exitCode}`);
+	if (check.text?.trim()) lines.push("", check.text.trim());
+	await appendText(path.join(taskDir(root, task), "evidence.md"), `${lines.join("\n")}\n`);
+	await appendTrace(root, {
+		type: "check",
+		taskId: task.id,
+		status,
+		command: check.command ? redact(check.command) : undefined,
+		exitCode: check.exitCode,
+	});
 	await autoInferPhase(root, "V");
 }
 
@@ -1269,6 +1339,13 @@ async function rememberMemory(root: string, text: string): Promise<string> {
 		await writeText(filePath, `# Memory: ${type}\n`);
 	}
 	const entry = content.startsWith("-") ? content : `- ${content}`;
+	const normalizeMemory = (value: string) => value.replace(/^[-*]\s*/, "").replace(/\s+/g, " ").trim().toLowerCase();
+	const existing = await readText(filePath);
+	const duplicate = existing.split("\n").some((line) => normalizeMemory(line) === normalizeMemory(entry));
+	if (duplicate) {
+		await appendTrace(root, { type: "memory_duplicate_skipped", memoryType: type, content: redact(content) });
+		return `Memory already exists in ${type}: ${content.slice(0, 120)}`;
+	}
 	await appendText(filePath, `${entry}\n`);
 	await appendTrace(root, { type: "memory_remember", memoryType: type, content: redact(content) });
 	return `Remembered in ${type}: ${content.slice(0, 120)}`;
@@ -1314,6 +1391,98 @@ async function forgetMemory(root: string, text: string): Promise<string> {
 	await writeText(filePath, filtered.join("\n"));
 	await appendTrace(root, { type: "memory_forget", memoryType: type, content: redact(content) });
 	return `Removed ${removed} entry(ies) from ${type}.`;
+}
+
+function normalizeMemoryLine(value: string): string {
+	return value.replace(/^[-*]\s*/, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function memoryEntryLines(content: string): string[] {
+	return content.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("#"));
+}
+
+async function memoryAudit(root: string): Promise<string> {
+	await ensureHarness(root);
+	const lines = [
+		"# Memory Audit",
+		"",
+		`Generated: ${now()}`,
+		"",
+		"This is deterministic and read-only. Use `/harness memory-dedupe` to remove exact normalized duplicates.",
+		"",
+		"| Type | Entries | Duplicates | Prompted | Characters | Notes |",
+		"| --- | ---: | ---: | --- | ---: | --- |",
+	];
+	let totalEntries = 0;
+	let totalDuplicates = 0;
+	for (const type of MEMORY_TYPES) {
+		const content = await readText(memoryFilePath(root, type));
+		const entries = memoryEntryLines(content);
+		const seen = new Set<string>();
+		let duplicates = 0;
+		for (const entry of entries) {
+			const key = normalizeMemoryLine(entry);
+			if (seen.has(key)) duplicates++;
+			else seen.add(key);
+		}
+		totalEntries += entries.length;
+		totalDuplicates += duplicates;
+		const prompted = (["preferences", "playbooks", "mistakes"] as string[]).includes(type) ? "yes" : "no";
+		const notes: string[] = [];
+		if (duplicates) notes.push("dedupe recommended");
+		if (prompted === "yes" && content.length > 1200) notes.push("lean context may truncate");
+		if (!entries.length) notes.push("empty");
+		lines.push(`| ${type} | ${entries.length} | ${duplicates} | ${prompted} | ${content.length} | ${notes.join(", ") || "ok"} |`);
+	}
+	lines.push(
+		"",
+		"## Recommendations",
+		"",
+		totalDuplicates ? `- Run \`/harness memory-dedupe\` to remove ${totalDuplicates} duplicate entr${totalDuplicates === 1 ? "y" : "ies"}.` : "- No duplicate memory entries detected.",
+		"- Keep `preferences`, `playbooks`, and `mistakes` high-signal: these are injected into lean context.",
+		"- Store broad project facts in `facts` and domain vocabulary in `glossary`; they are available through recall but not always injected.",
+		"- Prefer durable, reusable lessons over one-off task notes.",
+	);
+	const report = lines.join("\n");
+	await writeText(path.join(harnessPath(root), "memory-audit.md"), report);
+	await appendTrace(root, { type: "memory_audit", entries: totalEntries, duplicates: totalDuplicates });
+	return report;
+}
+
+async function memoryDedupe(root: string): Promise<string> {
+	await ensureHarness(root);
+	const report: string[] = ["Memory dedupe:"];
+	let totalRemoved = 0;
+	for (const type of MEMORY_TYPES) {
+		const filePath = memoryFilePath(root, type);
+		const content = await readText(filePath);
+		if (!content.trim()) continue;
+		const output: string[] = [];
+		const seen = new Set<string>();
+		let removed = 0;
+		for (const line of content.split("\n")) {
+			const trimmed = line.trim();
+			if (!trimmed || trimmed.startsWith("#")) {
+				output.push(line);
+				continue;
+			}
+			const key = normalizeMemoryLine(trimmed);
+			if (seen.has(key)) {
+				removed++;
+				continue;
+			}
+			seen.add(key);
+			output.push(line);
+		}
+		if (removed) {
+			totalRemoved += removed;
+			await writeText(filePath, output.join("\n").replace(/\n{3,}/g, "\n\n"));
+		}
+		report.push(`- ${type}: removed ${removed}`);
+	}
+	await appendTrace(root, { type: "memory_dedupe", removed: totalRemoved });
+	report.push(`Total removed: ${totalRemoved}`);
+	return report.join("\n");
 }
 
 async function taskForReflection(root: string, selector?: string): Promise<TaskState> {
@@ -1548,6 +1717,10 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			if (!params.text) throw new Error("text is required for recordEvidence");
 			await recordEvidence(root, params.text);
 			return "Evidence recorded.";
+		case "recordCheck":
+			if (!params.text && !params.command) throw new Error("text or command is required for recordCheck");
+			await recordCheck(root, { command: params.command, exitCode: params.exitCode, passed: params.passed, text: params.text });
+			return "Check recorded.";
 		case "recordNote":
 			if (!params.text) throw new Error("text is required for recordNote");
 			await recordNote(root, params.text);
@@ -1628,6 +1801,10 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			throw new Error("reflectAi requires Pi extension context; use /harness reflect-ai.");
 		case "memoryCandidates":
 			return await memoryCandidates(root, params.text);
+		case "memoryAudit":
+			return await memoryAudit(root);
+		case "memoryDedupe":
+			return await memoryDedupe(root);
 		case "improveReport":
 			return await improveReport(root);
 		default:
@@ -1652,6 +1829,7 @@ function commandHelp(): string {
 		"  close <task-id> [note]        mark any task as done by id/slug/title",
 		"  decision <text>              record durable decision",
 		"  evidence <text>              record validation evidence",
+		"  check [pass|fail] <cmd> -- <summary>  record structured validation check",
 		"  note <text>                  append an operational task journal note",
 		"  idea <text>                  append a task idea/backlog item",
 		"  contract <markdown>          replace active task contract",
@@ -1669,6 +1847,8 @@ function commandHelp(): string {
 		"  reflect [task-id]            review active or selected task and suggest what to memorize",
 		"  reflect-ai [task-id]         ask current model for suggestions, then approve memories with checkboxes",
 		"  memory-candidates [task-id]  heuristic scan for memorizable lines in a task",
+		"  memory-audit                 deterministic report of memory counts, duplicates, prompt footprint",
+		"  memory-dedupe                remove exact normalized duplicate memory entries",
 		"  improve-report               generate improvement report from mistakes/patterns",
 	].join("\n");
 }
@@ -1680,6 +1860,25 @@ function commandOutputLines(output: string): string[] {
 	const visible = lines.slice(0, maxLines).map((line) => (line.length > maxChars ? `${line.slice(0, maxChars - 1)}…` : line));
 	if (lines.length > maxLines) visible.push(`… truncated ${lines.length - maxLines} more lines`);
 	return visible;
+}
+
+function parseCheckArgs(rest: string): { command?: string; text?: string; exitCode?: number; passed?: boolean } {
+	let input = rest.trim();
+	let passed: boolean | undefined;
+	const statusMatch = input.match(/^(pass|passed|ok|fail|failed|error)\s+/i);
+	if (statusMatch) {
+		passed = /^(pass|passed|ok)$/i.test(statusMatch[1]!);
+		input = input.slice(statusMatch[0].length).trim();
+	}
+	const separator = input.indexOf(" -- ");
+	let command = separator >= 0 ? input.slice(0, separator).trim() : input;
+	let text = separator >= 0 ? input.slice(separator + 4).trim() : undefined;
+	const exitMatch = `${command} ${text ?? ""}`.match(/\bexit(?:=|\s+)(-?\d+)\b/i);
+	const exitCode = exitMatch ? Number(exitMatch[1]) : undefined;
+	if (typeof passed !== "boolean" && typeof exitCode === "number") passed = exitCode === 0;
+	command = command.replace(/\bexit(?:=|\s+)-?\d+\b/i, "").trim();
+	if (text) text = text.replace(/\bexit(?:=|\s+)-?\d+\b/i, "").trim();
+	return { command: command || undefined, text: text || undefined, exitCode, passed };
 }
 
 async function evaluateGoalWithModel(ctx: ExtensionContext, goal: GoalState): Promise<{ achieved: boolean; reason: string }> {
@@ -1862,6 +2061,11 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 			case "evidence":
 				output = await handleHarness(root, { action: "recordEvidence", text: rest } as HarnessParamsType);
 				break;
+			case "check": {
+				const parsed = parseCheckArgs(rest);
+				output = await handleHarness(root, { action: "recordCheck", ...parsed } as HarnessParamsType);
+				break;
+			}
 			case "note":
 				output = await handleHarness(root, { action: "recordNote", text: rest } as HarnessParamsType);
 				break;
@@ -1922,6 +2126,12 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 			case "memory-candidates":
 				output = await handleHarness(root, { action: "memoryCandidates", text: rest || undefined } as HarnessParamsType);
 				break;
+			case "memory-audit":
+				output = await handleHarness(root, { action: "memoryAudit" } as HarnessParamsType);
+				break;
+			case "memory-dedupe":
+				output = await handleHarness(root, { action: "memoryDedupe" } as HarnessParamsType);
+				break;
 			case "improve-report":
 				output = await handleHarness(root, { action: "improveReport" } as HarnessParamsType);
 				break;
@@ -1960,7 +2170,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerCommand("harness", {
 		description: "Project harness: durable context, PREVC tasks, goals, evidence, and reports",
 		getArgumentCompletions: (prefix) => {
-			const commands = ["init", "status", "tasks", "tasks-ui", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "note", "idea", "contract", "plan", "goal", "summary", "rebuild-summary", "report", "remember", "recall", "forget", "reflect", "reflect-ai", "memory-candidates", "improve-report", "help"];
+			const commands = ["init", "status", "tasks", "tasks-ui", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "check", "note", "idea", "contract", "plan", "goal", "summary", "rebuild-summary", "report", "remember", "recall", "forget", "reflect", "reflect-ai", "memory-candidates", "memory-audit", "memory-dedupe", "improve-report", "help"];
 			const filtered = commands.filter((cmd) => cmd.startsWith(prefix.trim()));
 			return filtered.length ? filtered.map((cmd) => ({ value: cmd, label: cmd })) : null;
 		},
@@ -1970,7 +2180,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "harness",
 		label: "Harness",
-		description: "Manage project-local pi-harness files: context, PREVC workflow, goals, decisions, evidence, notes, ideas, summaries, and reports.",
+		description: "Manage project-local pi-harness files: context, PREVC workflow, goals, decisions, evidence/checks, notes, ideas, summaries, and reports.",
 		promptSnippet: "Manage durable project context, PREVC task workflow, and verifiable goals via .pi/harness",
 		promptGuidelines: [
 			"Use harness for non-trivial tasks to create or inspect project context, start a task, track PREVC phase, record decisions, call updatePlan/updateContract for plans/contracts, manage active goals, and record validation evidence.",
@@ -2040,8 +2250,9 @@ export default function piHarness(pi: ExtensionAPI) {
 			toolName: event.toolName,
 			input: summarizeToolInput(event.toolName, event.input),
 		});
-		// Auto-infer phase → E when execution tools are used
-		if (["bash", "edit", "write"].includes(event.toolName)) {
+		await recordPhaseActionNotice(root, event.toolName, event.input);
+		// Auto-infer phase → E only for clear mutations. Read-only bash can be planning/review/validation.
+		if (event.toolName === "edit" || event.toolName === "write" || (event.toolName === "bash" && isLikelyMutatingShellCommand(shellCommandFromInput(event.input) ?? ""))) {
 			await autoInferPhase(root, "E");
 		}
 	});

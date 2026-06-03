@@ -1,6 +1,6 @@
 # pi-config-backup
 
-Global Pi extension that backs up sanitized Pi configuration to your dotfiles.
+Global Pi extension that backs up sanitized Pi configuration to your dotfiles and restores it across machines.
 
 Default destination:
 
@@ -8,7 +8,7 @@ Default destination:
 ~/Projects/dotfiles/config/pi
 ```
 
-## Commands
+## Backup commands
 
 ```text
 /pi-backup
@@ -17,28 +17,65 @@ Default destination:
 /pi-backup --include-agents-skills
 ```
 
-## Tool
+## Restore modes
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| **merge** (default) | `/pi-restore` or `/pi-restore --merge` | Restore new/updated files; keep local extras that are not in the backup |
+| **sync** | `/pi-restore --sync` | Restore + delete local extras so the machine is an exact mirror of the backup |
+
+Additional flags (both modes):
 
 ```text
-pi_config_backup
+/pi-restore --dry-run       preview what would change
+/pi-restore --force         overwrite locally-diverged files
+/pi-restore --sync --force  full mirror, force-overwrite diverged files
+```
+
+### Keeping machines in sync
+
+```bash
+# On the source machine (after changes):
+/pi-backup
+git commit && git push
+
+# On each other machine:
+git pull
+/pi-restore --sync
+```
+
+## Tools
+
+```text
+pi_config_backup   { destination?, dryRun?, includeAgentsSkills? }
+pi_config_restore  { source?, dryRun?, force?, sync?, merge? }
 ```
 
 ## What is copied
 
-- `~/.pi/agent/settings.json` -> `agent/settings.example.json` with sensitive values redacted
+- `~/.pi/agent/settings.json` → `agent/settings.example.json` with sensitive values redacted
 - `~/.pi/agent/extensions/`
-- `~/.pi/agent/skills/`, `prompts/`, `themes/` when present
+- `~/.pi/agent/prompts/`, `themes/` when present
 - optionally `~/.agents/skills/` with `--include-agents-skills`
+
+> **Note:** `agent/skills/` is intentionally excluded — Pi skills are managed in a separate project.
 
 ## What is excluded/redacted
 
 - `~/.pi/agent/sessions/`
 - package caches/install dirs such as `npm/`, `git/`, `node_modules/`
 - `.env`, token/secret/cookie/auth/private-key-looking filenames
-- API keys, tokens, bearer tokens, JWTs, cookies, OAuth material, and similar values in text files
+- API keys, tokens, bearer tokens, JWTs, cookies, OAuth material
+- Files with syntax errors (validated with `node --check`)
 
 This is a safety filter, not cryptographic proof. Review diffs before committing dotfiles.
 
+## Guardrails (restore)
+
+- Files modified locally since last backup are **skipped** (not overwritten) — use `--force` to override
+- A pre-restore snapshot is saved to `~/.pi/agent/.pre-restore-snapshot/` before any overwrite
+- In `--sync` mode, only managed directories are pruned (`extensions/`, `prompts/`, `themes/`); `sessions/` and other dirs are never touched
+
 ## UI behavior
 
-`/pi-backup` reports completion through a transient notification and intentionally does not keep a persistent widget block in the Pi UI. The `pi_config_backup` tool returns only a one-line summary; detailed file lists remain in the tool `details` and generated `manifest.json`.
+`/pi-backup` and `/pi-restore` report completion through a transient notification without a persistent widget. The tool versions return a one-line summary; detailed file lists remain in the tool `details` and generated `manifest.json`.

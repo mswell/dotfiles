@@ -1,15 +1,67 @@
 {
-  "lastChangelogVersion": "0.77.0",
-  "theme": "wellpunk-dark",
+  "lastChangelogVersion": "0.78.0",
+  "theme": "tokyonight",
   "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "xhigh",
+  "defaultModel": "claude-sonnet-4.6",
+  "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
-    "npm:pi-context",
-    "npm:@spences10/pi-skills",
     "npm:pi-subagents"
-  ]
+  ],
+  "subagents": {
+    "agentOverrides": {
+      "scout": {
+        "model": "github-copilot/gemini-3.5-flash",
+        "fallbackModels": [
+          "github-copilot/gemini-3-flash-preview",
+          "github-copilot/gpt-5.4-mini",
+          "github-copilot/claude-haiku-4.5"
+        ],
+        "thinking": "low",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls"
+        ],
+        "completionGuard": false
+      },
+      "reviewer": {
+        "model": "github-copilot/gemini-3.1-pro-preview",
+        "fallbackModels": [
+          "github-copilot/claude-sonnet-4.6",
+          "github-copilot/gpt-5.5"
+        ],
+        "thinking": "medium"
+      },
+      "oracle": {
+        "model": "github-copilot/gpt-5.5",
+        "fallbackModels": [
+          "github-copilot/claude-opus-4.7",
+          "github-copilot/claude-sonnet-4.6"
+        ],
+        "thinking": "high"
+      },
+      "researcher": {
+        "model": "github-copilot/claude-sonnet-4.6",
+        "fallbackModels": [
+          "github-copilot/gemini-3.1-pro-preview",
+          "github-copilot/gpt-5.5"
+        ],
+        "thinking": "medium"
+      },
+      "context-builder": {
+        "model": "github-copilot/gemini-3.5-flash",
+        "fallbackModels": [
+          "github-copilot/gemini-3-flash-preview",
+          "github-copilot/gpt-5.4-mini",
+          "github-copilot/claude-haiku-4.5"
+        ],
+        "thinking": "low"
+      }
+    }
+  },
+  "hideThinkingBlock": false
 }

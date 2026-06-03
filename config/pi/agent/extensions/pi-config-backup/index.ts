@@ -52,6 +52,7 @@ type RestoreResult = {
 	filesWritten: string[];
 	filesSkipped: Array<{ path: string; reason: string }>;
 	filesDiverged: Array<{ path: string; localVersion?: string; backupVersion?: string }>;
+	filesPruned: string[];
 	snapshotDir?: string;
 	dryRun: boolean;
 };
@@ -70,6 +71,9 @@ const RestoreParams = Type.Object({
 	source: Type.Optional(Type.String({ description: `Source directory. Defaults to ${DEFAULT_DESTINATION}.` })),
 	dryRun: Type.Optional(Type.Boolean({ description: "Preview what would be copied without writing files." })),
 	force: Type.Optional(Type.Boolean({ description: "Overwrite diverged local files without checking." })),
+	// sync vs merge mode
+	sync: Type.Optional(Type.Boolean({ description: "Sync mode: delete local managed files not in the backup so the destination is an exact mirror of the source. Use this to keep machines identical. Alias: --sync on the command line." })),
+	merge: Type.Optional(Type.Boolean({ description: "Merge mode (default): restore new/updated files from backup without deleting local extras. Alias: --merge on the command line." })),
 });
 
 type RestoreParamsType = Static<typeof RestoreParams>;
@@ -363,6 +367,37 @@ async function createPreRestoreSnapshot(filesToRestore: string[], dryRun: boolea
 	return PRE_RESTORE_SNAPSHOT_DIR;
 }
 
+async function pruneRestoreOrphans(dir: string, expectedFiles: Set<string>, result: RestoreResult): Promise<boolean> {
+	const entries = await fs.readdir(dir, { withFileTypes: true });
+	let emptied = true;
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) {
+			const childEmpty = await pruneRestoreOrphans(full, expectedFiles, result);
+			if (childEmpty) {
+				result.filesPruned.push(full);
+				if (!result.dryRun) {
+					try { await fs.rm(full, { recursive: true, force: true }); } catch {}
+				}
+			} else {
+				emptied = false;
+			}
+		} else if (entry.isFile()) {
+			if (expectedFiles.has(path.resolve(full))) {
+				emptied = false;
+				continue;
+			}
+			result.filesPruned.push(full);
+			if (!result.dryRun) {
+				try { await fs.rm(full, { force: true }); } catch {}
+			}
+		} else {
+			emptied = false;
+		}
+	}
+	return emptied;
+}
+
 async function collectRestoreFiles(srcDir: string, dstDir: string, files: Array<{ src: string; dst: string }>): Promise<void> {
 	if (!(await exists(srcDir))) return;
 	const entries = await fs.readdir(srcDir, { withFileTypes: true });
@@ -384,6 +419,7 @@ async function restorePiConfig(params: RestoreParamsType = {}): Promise<RestoreR
 		filesWritten: [],
 		filesSkipped: [],
 		filesDiverged: [],
+		filesPruned: [],
 		dryRun: Boolean(params.dryRun),
 	};
 
@@ -476,6 +512,18 @@ async function restorePiConfig(params: RestoreParamsType = {}): Promise<RestoreR
 		result.filesWritten.push(dst);
 	}
 
+	// --sync: delete local extras so destination is an exact mirror of the backup
+	// --merge (default): restore files without deleting local extras
+	const isSyncMode = params.sync === true;
+	if (isSyncMode) {
+		const expected = new Set(filesToRestore.map(({ dst }) => path.resolve(dst)));
+		const managedRoots = [path.join(destination, "extensions"), path.join(destination, "prompts"), path.join(destination, "themes")];
+		for (const root of managedRoots) {
+			if (!(await exists(root))) continue;
+			await pruneRestoreOrphans(root, expected, result);
+		}
+	}
+
 	// Record diverged files
 	for (const { dst, localVersion, backupVersion } of divergedFiles) {
 		result.filesDiverged.push({
@@ -512,12 +560,31 @@ ${includeAgentsSkills ? "- `agents/skills/` sanitized copy of `~/.agents/skills/
 - API keys, tokens, cookies, OAuth material, and similar strings
 - Files with syntax errors (validated with node --check)
 
-## Restore
+## Restore modes
 
-Use \`/pi-restore\` or the \`pi_config_restore\` tool. Guardrails:
+Use \`/pi-restore\` or the \`pi_config_restore\` tool.
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| **merge** (default) | \`/pi-restore\` or \`/pi-restore --merge\` | Restore new/updated files; keep local extras that are not in the backup |
+| **sync** | \`/pi-restore --sync\` | Restore + delete local extras so the machine is an exact mirror of the backup |
+
+Guardrails (both modes):
 - Files modified locally since last backup are **skipped** (not overwritten)
 - A pre-restore snapshot is saved to \`~/.pi/agent/.pre-restore-snapshot/\`
 - Use \`--force\` to override divergence protection
+
+### Keeping machines in sync
+
+\`\`\`bash
+# On the source machine (after changes):
+/pi-backup
+git commit && git push
+
+# On each other machine:
+git pull
+/pi-restore --sync
+\`\`\`
 `;
 }
 
@@ -546,6 +613,12 @@ function formatRestoreResult(result: RestoreResult): string {
 			lines.push(`  - ${item.path}: ${item.reason}`);
 		}
 	}
+	if (result.filesPruned.length) {
+		lines.push("", `🧹 ${result.filesPruned.length} extra file(s) pruned to mirror backup:`);
+		for (const item of result.filesPruned.slice(0, 20)) {
+			lines.push(`  - ${item}`);
+		}
+	}
 	if (result.filesDiverged.length) {
 		lines.push("", `⚠️  ${result.filesDiverged.length} file(s) modified locally since last backup (SKIPPED):`);
 		for (const item of result.filesDiverged.slice(0, 20)) {
@@ -568,13 +641,16 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 			const parts = args.trim().split(/\s+/).filter(Boolean);
 			const dryRun = parts.includes("--dry-run");
 			const force = parts.includes("--force");
+			const sync = parts.includes("--sync") || parts.includes("--mirror"); // --mirror kept as alias
+			const merge = parts.includes("--merge");
 			const source = parts.find((part) => !part.startsWith("--"));
 			try {
-				const result = await restorePiConfig({ source, dryRun, force });
+				const result = await restorePiConfig({ source, dryRun, force, sync, merge });
 				ctx.ui.setWidget("pi-restore", undefined);
+				const mode = sync ? "sync" : "merge";
 				const msg = result.filesDiverged.length
-					? `Pi config restore: ${result.filesWritten.length} files restored, ${result.filesDiverged.length} skipped (locally modified)`
-					: `Pi config restore ${dryRun ? "dry-run " : ""}complete: ${result.filesWritten.length} files written`;
+					? `Pi config restore [${mode}]: ${result.filesWritten.length} files restored, ${result.filesDiverged.length} skipped (locally modified)`
+					: `Pi config restore [${mode}] ${dryRun ? "dry-run " : ""}complete: ${result.filesWritten.length} files written${result.filesPruned.length ? `, ${result.filesPruned.length} pruned` : ""}`;
 				ctx.ui.notify(msg, result.filesDiverged.length ? "warning" : "info");
 			} catch (error) {
 				ctx.ui.notify(`pi-restore failed: ${error instanceof Error ? error.message : String(error)}`, "error");
@@ -607,6 +683,8 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 		promptGuidelines: [
 			"Use pi_config_restore to load backup configurations into the local Pi agent directory.",
 			"Restore skips files that were modified locally since last backup. Use force: true to override.",
+			"Use sync: true for sync mode (mirror): restores and deletes local extras so the destination matches the backup exactly. This is what you want to keep machines in sync.",
+		"Use merge: true (or omit) for merge mode (default): restores new/updated files but keeps local extras.",
 		],
 		parameters: RestoreParams,
 		async execute(_toolCallId, params: RestoreParamsType) {
@@ -620,6 +698,7 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 					filesWritten: [],
 					filesSkipped: [{ path: "", reason: message }],
 					filesDiverged: [],
+					filesPruned: [],
 					dryRun: Boolean(params.dryRun),
 				};
 				return {

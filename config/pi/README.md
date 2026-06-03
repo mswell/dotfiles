@@ -19,9 +19,28 @@ This directory is intended to be committed to dotfiles. It excludes or redacts s
 - API keys, tokens, cookies, OAuth material, and similar strings
 - Files with syntax errors (validated with node --check)
 
-## Restore
+## Restore modes
 
-Use `/pi-restore` or the `pi_config_restore` tool. Guardrails:
+Use `/pi-restore` or the `pi_config_restore` tool.
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| **merge** (default) | `/pi-restore` or `/pi-restore --merge` | Restore new/updated files; keep local extras that are not in the backup |
+| **sync** | `/pi-restore --sync` | Restore + delete local extras so the machine is an exact mirror of the backup |
+
+Guardrails (both modes):
 - Files modified locally since last backup are **skipped** (not overwritten)
 - A pre-restore snapshot is saved to `~/.pi/agent/.pre-restore-snapshot/`
 - Use `--force` to override divergence protection
+
+### Keeping machines in sync
+
+```bash
+# On the source machine (after changes):
+/pi-backup
+git commit && git push
+
+# On each other machine:
+git pull
+/pi-restore --sync
+```

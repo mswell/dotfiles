@@ -1,0 +1,6 @@
+{
+  "mode": "off",
+  "switchConfidenceThreshold": 0.8,
+  "familySwitchCooldownPrompts": 2,
+  "showStatus": true
+}

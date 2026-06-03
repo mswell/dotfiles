@@ -31,6 +31,7 @@ Project data is stored per repository in:
 /harness close <task-id> [note]
 /harness decision <text>
 /harness evidence <text>
+/harness check [pass|fail] <command> -- <summary>
 /harness note <text>
 /harness idea <text>
 /harness contract <markdown>
@@ -47,6 +48,8 @@ Project data is stored per repository in:
 /harness forget <type>: <substring>
 /harness reflect [task-id]
 /harness reflect-ai [task-id]
+/harness memory-audit
+/harness memory-dedupe
 /harness improve-report
 ```
 
@@ -60,13 +63,22 @@ PREVC phases:
 - V: Validation
 - C: Confirmation
 
-Use the `harness` tool or `/harness` command to keep durable task contracts, plans, goals, decisions, evidence, notes, ideas, reports, and traces in `.pi/harness`.
+Use the `harness` tool or `/harness` command to keep durable task contracts, plans, goals, decisions, evidence, structured checks, notes, ideas, reports, and traces in `.pi/harness`.
 
 For many tasks, `/harness tasks all` opens a navigable task browser instead of a truncating widget. Use `/harness tasks text all` for the old plain text list, or `/harness tasks-ui all` to explicitly open the browser. In the browser, type to filter, use ↑/↓ or j/k to move, Enter to insert `/harness reflect-ai <task-id>`, `r` to insert `/harness reflect <task-id>`, and q/Esc to close.
 
 Long outputs such as `/harness reflect-ai`, `/harness reflect`, `/harness report`, `/harness summary`, `/harness context`, and `/harness improve-report` open in a scrollable overlay reader instead of the truncating command widget. Use ↑/↓ or j/k to scroll, PgUp/PgDn/Space to page, Home/End, and q/Esc to close.
 
 Tool actions for task files are `updatePlan` and `updateContract`. Compatibility aliases `recordPlan` and `recordContract` are accepted because agents sometimes infer those names from `recordDecision` / `recordEvidence`.
+
+For validation, prefer structured checks when possible:
+
+```text
+/harness check pass npx tsc --noEmit -- typecheck passed
+/harness check fail npm test -- 2 tests still fail; see output above
+```
+
+The tool equivalent is `harness({ action: "recordCheck", command, exitCode, passed, text })`.
 
 ## Goal mode
 
@@ -89,6 +101,8 @@ Memory is explicit and project-local. Use `/harness remember <type>: <content>` 
 
 `/harness reflect [task-id]` performs a deterministic heuristic review of the active task, or a selected open/closed task when an id, slug, or exact title is provided. `/harness reflect-ai [task-id]` asks the current Pi model for continuous-improvement suggestions, extracts suggested `/harness remember ...` commands, and opens a checkbox approval overlay. Only selected memories are applied; press `v` in the overlay to inspect the full read-only report without applying anything.
 
+`/harness memory-audit` writes a deterministic `.pi/harness/memory-audit.md` report with entry counts, duplicate counts, and lean-context footprint notes. `/harness memory-dedupe` removes exact normalized duplicate entries within each memory type; it does not do semantic pruning.
+
 ## Autoresearch-inspired additions
 
 - `events.jsonl`: append-only project-level event log.
@@ -108,6 +122,16 @@ Before compaction, pi-harness rebuilds `.pi/harness/summary.md` so Pi's normal c
 ## UI footprint
 
 By default, pi-harness only uses the footer status (`harness:on ...`) and does not reserve a persistent widget block above the input. The full status remains available through `/harness status` and the tool action `status`.
+
+## Smoke test
+
+From `~/.pi`, run:
+
+```bash
+node scripts/test-pi-harness-smoke.mjs
+```
+
+The smoke test checks TypeScript, syntax, extension startup through `pi --list-models`, and that the route router remains fail-safe `off`.
 
 ## Manual dotfiles backup notes
 
