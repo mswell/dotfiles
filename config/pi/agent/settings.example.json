@@ -3,7 +3,7 @@
   "theme": "tokyonight",
   "defaultProvider": "github-copilot",
   "defaultModel": "claude-sonnet-4.6",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "low",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
