@@ -1,9 +1,9 @@
 {
-  "lastChangelogVersion": "0.78.1",
-  "theme": "tokyonight",
+  "lastChangelogVersion": "0.79.0",
+  "theme": "wellpunk-light",
   "defaultProvider": "github-copilot",
-  "defaultModel": "claude-opus-4.6",
-  "defaultThinkingLevel": "xhigh",
+  "defaultModel": "gpt-5.4-mini",
+  "defaultThinkingLevel": "low",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
@@ -29,10 +29,11 @@
         "completionGuard": false
       },
       "reviewer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "github-copilot/gpt-5.5",
         "fallbackModels": [
           "github-copilot/claude-sonnet-4.6",
-          "github-copilot/gpt-5.5"
+          "github-copilot/claude-opus-4.7",
+          "github-copilot/gpt-5.4"
         ],
         "thinking": "medium"
       },
@@ -47,8 +48,8 @@
       "researcher": {
         "model": "github-copilot/claude-sonnet-4.6",
         "fallbackModels": [
-          "github-copilot/gemini-3.1-pro-preview",
-          "github-copilot/gpt-5.5"
+          "github-copilot/gpt-5.5",
+          "github-copilot/claude-opus-4.7"
         ],
         "thinking": "medium"
       },

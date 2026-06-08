@@ -3,14 +3,15 @@ export const ROUTE_MODES = ["cheap", "dev", "bugbounty", "max", "manual", "off"]
 export type RouteMode = (typeof ROUTE_MODES)[number];
 export type EffectiveRouteMode = Exclude<RouteMode, "manual" | "off">;
 export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
-export type SupportedProvider = "google" | "openai-codex" | "opencode-go";
+export type SupportedProvider = "github-copilot";
 export type ModelRole =
-	| "geminiFlash"
-	| "geminiPro"
-	| "codexPlan"
-	| "codexWork"
-	| "opencodeFast"
-	| "opencodeWork";
+	| "copilotFast"
+	| "copilotScout"
+	| "copilotWork"
+	| "copilotDebug"
+	| "copilotReview"
+	| "copilotOracle"
+	| "copilotVision";
 
 export interface RouteConfig {
 	mode: RouteMode;

@@ -2,7 +2,7 @@
 
 Global Pi extension for project-local harness state without MCP or dotcontext.
 
-Version: 0.5.0
+Version: 0.5.1
 
 Installed globally at:
 
@@ -115,9 +115,17 @@ Pi's normal compaction is not replaced; the harness simply persists a determinis
 
 ## Token footprint
 
-pi-harness injects a lean project context into the system prompt: active task, bounded summary, recent decisions, and a pointer to `harness({ action: "readContext" })` for full detail. Large traces, full journals, full evidence, and ideas are kept on disk and loaded on demand instead of being sent every turn.
+pi-harness defaults to a minimal prompt footprint. It injects only task counts, active-task title/phase when present, and a pointer to `harness({ action: "readContext" })` for full detail. Large traces, summaries, journals, evidence, decisions, ideas, and most memory stay on disk unless explicitly requested.
 
-Before compaction, pi-harness rebuilds `.pi/harness/summary.md` so Pi's normal compaction has a deterministic project/task snapshot available.
+Context injection is configurable with `PI_HARNESS_CONTEXT`:
+
+```text
+PI_HARNESS_CONTEXT=minimal  # default: smallest useful status
+PI_HARNESS_CONTEXT=lean     # bounded summary, recent decisions, selected memory
+PI_HARNESS_CONTEXT=off      # no automatic harness context injection
+```
+
+Before compaction, pi-harness rebuilds `.pi/harness/summary.md` so Pi's normal compaction has a deterministic project/task snapshot available. Normal turns no longer trust `summary.md` for prompt injection because it can become stale between compactions.
 
 ## UI footprint
 

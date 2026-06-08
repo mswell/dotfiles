@@ -3,7 +3,7 @@ import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 const HARNESS_DIR = path.join(".pi", "harness");
 const EVENTS_FILE = "events.jsonl";
 const SUMMARY_FILE = "summary.md";
@@ -11,7 +11,11 @@ const TRACE_RECENT_LIMIT = 25;
 const DEFAULT_GOAL_MAX_TURNS = 10;
 const GOAL_CONVERSATION_ENTRY_LIMIT = 80;
 const WIDGET_MODE: "off" | "compact" = "off";
-const LEAN_CONTEXT_LIMIT = 4500;
+const HARNESS_CONTEXT_MODE_ENV = "PI_HARNESS_CONTEXT";
+type HarnessContextMode = "off" | "minimal" | "lean";
+const DEFAULT_CONTEXT_MODE: HarnessContextMode = "minimal";
+const LEAN_CONTEXT_LIMIT = 2200;
+const MINIMAL_CONTEXT_LIMIT = 900;
 const PHASES = ["P", "R", "E", "V", "C"] as const;
 const MEMORY_TYPES = ["facts", "preferences", "patterns", "mistakes", "playbooks", "glossary"] as const;
 type MemoryType = (typeof MEMORY_TYPES)[number];
@@ -112,13 +116,13 @@ const HarnessParams = Type.Object({
 		Type.Literal("memoryAudit"),
 		Type.Literal("memoryDedupe"),
 		Type.Literal("improveReport"),
-	], { description: "Harness action to run." }),
-	title: Type.Optional(Type.String({ description: "Task title for startTask." })),
-	text: Type.Optional(Type.String({ description: "Text for decisions, evidence, checks, notes, ideas, project context, policy, contract, plan, report note, or memory content. For remember: 'type: content'. For recall: optional type filter. For forget: 'type: content substring'." })),
-	command: Type.Optional(Type.String({ description: "Command or check name for recordCheck." })),
-	exitCode: Type.Optional(Type.Number({ description: "Process exit code for recordCheck." })),
-	passed: Type.Optional(Type.Boolean({ description: "Whether recordCheck passed." })),
-	phase: Type.Optional(Type.Union(PHASES.map((p) => Type.Literal(p)) as any, { description: "PREVC phase: P, R, E, V, C." })),
+	], { description: "Harness action." }),
+	title: Type.Optional(Type.String({ description: "Task title." })),
+	text: Type.Optional(Type.String({ description: "Action text; remember/forget use 'type: content'." })),
+	command: Type.Optional(Type.String({ description: "Check command/name." })),
+	exitCode: Type.Optional(Type.Number({ description: "Check exit code." })),
+	passed: Type.Optional(Type.Boolean({ description: "Check passed." })),
+	phase: Type.Optional(Type.Union(PHASES.map((p) => Type.Literal(p)) as any, { description: "PREVC phase." })),
 });
 
 type HarnessParamsType = Static<typeof HarnessParams>;
@@ -248,7 +252,56 @@ async function ensureHarness(root: string): Promise<HarnessIndex> {
 	if (!(await exists(path.join(dir, "decisions.md")))) {
 		await writeText(path.join(dir, "decisions.md"), "# Decisions\n\nDurable project decisions recorded by pi-harness.\n");
 	}
+	await ensureGitignore(root);
 	return index;
+}
+
+/**
+ * Ensure the project .gitignore has the correct pi-harness policy:
+ *   - .pi/runs/*          → ignored (ephemeral session logs)
+ *   - !.pi/runs/index.jsonl → tracked (lightweight historical evidence)
+ *   - .pi/harness/        → NOT ignored (durable project state)
+ *
+ * Uses a glob pattern (.pi/runs/*) instead of a directory pattern (.pi/runs/)
+ * so that git negation rules can re-include index.jsonl.
+ */
+async function ensureGitignore(root: string): Promise<void> {
+	const gitignorePath = path.join(root, ".gitignore");
+	let content = "";
+	try {
+		content = await fs.readFile(gitignorePath, "utf8");
+	} catch {
+		// file does not exist yet — will be created
+	}
+
+	// Migrate: upgrade .pi/runs/ (directory form) to .pi/runs/* (glob form)
+	// so that !.pi/runs/index.jsonl negation can work.
+	content = content.replace(/^\.pi\/runs\/$/m, ".pi/runs/*");
+
+	const trimmedLines = content.split("\n").map((l) => l.trim());
+	const hasRunsGlob = trimmedLines.includes(".pi/runs/*");
+	const hasIndexException = trimmedLines.includes("!.pi/runs/index.jsonl");
+
+	if (hasRunsGlob && hasIndexException) {
+		// Both present; write back in case we performed the directory→glob migration
+		await fs.writeFile(gitignorePath, content, "utf8");
+		return;
+	}
+
+	const additions: string[] = [];
+	if (!hasRunsGlob) {
+		additions.push("");
+		additions.push("# Pi session run logs (ephemeral — blueprint, commands.jsonl, context/)");
+		additions.push(".pi/runs/*");
+	}
+	if (!hasIndexException) {
+		if (additions.length === 0) additions.push(""); // blank separator
+		additions.push("# Preserve run index as lightweight historical evidence");
+		additions.push("!.pi/runs/index.jsonl");
+	}
+
+	if (content.length > 0 && !content.endsWith("\n")) content += "\n";
+	await fs.writeFile(gitignorePath, content + additions.join("\n") + "\n", "utf8");
 }
 
 async function getActiveTask(root: string): Promise<TaskState | undefined> {
@@ -946,6 +999,22 @@ function truncate(value: string, max = 4000): string {
 	return value.length <= max ? value : `${value.slice(0, max)}\n\n[truncated ${value.length - max} chars]`;
 }
 
+function getHarnessContextMode(): HarnessContextMode {
+	const raw = (process.env[HARNESS_CONTEXT_MODE_ENV] ?? process.env.PI_HARNESS_CONTEXT_MODE ?? DEFAULT_CONTEXT_MODE).trim().toLowerCase();
+	if (["0", "false", "none", "disabled", "off"].includes(raw)) return "off";
+	if (raw === "lean" || raw === "full") return "lean";
+	return "minimal";
+}
+
+function harnessOperatingRules(): string {
+	return [
+		"# pi-harness rules",
+		"",
+		"- Use harness only when durable project/task state is worth the token cost; skip it for quick or throwaway work.",
+		"- Load full detail with harness({ action: \"readContext\" }) only on demand; never store secrets in harness records.",
+	].join("\n");
+}
+
 async function recentTraceSection(root: string, task?: TaskState): Promise<string> {
 	const tracePath = task
 		? path.join(taskDir(root, task), "trace.jsonl")
@@ -962,7 +1031,7 @@ async function buildContext(root: string): Promise<string> {
 	const project = truncate(await readText(path.join(dir, "project.md")), 2500);
 	const policies = truncate(await readText(path.join(dir, "policies.md")), 2000);
 	const decisions = truncate(await readText(path.join(dir, "decisions.md")), 2500);
-	const persistedSummary = truncate(await readText(path.join(dir, SUMMARY_FILE)), 2500);
+	const currentSummary = truncate(await buildHarnessSummary(root), 1200);
 	let taskFiles = "";
 	if (active) {
 		const dir = taskDir(root, active);
@@ -982,7 +1051,7 @@ async function buildContext(root: string): Promise<string> {
 		`pi-harness v${VERSION}`,
 		`Root: ${root}`,
 		`Tasks: ${index.tasks.length}`,
-		persistedSummary,
+		currentSummary,
 		project,
 		policies,
 		decisions,
@@ -1002,12 +1071,9 @@ async function buildLeanContext(root: string): Promise<string> {
 		active ? `Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]` : "Active task: none",
 	];
 
-	const persistedSummary = (await readText(path.join(dir, SUMMARY_FILE))).trim();
-	if (persistedSummary) {
-		lines.push("", "## Harness Summary", truncate(persistedSummary, 1600));
-	} else {
-		lines.push("", "## Project Context", truncate(await readText(path.join(dir, "project.md")), 1000));
-	}
+	// Build a current prompt summary instead of trusting summary.md; the persisted
+	// file is for compaction recovery and can be stale during normal turns.
+	lines.push("", "## Harness Summary", truncate(await buildHarnessSummary(root), 900));
 
 	if (active) {
 		const activeDir = taskDir(root, active);
@@ -1015,24 +1081,41 @@ async function buildLeanContext(root: string): Promise<string> {
 		lines.push(
 			"",
 			"## Active Task Snapshot",
-			truncate(await readText(path.join(activeDir, "contract.md")), 700),
-			truncate(await readText(path.join(activeDir, "plan.md")), 700),
+			truncate(await readText(path.join(activeDir, "contract.md")), 350),
+			truncate(await readText(path.join(activeDir, "plan.md")), 350),
 			goal ? `### Goal\n${formatGoal(goal)}` : "",
 			"### Latest Evidence",
-			truncate((await recentLines(path.join(activeDir, "evidence.md"), 12)).join("\n"), 500),
+			truncate((await recentLines(path.join(activeDir, "evidence.md"), 8)).join("\n"), 250),
 			"### Latest Journal",
-			truncate((await recentLines(path.join(activeDir, "journal.md"), 10)).join("\n"), 450),
+			truncate((await recentLines(path.join(activeDir, "journal.md"), 6)).join("\n"), 200),
 		);
 	}
 
-	const recentDecisions = (await recentLines(path.join(dir, "decisions.md"), 20)).join("\n").trim();
-	if (recentDecisions) lines.push("", "## Recent Decisions", truncate(recentDecisions, 800));
+	const recentDecisions = (await recentLines(path.join(dir, "decisions.md"), 10)).join("\n").trim();
+	if (recentDecisions) lines.push("", "## Recent Decisions", truncate(recentDecisions, 400));
 
 	const leanMemory = await buildLeanMemory(root);
 	if (leanMemory) lines.push("", leanMemory);
 
 	lines.push("", "Full harness context is available on demand with harness({ action: \"readContext\" }).");
 	return truncate(lines.filter(Boolean).join("\n"), LEAN_CONTEXT_LIMIT);
+}
+
+async function buildMinimalContext(root: string): Promise<string> {
+	const index = await loadIndex(root);
+	const active = await getActiveTask(root);
+	const openTasks = index.tasks.filter((task) => task.status !== "done");
+	const lines = [
+		`pi-harness v${VERSION} (context=minimal)`,
+		`Tasks: ${index.tasks.length} total, ${openTasks.length} open`,
+		active ? `Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]` : "Active task: none",
+	];
+	if (active) {
+		const goal = await readGoal(root, active);
+		if (goal?.status === "active") lines.push(`Goal: ${goal.condition} (${goal.turns}/${goal.maxTurns})`);
+	}
+	lines.push("Full detail is on disk; call harness({ action: \"readContext\" }) only when needed.");
+	return truncate(lines.join("\n"), MINIMAL_CONTEXT_LIMIT);
 }
 
 async function buildStatus(root: string): Promise<string> {
@@ -1043,7 +1126,7 @@ async function buildStatus(root: string): Promise<string> {
 	const active = await getActiveTask(root);
 	const openTasks = index.tasks.filter((task) => task.status !== "done");
 	const doneTasks = index.tasks.length - openTasks.length;
-	const lines = [`pi-harness v${VERSION}`, `Root: ${root}`, `Open tasks: ${openTasks.length}${doneTasks ? ` (done: ${doneTasks})` : ""}`];
+	const lines = [`pi-harness v${VERSION}`, `Root: ${root}`, `Prompt context: ${getHarnessContextMode()} (set ${HARNESS_CONTEXT_MODE_ENV}=off|minimal|lean)`, `Open tasks: ${openTasks.length}${doneTasks ? ` (done: ${doneTasks})` : ""}`];
 	if (active) {
 		lines.push(`Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]`);
 		const goal = await readGoal(root, active);
@@ -1974,7 +2057,7 @@ async function buildLeanMemory(root: string): Promise<string> {
 	for (const type of ["preferences", "playbooks", "mistakes"] as MemoryType[]) {
 		const content = (await readText(memoryFilePath(root, type))).trim();
 		if (content && content !== `# Memory: ${type}`) {
-			sections.push(truncate(content, 600));
+			sections.push(truncate(content, 300));
 		}
 	}
 	if (!sections.length) return "";
@@ -2511,13 +2594,11 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "harness",
 		label: "Harness",
-		description: "Manage project-local pi-harness files: context, PREVC workflow, goals, decisions, evidence/checks, notes, ideas, summaries, and reports.",
-		promptSnippet: "Manage durable project context, PREVC task workflow, and verifiable goals via .pi/harness",
+		description: "Manage durable pi-harness project/task state on disk.",
+		promptSnippet: "Manage durable project/task state via .pi/harness",
 		promptGuidelines: [
-			"Use harness for non-trivial tasks to create or inspect project context, start a task, track PREVC phase, record decisions, call updatePlan/updateContract for plans/contracts, manage active goals, and record validation evidence.",
-			"Use harness recordNote for operational handoffs/lessons and appendIdea for promising follow-up ideas that should survive context resets.",
-			"Use harness remember to persist learnings (format: 'type: content'). Use recall to retrieve memories. Use reflect at task end to surface candidates.",
-			"Never put API keys, tokens, passwords, cookies, OAuth material, or authentication secrets into harness records.",
+			"Use harness only when durable project/task state is worth the token cost; skip it for quick or throwaway work.",
+			"Use harness readContext on demand, record checks/evidence for non-trivial completion, and never store secrets.",
 		],
 		parameters: HarnessParams,
 		async execute(_toolCallId, params: HarnessParamsType, _signal, onUpdate, ctx) {
@@ -2561,14 +2642,16 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.on("before_agent_start", async (event, ctx) => {
 		const root = await resolveProjectRoot(ctx.cwd);
 		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
-		const context = await buildLeanContext(root);
+		const mode = getHarnessContextMode();
+		if (mode === "off") return;
+		const context = mode === "lean" ? await buildLeanContext(root) : await buildMinimalContext(root);
 		const active = await getActiveTask(root);
 		const goal = active ? await readGoal(root, active) : undefined;
 		const goalInstructions = goal?.status === "active"
-			? `\n\n# pi-harness active goal\n\nCondition: ${goal.condition}\nProgress: ${goal.turns}/${goal.maxTurns} evaluated turns\nLast evaluator reason: ${goal.lastEvaluatorReason ?? "none yet"}\n\nWork toward this condition until it is verifiably satisfied or the budget is reached. Surface proof in the conversation, record validation evidence with harness({ action: "recordEvidence", text: ... }), then mark success with harness({ action: "achieveGoal", text: "evidence summary" }).`
+			? `\n\n# pi-harness active goal\n\nGoal: ${goal.condition}\nBudget: ${goal.turns}/${goal.maxTurns} turns. When proven, record evidence and call harness({ action: "achieveGoal", text: "evidence summary" }); otherwise continue.`
 			: "";
 		return {
-			systemPrompt: `${event.systemPrompt}\n\n# pi-harness lean project context\n\n${context}${goalInstructions}\n\n# pi-harness operating rules\n\n- Treat .pi/harness as durable, project-local memory/workflow state; call harness({ action: "readContext" }) only when the lean context is insufficient.\n- For non-trivial tasks, keep an active harness task; call harness({ action: "updatePlan", text: ... }) or harness({ action: "updateContract", text: ... }) when scope changes; record validation evidence before final confirmation.\n- Record durable decisions with harness({ action: "recordDecision", text: ... }); use harness({ action: "recordNote", text: ... }) for handoffs/lessons and harness({ action: "appendIdea", text: ... }) for deferred ideas.\n- Never store secrets, tokens, cookies, OAuth material, private keys, or auth data in harness files.`,
+			systemPrompt: `${event.systemPrompt}\n\n# pi-harness context\n\n${context}${goalInstructions}\n\n${harnessOperatingRules()}`,
 		};
 	});
 

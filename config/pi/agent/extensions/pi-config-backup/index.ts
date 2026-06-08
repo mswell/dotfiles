@@ -13,14 +13,21 @@ const AGENTS_SKILLS_DIR = path.join(os.homedir(), ".agents", "skills");
 const PRE_RESTORE_SNAPSHOT_DIR = path.join(PI_AGENT_DIR, ".pre-restore-snapshot");
 const MANIFEST_FILENAME = ".backup-manifest.json";
 
-const SENSITIVE_KEY_RE = /(api[_-]?key|token|secret|password|passwd|cookie|credential|oauth|authorization|bearer|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|session[_-]?token|pat)/i;
+const SENSITIVE_KEY_RE = /(api[_-]?key|token|secret|password|passwd|cookie|credential|oauth|authorization|bearer|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|session[_-]?token|pat|sessionid|csrf|xsrf)/i;
 const SKIP_NAME_RE = /^(sessions|node_modules|\.git|\.cache|cache|tmp|temp|logs?|npm|git|\.pre-restore-snapshot)$/i;
-const SKIP_FILE_RE = /(\.env($|\.)|secret|secrets|credential|credentials|cookie|cookies|oauth|auth|token|tokens|keychain|known_hosts|id_rsa|id_ed25519|\.pem$|\.p12$|\.pfx$)/i;
+const SKIP_FILE_RE = /(\.env($|\.)|secret|secrets|credential|credentials|cookie|cookies|oauth|auth|token|tokens|keychain|known_hosts|id_rsa|id_ed25519|\.pem$|\.p12$|\.pfx$|\.key$|\.crt$|secrets\.json$|credentials\.json$|config\.json$)/i;
 const TEXT_FILE_RE = /\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|md|txt|yaml|yml|toml|sh|bash|zsh|fish|ini|conf|config|gitignore)$/i;
 const JSON_FILE_RE = /\.json$/i;
 const TS_JS_FILE_RE = /\.(ts|tsx|js|jsx|mjs|cjs)$/i;
 const VERSION_RE = /(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/;
 const MAX_COPY_BYTES = 1024 * 1024;
+const SECRET_LINE_RE = /(authorization|proxy-authorization|cookie|set-cookie)\s*:\s*[^\n\r]+/gi;
+const BEARER_RE = /Bearer\s+[A-Za-z0-9._~+\/-]{16,}=*/gi;
+const JWT_RE = /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\b/g;
+const PRIVATE_KEY_RE = /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g;
+const SECRET_ASSIGNMENT_RE = /(^|\n)(\s*)([A-Z0-9_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|COOKIE|OAUTH|AUTHORIZATION|CLIENT[_-]?SECRET|PRIVATE[_-]?KEY|ACCESS[_-]?TOKEN|REFRESH[_-]?TOKEN|SESSION[_-]?TOKEN|CSRF|XSRF)[A-Z0-9_]*)\s*[:=]\s*([^\n\r]+)/g;
+const GENERIC_SECRET_VALUE_RE = /\b[A-Za-z0-9+\/_-]{32,}=*\b/g;
+const SUSPICIOUS_SECRET_CONTENT_RE = /(?:-----BEGIN [A-Z ]*PRIVATE KEY-----|Bearer\s+[A-Za-z0-9._~+\/-]{16,}=*|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}|(?:authorization|cookie|set-cookie)\s*:|(?:api[_-]?key|token|secret|password|passwd|cookie|credential|oauth|authorization|bearer|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|session[_-]?token|pat|sessionid|csrf|xsrf)\s*[:=])/i;
 
 // --- Manifest types ---
 
@@ -153,12 +160,23 @@ function sanitizeJson(value: unknown): unknown {
 
 function redactText(input: string): string {
 	let text = input;
-	text = text.replace(/Bearer\s+[A-Za-z0-9._~+\/-]{16,}=*/gi, "Bearer <REDACTED>");
+	text = text.replace(PRIVATE_KEY_RE, "<REDACTED_PRIVATE_KEY>");
+	text = text.replace(BEARER_RE, "Bearer <REDACTED>");
 	text = text.replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|sk-ant-[A-Za-z0-9_-]{16,}|github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9_]{20,})\b/g, "<REDACTED>");
-	text = text.replace(/\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\b/g, "<REDACTED_JWT>");
-	text = text.replace(new RegExp(`(^|\\n)(\\s*)([A-Z0-9_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|COOKIE|OAUTH|AUTHORIZATION|CLIENT[_-]?SECRET|PRIVATE[_-]?KEY)[A-Z0-9_]*)\\s*[:=]\\s*([^\\n\\r]+)`, "g"), "$1$2$3=<REDACTED>");
-	text = text.replace(/(authorization|cookie|set-cookie)\s*:\s*[^\n\r]+/gi, "$1: <REDACTED>");
+	text = text.replace(JWT_RE, "<REDACTED_JWT>");
+	text = text.replace(SECRET_ASSIGNMENT_RE, "$1$2$3=<REDACTED>");
+	text = text.replace(SECRET_LINE_RE, "$1: <REDACTED>");
+	text = text.replace(/\b(?:AKIA|ASIA|AIDA|ANPA|AROA|AGPA|A3T[A-Z0-9])[A-Z0-9]{12,}\b/g, "<REDACTED_AWS_KEY>");
+	text = text.replace(GENERIC_SECRET_VALUE_RE, (value) => {
+		if (value.length < 32) return value;
+		if (/^[A-Za-z]+$/.test(value)) return value;
+		return "<REDACTED>";
+	});
 	return text;
+}
+
+function containsSensitiveContent(text: string): boolean {
+	return SUSPICIOUS_SECRET_CONTENT_RE.test(text);
 }
 
 async function readJsonFile(filePath: string): Promise<unknown | undefined> {
@@ -211,7 +229,8 @@ async function copySanitizedFile(source: string, destination: string, result: Ba
 	if (JSON_FILE_RE.test(source)) {
 		try {
 			const parsed = JSON.parse(rawContent.toString("utf8"));
-			await writeJsonToBackup(destination, sanitizeJson(parsed), result);
+			const sanitized = sanitizeJson(parsed);
+			await writeJsonToBackup(destination, sanitized, result);
 			manifest.files[relPath] = { hash, backedUpAt: new Date().toISOString(), size: stat.size };
 			return;
 		} catch {}
@@ -219,6 +238,10 @@ async function copySanitizedFile(source: string, destination: string, result: Ba
 
 	if (TEXT_FILE_RE.test(source)) {
 		const textContent = rawContent.toString("utf8");
+		if (containsSensitiveContent(textContent)) {
+			result.filesSkipped.push({ path: source, reason: "contains sensitive content" });
+			return;
+		}
 		const version = extractVersion(textContent);
 		await writeTextToBackup(destination, redactText(textContent), result);
 		manifest.files[relPath] = { hash, version, backedUpAt: new Date().toISOString(), size: stat.size };

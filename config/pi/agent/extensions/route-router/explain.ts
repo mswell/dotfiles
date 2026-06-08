@@ -20,7 +20,8 @@ function targetText(decision: RouteDecision): string {
 	if (!decision.targetRole) return "—";
 	const catalog = MODEL_CATALOG[decision.targetRole];
 	const resolved = decision.resolvedModel ?? decision.appliedModel;
-	return `${catalog.provider}/${resolved ?? catalog.fallbacks[0]} (${catalog.label})`;
+	const modelText = resolved?.includes("/") ? resolved : `${catalog.provider}/${resolved ?? catalog.fallbacks[0]}`;
+	return `${modelText} (${catalog.label})`;
 }
 
 export function formatStatus(input: RuntimeStatusInput): string {
@@ -56,7 +57,7 @@ export function formatStatus(input: RuntimeStatusInput): string {
 	}
 
 	out += "\n";
-	out += "  Commands: /route | /route mode [cheap|dev|bugbounty|max|manual|off] | /route why";
+	out += "  Commands: /route | /route mode [cheap|dev|bugbounty|max|manual|off] | /route why | /route models | /route health";
 	return out;
 }
 

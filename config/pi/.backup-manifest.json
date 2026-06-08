@@ -1,141 +1,151 @@
 {
   "manifestVersion": 1,
-  "lastBackupAt": "2026-06-05T00:41:03.324Z",
+  "lastBackupAt": "2026-06-08T23:06:15.393Z",
   "files": {
     "agent/settings.example.json": {
-      "hash": "sha256:a833e894aced78ae2959d7f64985948be2e921f84cb132064684da065bc58c93",
-      "backedUpAt": "2026-06-05T00:41:02.931Z",
-      "size": 1782
+      "hash": "sha256:3a597c2000daf134ff3a1306b8fa0ffea6257bcbfd1ba4a237a6fca6f94d7e05",
+      "backedUpAt": "2026-06-08T23:06:15.009Z",
+      "size": 1803
     },
     "agent/extensions/guardrails.json": {
       "hash": "sha256:81a73fc0f872991b72496c9f76c4d6210adb293e38a27a48abba99c846fe6fc6",
-      "backedUpAt": "2026-06-05T00:41:02.933Z",
+      "backedUpAt": "2026-06-08T23:06:15.037Z",
       "size": 191
     },
     "agent/extensions/hypr-theme-sync.js": {
       "hash": "sha256:576a2dfbf6b9b2a4c209dc5dd57e7afc33c1966aea5a938e633d43251983bd11",
-      "backedUpAt": "2026-06-05T00:41:02.961Z",
+      "backedUpAt": "2026-06-08T23:06:15.060Z",
       "size": 2412
     },
     "agent/extensions/pi-config-backup/index.ts": {
-      "hash": "sha256:a2ee3ab7e8c82735ec4621491d1ed737c1743debf6b6b1140dcb8a33ee2b0b3d",
+      "hash": "sha256:9c4e6d7d85ff472b1ae0b3f4739db2fdff9ff31041fd80ba5d405019771154e6",
       "version": "0.3.1",
-      "backedUpAt": "2026-06-05T00:41:03.017Z",
-      "size": 29141
+      "backedUpAt": "2026-06-08T23:06:15.111Z",
+      "size": 30655
     },
     "agent/extensions/pi-harness/README.md": {
-      "hash": "sha256:6dcd1b7adbf4186b7910fe53de24c893dbb15420f7251cbf547a72040eb097ff",
-      "backedUpAt": "2026-06-05T00:41:03.019Z",
-      "size": 8837
+      "hash": "sha256:c73956b2a508ec7730b6376fcf0f6a712a23e64646ac0abbadf19875734e5697",
+      "backedUpAt": "2026-06-08T23:06:15.112Z",
+      "size": 9235
     },
     "agent/extensions/pi-harness/index.ts": {
-      "hash": "sha256:b6ca1e7f8d279736098fa9837e4e7ab99d291c34659b84481212168f469c91aa",
-      "version": "0.5.0",
-      "backedUpAt": "2026-06-05T00:41:03.047Z",
-      "size": 110388
+      "hash": "sha256:9b9e1ce1165c43e1ef910fc22ed47e5617136fed58a82d48415e8edb63b18e4f",
+      "version": "0.5.1",
+      "backedUpAt": "2026-06-08T23:06:15.139Z",
+      "size": 112310
     },
     "agent/extensions/pi-skill-audit/README.md": {
       "hash": "sha256:c22331bbdc547127bc016201e5c212b3c1e9a80ec6e1d5c82187d48b05eb7fe0",
-      "backedUpAt": "2026-06-05T00:41:03.048Z",
+      "backedUpAt": "2026-06-08T23:06:15.141Z",
       "size": 2935
     },
     "agent/extensions/pi-skill-audit/index.ts": {
       "hash": "sha256:551766e0287f732e4875d910ebb8af2c5a21d8b04684e103d009f21294496085",
       "version": "0.1.0",
-      "backedUpAt": "2026-06-05T00:41:03.074Z",
+      "backedUpAt": "2026-06-08T23:06:15.167Z",
       "size": 39765
     },
     "agent/extensions/ui-ux-design/index.ts": {
       "hash": "sha256:15b6e7e54ffd74cd6f3aa32da0638dedf3763b1e1b311116a6fccdd5a19ecbc2",
       "version": "0.2.0",
-      "backedUpAt": "2026-06-05T00:41:03.320Z",
+      "backedUpAt": "2026-06-08T23:06:15.388Z",
       "size": 38261
     },
     "agent/themes/tokyonight.json": {
       "hash": "sha256:8324200abc602896c7ec77a3530ef4ba78d4aec76444b17d524f0d935a45f7c4",
-      "backedUpAt": "2026-06-05T00:41:03.321Z",
+      "backedUpAt": "2026-06-08T23:06:15.389Z",
       "size": 2197
     },
     "agent/themes/wellpunk-dark.json": {
       "hash": "sha256:c0b86806ea27183692956d916304bcdb488ce99fb1d4fae4722f0f8a010ed528",
-      "backedUpAt": "2026-06-05T00:41:03.322Z",
+      "backedUpAt": "2026-06-08T23:06:15.390Z",
       "size": 2178
     },
     "agent/themes/wellpunk-light.json": {
       "hash": "sha256:2359f1c7b1eb38da88fe1396870c21d0d954fb0a67f95c2e854f39b57e36d192",
-      "backedUpAt": "2026-06-05T00:41:03.323Z",
+      "backedUpAt": "2026-06-08T23:06:15.390Z",
       "size": 2135
     },
     "agent/extensions/pi-config-backup/README.md": {
       "hash": "sha256:f2184d9a1a32fa884056266a32543df4463ebc7ca7b9d1255be71944aea3d070",
-      "backedUpAt": "2026-06-05T00:41:02.963Z",
+      "backedUpAt": "2026-06-08T23:06:15.061Z",
       "size": 2618
     },
     "agent/extensions/pi-config-backup/index.js": {
       "hash": "sha256:c73fbe7ae0909a3f5a279617b8cd4080b65f0585148932091ca32789a4175cc1",
       "version": "0.1.0",
-      "backedUpAt": "2026-06-05T00:41:02.990Z",
+      "backedUpAt": "2026-06-08T23:06:15.086Z",
       "size": 15260
     },
     "agent/themes/vantablack.json": {
       "hash": "sha256:f8f1ff771562c4805a117eb865fe57760848fccf9ed3ec5fa2fbbdd198521f68",
-      "backedUpAt": "2026-06-05T00:41:03.322Z",
+      "backedUpAt": "2026-06-08T23:06:15.389Z",
       "size": 1970
     },
     "agent/themes/white.json": {
       "hash": "sha256:4b56d4491eaf1dae1b6c0f546f768afbe9418809ce89b149434c2ac9f4bb9527",
-      "backedUpAt": "2026-06-05T00:41:03.323Z",
+      "backedUpAt": "2026-06-08T23:06:15.391Z",
       "size": 2068
     },
     "agent/extensions/route-router/README.md": {
-      "hash": "sha256:0dc6c5e4303a0132f67025cfc5b16a65c12a44556b6d99267c904c7380516a88",
-      "backedUpAt": "2026-06-05T00:41:03.075Z",
-      "size": 3853
+      "hash": "sha256:a8392cfe41b0472e31701980c49f8b1260ec75f220102cc7cf69e241465b4b33",
+      "backedUpAt": "2026-06-08T23:06:15.167Z",
+      "size": 4019
     },
     "agent/extensions/route-router/config.json": {
-      "hash": "sha256:d00195302ca20847217a10e5dd46c9888b3f6b29f3c6450e7eb940c92d975671",
-      "backedUpAt": "2026-06-05T00:41:03.076Z",
+      "hash": "sha256:12ef453c13120e459ad8c1e888bd3f9335132a7015eb25c4e554c6e1eaffcf1d",
+      "backedUpAt": "2026-06-08T23:06:15.168Z",
       "size": 114
     },
     "agent/extensions/route-router/config.ts": {
       "hash": "sha256:3099e707b1be8bc668ce25d3cad61c90bebe6286f18e51882c6529383a173ccc",
-      "backedUpAt": "2026-06-05T00:41:03.102Z",
+      "backedUpAt": "2026-06-08T23:06:15.193Z",
       "size": 2443
     },
     "agent/extensions/route-router/explain.ts": {
-      "hash": "sha256:627100af8371ddddf38fd565e0a2406e87da5664d928fc1a71736bec15c1b3fd",
-      "backedUpAt": "2026-06-05T00:41:03.129Z",
-      "size": 4428
+      "hash": "sha256:417680dc47682409bccab4f270e69396668385b1231a8d177dcc14594cfceefe",
+      "backedUpAt": "2026-06-08T23:06:15.219Z",
+      "size": 4532
     },
     "agent/extensions/route-router/index.ts": {
-      "hash": "sha256:ef022b60a9bb06a87930331423208d9283b2f676a0fc97350fd85e29f077a30f",
-      "backedUpAt": "2026-06-05T00:41:03.154Z",
-      "size": 10116
+      "hash": "sha256:ce0be4815b8279f855a90c239bf8e558d6864c856484aa927c5c50b35c8338f4",
+      "backedUpAt": "2026-06-08T23:06:15.242Z",
+      "size": 13170
     },
     "agent/extensions/route-router/model-catalog.ts": {
-      "hash": "sha256:dc649e305a00ebc495991bc80930b9ea9842252f88f910974c1015c4fef3bfe5",
-      "backedUpAt": "2026-06-05T00:41:03.184Z",
-      "size": 3487
+      "hash": "sha256:8bb2d15a19f737d17b87f9edd16b23990e8075b1e9825da6f5b3db6afd185b4f",
+      "backedUpAt": "2026-06-08T23:06:15.266Z",
+      "size": 4388
     },
     "agent/extensions/route-router/policy.ts": {
-      "hash": "sha256:872628f31c2d7e4bfc5b71d04a96395d036a477865f828f3554710645011251e",
-      "backedUpAt": "2026-06-05T00:41:03.212Z",
-      "size": 11272
+      "hash": "sha256:8c0ce49db7bffb118145ff846daaa006a5e903e85003f82ab975c2960d318cc2",
+      "backedUpAt": "2026-06-08T23:06:15.292Z",
+      "size": 10393
     },
     "agent/extensions/route-router/signals.ts": {
-      "hash": "sha256:ceea3e791a130a6db7f3e97fd3cd1762d3c09be1defb8a42d2b0a7f8637edcca",
-      "backedUpAt": "2026-06-05T00:41:03.238Z",
-      "size": 9279
+      "hash": "sha256:5e133436e6fe8519a4ba68baf24db186e994aeed1d6c978be9d19d81b12471d7",
+      "backedUpAt": "2026-06-08T23:06:15.315Z",
+      "size": 9270
     },
     "agent/extensions/route-router/test-policy.ts": {
-      "hash": "sha256:7d311efd72b1a962f5b95a2fc68f0c653a71f9d227ac950072d292ef91714685",
-      "backedUpAt": "2026-06-05T00:41:03.266Z",
-      "size": 6257
+      "hash": "sha256:369905b93246c24e90702dabb854169bb3a62bc8d02714a3a0b213111db308f3",
+      "backedUpAt": "2026-06-08T23:06:15.340Z",
+      "size": 7591
     },
     "agent/extensions/route-router/types.ts": {
-      "hash": "sha256:29b751d20de6c9b593492183a479821e6df08b2ed67ca88b3662a6558906c19e",
-      "backedUpAt": "2026-06-05T00:41:03.294Z",
-      "size": 1642
+      "hash": "sha256:1d58c1ebb69ea192a33635924d054f163f95c947164ec7ee09877420e695ead7",
+      "backedUpAt": "2026-06-08T23:06:15.363Z",
+      "size": 1646
+    },
+    "agent/extensions/copilot-blueprints/README.md": {
+      "hash": "sha256:cfe302bd09da5a6d016842ebb2ff7a4b5210add00e0c1fbd77d052ea6f439f24",
+      "backedUpAt": "2026-06-08T23:06:15.010Z",
+      "size": 6877
+    },
+    "agent/extensions/copilot-blueprints/index.ts": {
+      "hash": "sha256:781e0bb6e5e66f23b954730880399c72ee523447536a9409393966fdf5153702",
+      "backedUpAt": "2026-06-08T23:06:15.036Z",
+      "size": 45605
     }
   }
 }

@@ -58,7 +58,7 @@ const IMPLEMENTATION_KEYWORDS = [
 const DEBUG_KEYWORDS = [
 	"debug", "diagnose", "stacktrace", "stack trace", "failing test", "error",
 	"exception", "regression", "reproduce", "repro", "race condition", "deadlock",
-	"depurar", "diagnosticar", "erro", "falha", "teste falhando",
+	"depurar", "diagnosticar", "erro", "teste falhando",
 	"regressão", "regressao", "reproduzir", "condição de corrida", "condicao de corrida",
 ];
 
