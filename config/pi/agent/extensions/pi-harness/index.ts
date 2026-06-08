@@ -3,7 +3,7 @@ import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const VERSION = "0.4.3";
+const VERSION = "0.5.0";
 const HARNESS_DIR = path.join(".pi", "harness");
 const EVENTS_FILE = "events.jsonl";
 const SUMMARY_FILE = "summary.md";
@@ -354,6 +354,21 @@ async function completeTaskState(root: string, task: TaskState, note?: string): 
 	if (note) {
 		await appendText(path.join(taskDir(root, task), "evidence.md"), `\n## ${now()}\n\n${note}\n`);
 	}
+	// Anti-laziness check: verify plan coverage before completing
+	let coverageWarning = "";
+	try {
+		const dir = taskDir(root, task);
+		const planText = await readText(path.join(dir, "plan.md"));
+		const evidenceText = await readText(path.join(dir, "evidence.md"));
+		const planItems = extractPlanItems(planText);
+		if (planItems.length >= 3) {
+			const coverage = computeCoverage(planItems, evidenceText, "");
+			coverageWarning = buildCoverageWarning(coverage);
+			if (coverageWarning) {
+				await appendTrace(root, { type: "coverage_warning", taskId: task.id, covered: coverage.covered, total: coverage.total });
+			}
+		}
+	} catch { /* non-critical */ }
 	// Auto-reflect: generate memory candidates before closing
 	let reflectionHint = "";
 	try {
@@ -388,7 +403,7 @@ async function completeTaskState(root: string, task: TaskState, note?: string): 
 	task.updatedAt = now();
 	await appendTrace(root, { type: "task_done", taskId: task.id, title: task.title });
 	await saveTask(root, task);
-	return { task, reflectionHint };
+	return { task, reflectionHint: `${coverageWarning}${reflectionHint}` };
 }
 
 async function closeTask(root: string, text?: string): Promise<{ task: TaskState; reflectionHint: string }> {
@@ -453,6 +468,296 @@ function mutatingToolReason(toolName: string, input: unknown): string | undefine
 		if (command && isLikelyMutatingShellCommand(command)) return `bash appears mutating: ${redact(command)}`;
 	}
 	return undefined;
+}
+
+// ─── Dynamic Workflow Features ───────────────────────────────────────────────
+
+// Feature 1: Anti-laziness tracker
+// Extracts enumerated items from plan text and computes evidence coverage.
+
+interface PlanItem {
+	text: string;
+	checked: boolean;
+}
+
+function extractPlanItems(planText: string): PlanItem[] {
+	const items: PlanItem[] = [];
+	for (const line of planText.split("\n")) {
+		const trimmed = line.trim();
+		// Match markdown checklist items: - [ ] or - [x]
+		const checklistMatch = trimmed.match(/^[-*]\s*\[([ xX])\]\s+(.+)/);
+		if (checklistMatch) {
+			items.push({ text: checklistMatch[2].trim(), checked: checklistMatch[1] !== " " });
+			continue;
+		}
+		// Match numbered list items: 1. or 1)
+		const numberedMatch = trimmed.match(/^\d+[.)\s]\s*(.+)/);
+		if (numberedMatch && numberedMatch[1].length > 5) {
+			items.push({ text: numberedMatch[1].trim(), checked: false });
+			continue;
+		}
+		// Match bullet items with substantive content (skip headers, phase labels)
+		const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
+		if (bulletMatch && bulletMatch[1].length > 10 && !/^(planning|review|execution|validation|confirmation)$/i.test(bulletMatch[1].trim())) {
+			items.push({ text: bulletMatch[1].trim(), checked: false });
+		}
+	}
+	return items;
+}
+
+function computeCoverage(planItems: PlanItem[], evidenceText: string, checksText: string): { covered: number; total: number; uncovered: string[] } {
+	if (planItems.length === 0) return { covered: 0, total: 0, uncovered: [] };
+	const evidenceLower = `${evidenceText}\n${checksText}`.toLowerCase();
+	const uncovered: string[] = [];
+	let covered = 0;
+	for (const item of planItems) {
+		if (item.checked) {
+			covered++;
+			continue;
+		}
+		// Check if evidence/checks mention keywords from this item
+		const keywords = item.text.toLowerCase()
+			.replace(/[^a-z0-9\s]/g, " ")
+			.split(/\s+/)
+			.filter((w) => w.length > 3);
+		const matchCount = keywords.filter((kw) => evidenceLower.includes(kw)).length;
+		const coverageRatio = keywords.length > 0 ? matchCount / keywords.length : 0;
+		if (coverageRatio >= 0.4) {
+			covered++;
+		} else {
+			uncovered.push(item.text);
+		}
+	}
+	return { covered, total: planItems.length, uncovered };
+}
+
+function buildCoverageWarning(coverage: { covered: number; total: number; uncovered: string[] }): string {
+	if (coverage.total < 3) return ""; // Not enough items to be meaningful
+	const pct = Math.round((coverage.covered / coverage.total) * 100);
+	if (pct >= 80) return ""; // Good coverage
+	const lines = [
+		"",
+		`⚠️  Anti-laziness check: plan coverage is ${pct}% (${coverage.covered}/${coverage.total} items addressed).`,
+		"Items without evidence:",
+		...coverage.uncovered.slice(0, 8).map((item) => `  - ${item.slice(0, 100)}`),
+	];
+	if (coverage.uncovered.length > 8) lines.push(`  ... and ${coverage.uncovered.length - 8} more`);
+	lines.push("", "Consider recording evidence for remaining items before completing, or adjust the plan to reflect actual scope.");
+	return lines.join("\n");
+}
+
+// Feature 2: Auto-adversarial review suggestion
+// When transitioning to V phase, suggest spawning a fresh-context reviewer.
+
+function buildAdversarialReviewSuggestion(contractText: string, planText: string): string {
+	// Extract done criteria from contract
+	const criteriaLines: string[] = [];
+	let inCriteria = false;
+	for (const line of contractText.split("\n")) {
+		if (/^##\s*(done\s*criteria|acceptance|success)/i.test(line.trim())) {
+			inCriteria = true;
+			continue;
+		}
+		if (inCriteria && /^##\s/.test(line.trim())) break;
+		if (inCriteria && line.trim()) criteriaLines.push(line.trim());
+	}
+
+	// If no explicit criteria, extract scope items
+	if (criteriaLines.length === 0) {
+		let inScope = false;
+		for (const line of contractText.split("\n")) {
+			if (/^##\s*scope/i.test(line.trim())) { inScope = true; continue; }
+			if (inScope && /^##\s/.test(line.trim())) break;
+			if (inScope && line.trim().startsWith("-")) criteriaLines.push(line.trim());
+		}
+	}
+
+	const criteria = criteriaLines.slice(0, 6).join("\n");
+	const planSummary = planText.split("\n").filter((l) => l.trim().startsWith("-") || /^\d+[.)]/.test(l.trim())).slice(0, 6).join("\n");
+
+	const lines = [
+		"",
+		"🔍 **Adversarial review suggestion** — entering Validation phase.",
+		"To combat self-preferential bias, consider spawning a fresh-context reviewer:",
+		"",
+		"```",
+		`/run reviewer "Adversarially validate this implementation against the contract criteria. Check each item below and report evidence of pass/fail with file:line references. Be skeptical — challenge assumptions.`,
+	];
+	if (criteria) lines.push("", "Criteria:", criteria);
+	if (planSummary) lines.push("", "Plan items:", planSummary);
+	lines.push("", "Report:", "- For each criterion: PASS/FAIL with evidence", "- Missing test coverage", "- Edge cases not addressed", "- Potential regressions\"");
+	lines.push("```");
+	lines.push("", "This reviewer won't have seen your execution reasoning, eliminating self-preferential bias.");
+	return lines.join("\n");
+}
+
+// Feature 3: Workflow pattern suggestions
+// Detects task patterns in plan/contract text and suggests appropriate workflow shapes.
+
+interface WorkflowPattern {
+	name: string;
+	description: string;
+	trigger: (text: string) => boolean;
+	suggestion: string;
+}
+
+const WORKFLOW_PATTERNS: WorkflowPattern[] = [
+	{
+		name: "fan-out-and-synthesize",
+		description: "Large number of similar items to process independently",
+		trigger: (text) => {
+			const hasMultipleItems = (text.match(/^\s*[-*]\s+/gm) ?? []).length >= 8 ||
+				(text.match(/^\s*\d+[.)]/gm) ?? []).length >= 8;
+			const hasAuditPattern = /\b(audit|review|check|scan|validate|inspect|analyze|test)\b.*\b(all|every|each|endpoints?|files?|modules?|routes?|components?)\b/i.test(text);
+			const hasMigrationPattern = /\b(migrate|rename|refactor|update|convert)\b.*\b(all|every|each|across|everywhere)\b/i.test(text);
+			return hasMultipleItems || hasAuditPattern || hasMigrationPattern;
+		},
+		suggestion: [
+			"**Fan-out-and-synthesize**: Split items across parallel subagents, each in a clean context.",
+			"```",
+			`subagent({ tasks: [`,
+			`  { agent: "worker", task: "Process item 1...", output: "results/item-1.md" },`,
+			`  { agent: "worker", task: "Process item 2...", output: "results/item-2.md" },`,
+			`  // ... one per item`,
+			`], concurrency: 4 })`,
+			"```",
+			"Prevents agentic laziness (each agent completes one focused item) and goal drift (clean context per item).",
+		].join("\n"),
+	},
+	{
+		name: "adversarial-verification",
+		description: "Claims, findings, or results that need independent verification",
+		trigger: (text) => {
+			return /\b(verify|validate|fact[- ]?check|prove|confirm|cross[- ]?check|assert)\b/i.test(text) &&
+				/\b(claims?|findings?|results?|reports?|assertions?)\b/i.test(text);
+		},
+		suggestion: [
+			"**Adversarial verification**: Spawn verifiers that challenge each finding independently.",
+			"```",
+			`subagent({ chain: [`,
+			`  { agent: "worker", task: "Produce findings/claims..." },`,
+			`  { parallel: [`,
+			`    { agent: "reviewer", task: "Adversarially verify finding 1 from {previous}" },`,
+			`    { agent: "reviewer", task: "Adversarially verify finding 2 from {previous}" },`,
+			`  ] },`,
+			`  { agent: "context-builder", task: "Synthesize verified results from {previous}" }`,
+			`] })`,
+			"```",
+			"Eliminates self-preferential bias: verifiers can't see the original reasoning.",
+		].join("\n"),
+	},
+	{
+		name: "deep-research",
+		description: "Research question requiring multiple sources/angles",
+		trigger: (text) => {
+			return /\b(research|investigate|explore|study|compare|benchmark|evaluate\s+options)\b/i.test(text) &&
+				(/\b(sources?|angles?|perspectives?|approaches|alternatives|options)\b/i.test(text) ||
+				 /\b(pros?\s*(and|&|\/)\s*cons?|trade[- ]?offs?|comparison)\b/i.test(text));
+		},
+		suggestion: [
+			"**Deep research**: Fan out search angles, fetch, cross-check, synthesize.",
+			"```",
+			`subagent({ chain: [`,
+			`  { parallel: [`,
+			`    { agent: "researcher", task: "Research angle 1: ..." },`,
+			`    { agent: "researcher", task: "Research angle 2: ..." },`,
+			`    { agent: "scout", task: "Local codebase context for: ..." },`,
+			`  ] },`,
+			`  { agent: "context-builder", task: "Cross-check and synthesize from {previous}" }`,
+			`] })`,
+			"```",
+			"Each researcher has a clean context, avoiding confirmation bias across sources.",
+		].join("\n"),
+	},
+	{
+		name: "loop-until-done",
+		description: "Iterative fix/check loop with unknown completion point",
+		trigger: (text) => {
+			return /\b(until|loop|iterate|repeat|keep\s+going|fix.*until|zero\s+(errors?|warnings?|failures?))\b/i.test(text) &&
+				/\b(pass|clean|green|no\s+(more|remaining)|all.*fixed|exit\s*0)\b/i.test(text);
+		},
+		suggestion: [
+			"**Loop-until-done**: Use goal mode with budgeted turns instead of manual iteration.",
+			"```",
+			`/harness goal --max-turns 8 <verifiable stop condition>`,
+			"```",
+			"Or for parallel hypothesis testing:",
+			"```",
+			`subagent({ chain: [`,
+			`  { agent: "scout", task: "Identify all remaining failures" },`,
+			`  { agent: "worker", task: "Fix issues from {previous}", acceptance: {`,
+			`    verify: [{ id: "check", command: "npm test" }],`,
+			`    maxFinalizationTurns: 3`,
+			`  } }`,
+			`] })`,
+			"```",
+			"Prevents goal drift: acceptance contract holds the stop condition outside the context window.",
+		].join("\n"),
+	},
+	{
+		name: "classify-and-route",
+		description: "Mixed-type items needing different handling per category",
+		trigger: (text) => {
+			return /\b(classify|categorize|triage|sort|route|bucket|prioritize)\b/i.test(text) &&
+				/\b(type|category|severity|priority|kind|class)\b/i.test(text);
+		},
+		suggestion: [
+			"**Classify-and-route**: First classify items, then route each category to specialized agents.",
+			"```",
+			`subagent({ chain: [`,
+			`  { agent: "scout", task: "Classify items by type/severity", outputSchema: {`,
+			`    type: "object", properties: { items: { type: "array", items: {`,
+			`      type: "object", properties: { id: {type:"string"}, category: {type:"string"}, task: {type:"string"} }`,
+			`    } } }`,
+			`  }, as: "classified" },`,
+			`  { expand: { from: { output: "classified", path: "/items" }, maxItems: 20 },`,
+			`    parallel: { agent: "worker", task: "Handle {item.category} item: {item.task}" },`,
+			`    collect: { as: "results" } }`,
+			`] })`,
+			"```",
+			"Uses dynamic fanout: the classifier decides how many workers spawn.",
+		].join("\n"),
+	},
+	{
+		name: "tournament",
+		description: "Choosing best option from multiple competing approaches",
+		trigger: (text) => {
+			return /\b(best|choose|pick|select|compare|rank|tournament|compete|winner)\b/i.test(text) &&
+				/\b(approach|option|solution|design|implementation|candidate|alternative|name)\b/i.test(text);
+		},
+		suggestion: [
+			"**Tournament**: Multiple agents compete, then a judge selects the winner.",
+			"```",
+			`subagent({ chain: [`,
+			`  { parallel: [`,
+			`    { agent: "worker", task: "Approach A: ...", as: "approachA" },`,
+			`    { agent: "worker", task: "Approach B: ...", as: "approachB" },`,
+			`    { agent: "worker", task: "Approach C: ...", as: "approachC" },`,
+			`  ] },`,
+			`  { agent: "reviewer", task: "Judge approaches against rubric: ... Outputs: {previous}" }`,
+			`] })`,
+			"```",
+			"Each competitor works independently; the judge sees only results, not process.",
+		].join("\n"),
+	},
+];
+
+function detectWorkflowPatterns(text: string): WorkflowPattern[] {
+	return WORKFLOW_PATTERNS.filter((p) => p.trigger(text));
+}
+
+function buildWorkflowSuggestions(patterns: WorkflowPattern[]): string {
+	if (patterns.length === 0) return "";
+	const lines = [
+		"",
+		"🔄 **Workflow pattern detected** — consider using subagent orchestration:",
+		"",
+	];
+	for (const pattern of patterns.slice(0, 2)) {
+		lines.push(pattern.suggestion, "");
+	}
+	lines.push("These patterns combat agentic laziness, self-preferential bias, and goal drift by isolating work in focused subagent contexts.");
+	return lines.join("\n");
 }
 
 async function recordPhaseActionNotice(root: string, toolName: string, input: unknown): Promise<void> {
@@ -1695,11 +2000,31 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 		case "setPhase": {
 			if (!params.phase || !PHASES.includes(params.phase as Phase)) throw new Error("phase must be one of P, R, E, V, C");
 			const task = await setPhase(root, params.phase as Phase);
-			return `Set phase to ${task.phase} (${PHASE_LABELS[task.phase]}).`;
+			let phaseHint = "";
+			// Feature 2: Auto-adversarial review suggestion on V transition
+			if (params.phase === "V") {
+				try {
+					const dir = taskDir(root, task);
+					const contractText = await readText(path.join(dir, "contract.md"));
+					const planText = await readText(path.join(dir, "plan.md"));
+					phaseHint = buildAdversarialReviewSuggestion(contractText, planText);
+				} catch { /* non-critical */ }
+			}
+			return `Set phase to ${task.phase} (${PHASE_LABELS[task.phase]}).${phaseHint}`;
 		}
 		case "advancePhase": {
 			const task = await advancePhase(root);
-			return `Advanced to ${task.phase} (${PHASE_LABELS[task.phase]}).`;
+			let advanceHint = "";
+			// Also suggest adversarial review when advancing into V
+			if (task.phase === "V") {
+				try {
+					const dir = taskDir(root, task);
+					const contractText = await readText(path.join(dir, "contract.md"));
+					const planText = await readText(path.join(dir, "plan.md"));
+					advanceHint = buildAdversarialReviewSuggestion(contractText, planText);
+				} catch { /* non-critical */ }
+			}
+			return `Advanced to ${task.phase} (${PHASE_LABELS[task.phase]}).${advanceHint}`;
 		}
 		case "completeTask": {
 			const { task, reflectionHint } = await completeTask(root, params.text);
@@ -1752,7 +2077,10 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			await writeText(path.join(taskDir(root, task), "contract.md"), params.text);
 			await appendTrace(root, { type: "contract_update", taskId: task.id });
 			await autoInferPhase(root, "P");
-			return "Task contract updated.";
+			// Feature 3: Workflow pattern suggestions
+			const contractPatterns = detectWorkflowPatterns(params.text);
+			const contractSuggestions = buildWorkflowSuggestions(contractPatterns);
+			return `Task contract updated.${contractSuggestions}`;
 		}
 		case "updatePlan":
 		case "recordPlan": {
@@ -1762,7 +2090,10 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			await writeText(path.join(taskDir(root, task), "plan.md"), params.text);
 			await appendTrace(root, { type: "plan_update", taskId: task.id });
 			await autoInferPhase(root, "P");
-			return "Task plan updated.";
+			// Feature 3: Workflow pattern suggestions
+			const planPatterns = detectWorkflowPatterns(params.text);
+			const planSuggestions = buildWorkflowSuggestions(planPatterns);
+			return `Task plan updated.${planSuggestions}`;
 		}
 		case "setGoal": {
 			if (!params.text) throw new Error("text is required for setGoal");

@@ -2,7 +2,7 @@
 
 Global Pi extension for project-local harness state without MCP or dotcontext.
 
-Version: 0.4.3
+Version: 0.5.0
 
 Installed globally at:
 
@@ -122,6 +122,50 @@ Before compaction, pi-harness rebuilds `.pi/harness/summary.md` so Pi's normal c
 ## UI footprint
 
 By default, pi-harness only uses the footer status (`harness:on ...`) and does not reserve a persistent widget block above the input. The full status remains available through `/harness status` and the tool action `status`.
+
+## Dynamic workflow features (v0.5.0)
+
+Inspired by Claude Code's dynamic workflows, pi-harness v0.5.0 adds three advisory features that combat common agentic failure modes:
+
+### Anti-laziness tracker
+
+When completing a task (`/harness done` or `completeTask`), the harness parses enumerated items from the plan and checks evidence coverage. If less than 80% of plan items have corresponding evidence, a warning is emitted:
+
+```
+⚠️  Anti-laziness check: plan coverage is 45% (5/11 items addressed).
+Items without evidence:
+  - Validate error handling for rate limits
+  - Test concurrent access patterns
+  ...
+```
+
+This prevents premature task completion when items remain unaddressed.
+
+### Auto-adversarial review suggestion
+
+When transitioning to Validation phase (`setPhase V` or `advancePhase` into V), the harness suggests spawning a fresh-context reviewer with the contract criteria. This reviewer hasn't seen the execution reasoning, eliminating self-preferential bias:
+
+```
+🔍 Adversarial review suggestion — entering Validation phase.
+To combat self-preferential bias, consider spawning a fresh-context reviewer:
+
+/run reviewer "Adversarially validate this implementation against the contract criteria..."
+```
+
+### Workflow pattern suggestions
+
+When updating a plan or contract (`updatePlan` / `updateContract`), the harness detects task patterns and suggests appropriate subagent workflow shapes:
+
+| Pattern | Trigger | Shape |
+|---------|---------|-------|
+| Fan-out-and-synthesize | 8+ list items, "audit all", "migrate everywhere" | Parallel workers, one per item |
+| Adversarial verification | "verify claims", "fact-check" | Worker → parallel verifiers → synthesizer |
+| Deep research | "research", "compare options", "trade-offs" | Parallel researchers + scout → synthesizer |
+| Loop-until-done | "until all pass", "fix until zero errors" | Goal mode or acceptance-contract worker |
+| Classify-and-route | "classify", "triage by type" | Classifier → dynamic fanout |
+| Tournament | "best approach", "pick winner" | Parallel competitors → judge |
+
+Suggestions are advisory — they appear in the tool response but don't block workflow.
 
 ## Smoke test
 
