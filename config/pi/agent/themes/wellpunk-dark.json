@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/badlogic/pi-mono/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "$schema": "https://raw.githubusercontent.<REDACTED>.json",
   "name": "wellpunk-dark",
   "vars": {
     "fg": "#e6e6e6",

@@ -64,7 +64,7 @@ pi_config_restore  { source?, dryRun?, force?, sync?, merge? }
 
 - `~/.pi/agent/sessions/`
 - package caches/install dirs such as `npm/`, `git/`, `node_modules/`
-- `.env`, token/secret/cookie/auth/private-key-looking filenames
+- `.env`, <REDACTED> filenames
 - API keys, tokens, bearer tokens, JWTs, cookies, OAuth material
 - Files with syntax errors (validated with `node --check`)
 

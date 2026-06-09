@@ -2,8 +2,8 @@
   "lastChangelogVersion": "0.79.0",
   "theme": "wellpunk-light",
   "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-5.4-mini",
-  "defaultThinkingLevel": "low",
+  "defaultModel": "claude-sonnet-4.6",
+  "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
@@ -15,7 +15,7 @@
       "scout": {
         "model": "github-copilot/gemini-3.5-flash",
         "fallbackModels": [
-          "github-copilot/gemini-3-flash-preview",
+          "<REDACTED>",
           "github-copilot/gpt-5.4-mini",
           "github-copilot/claude-haiku-4.5"
         ],
@@ -56,7 +56,7 @@
       "context-builder": {
         "model": "github-copilot/gemini-3.5-flash",
         "fallbackModels": [
-          "github-copilot/gemini-3-flash-preview",
+          "<REDACTED>",
           "github-copilot/gpt-5.4-mini",
           "github-copilot/claude-haiku-4.5"
         ],

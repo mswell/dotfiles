@@ -17,7 +17,7 @@ export const MODEL_ROLE_ORDER: readonly ModelRole[] = [
 	"copilotVision",
 ];
 
-export const SUPPORTED_ROUTE_BASE_DESCRIPTION = "github-copilot/* only";
+export const <REDACTED> = "github-copilot/* only";
 
 // Authoritative allowlist for GitHub Copilot's vscode-chat integrator.
 // Do not route to models merely because pi lists them if the Copilot API rejects

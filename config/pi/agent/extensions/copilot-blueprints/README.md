@@ -18,7 +18,7 @@ Structured daily-work blueprints for Pi using the GitHub Copilot-only route rout
 
 ## Auto-suggestion
 
-When you type a normal request that looks like feature/test/refactor/review/security work, Pi asks for confirmation before converting it to the matching blueprint.
+When you type a normal request that looks like <REDACTED> work, Pi asks for confirmation before converting it to the matching blueprint.
 
 Examples that trigger a confirmation:
 

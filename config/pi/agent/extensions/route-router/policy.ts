@@ -1,4 +1,4 @@
-import { providerForRole, supportsRouteBase, SUPPORTED_ROUTE_BASE_DESCRIPTION } from "./model-catalog";
+import { providerForRole, supportsRouteBase, <REDACTED> } from "./model-catalog";
 import { extractSignals, type PromptSignals } from "./signals";
 import type { EffectiveRouteMode, ModelRole, RouteDecision, RouteInput, ThinkingLevel } from "./types";
 
@@ -169,7 +169,7 @@ function chooseDev(input: RouteInput): RouteChoice {
 			role: "copilotOracle",
 			thinking: heavyThinking(s, "dev"),
 			confidence: 0.93,
-			reason: "architecture/deep/security-heavy reasoning routes to Copilot oracle models",
+			reason: "<REDACTED> reasoning routes to Copilot oracle models",
 			escalation: "Route to Copilot work/debug when the plan turns into concrete edits/tests.",
 		};
 	}
@@ -221,7 +221,7 @@ function chooseBugbounty(input: RouteInput): RouteChoice {
 			role: "copilotOracle",
 			thinking: heavyThinking(s, "bugbounty"),
 			confidence: 0.92,
-			reason: "heavy exploitability/authz/business-logic reasoning routes to Copilot oracle",
+			reason: "heavy <REDACTED> reasoning routes to Copilot oracle",
 			escalation: "Use Copilot work/debug when the next step is PoC code, patching, or report drafting.",
 		};
 	}
@@ -314,7 +314,7 @@ export function decideRoute(input: RouteInput): RouteDecision {
 	}
 
 	if (!supportsRouteBase(input.currentProvider, input.currentModelId)) {
-		return dormant(input, `current model is not ${SUPPORTED_ROUTE_BASE_DESCRIPTION}`);
+		return dormant(input, `current model is not ${<REDACTED>}`);
 	}
 
 	const effectiveMode: EffectiveRouteMode = input.mode === "manual" ? "dev" : input.mode;

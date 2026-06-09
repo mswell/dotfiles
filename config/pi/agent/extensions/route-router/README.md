@@ -103,7 +103,7 @@ Health state is runtime-only and is not persisted to disk.
 Config lives next to the extension:
 
 ```txt
-agent/extensions/route-router/config.json
+<REDACTED>.json
 ```
 
 Current default is `dev` for Copilot-only routing:
