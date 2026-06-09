@@ -9,6 +9,8 @@ DOTFILES_ROOT="${DOTFILES:-${DOTFILES_PATH:-$HOME/Projects/dotfiles}}"
 
 if [[ -f "$DOTFILES_ROOT/setup/lib/theme_orchestrator.sh" ]]; then
     source "$DOTFILES_ROOT/setup/lib/theme_orchestrator.sh"
+elif [[ -f "$SCRIPT_DIR/lib/theme_orchestrator.sh" ]]; then
+    source "$SCRIPT_DIR/lib/theme_orchestrator.sh"
 elif [[ -f "$SCRIPT_DIR/../../../setup/lib/theme_orchestrator.sh" ]]; then
     source "$SCRIPT_DIR/../../../setup/lib/theme_orchestrator.sh"
 else

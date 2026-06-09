@@ -14,6 +14,15 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local haystack="$1" needle="$2"
+  if [[ "$haystack" == *"$needle"* ]]; then
+    echo "Expected output not to contain: $needle" >&2
+    echo "$haystack" >&2
+    exit 1
+  fi
+}
+
 source "$ROOT/setup/lib/theme_orchestrator.sh"
 [[ "$(theme_resolve wellpunk-dark)" == "wellpunk-dark" ]]
 if theme_resolve invalid >/tmp/theme-invalid.out 2>&1; then
@@ -56,6 +65,9 @@ source "$ROOT/setup/lib/dotfiles_manifest.sh"
 manifest=$(DOTFILES="$ROOT" HOME=/tmp/dotfiles-home dotfiles_plan)
 assert_contains "$manifest" "copy_file|$ROOT/config/zsh/runtime.zsh|/tmp/dotfiles-home/.config/zsh/runtime.zsh"
 assert_contains "$manifest" "symlink|/tmp/dotfiles-home/.config/git/themes/wellpunk-dark.gitconfig|/tmp/dotfiles-home/.config/git/current-theme.gitconfig"
+assert_contains "$manifest" "copy_file|$ROOT/setup/lib/theme_orchestrator.sh|/tmp/dotfiles-home/.config/hypr/scripts/lib/theme_orchestrator.sh"
+waybar_config=$(cat "$ROOT/config/waybar/config.jsonc")
+assert_not_contains "$waybar_config" "~/.local/scripts/stream_status"
 
 source "$ROOT/setup/lib/setup_plans.sh"
 ubuntu_plan=$(setup_plan_print 1)

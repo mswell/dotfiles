@@ -66,6 +66,7 @@ copy_file|$root/config/hypr/hyprpaper.conf|$config_dir/hypr/hyprpaper.conf
 copy_file|$root/config/hypr/hypridle.conf|$config_dir/hypr/hypridle.conf
 copy_dir|$root/config/hypr/themes|$config_dir/hypr/themes
 copy_dir|$root/config/hypr/scripts|$config_dir/hypr/scripts
+copy_file|$root/setup/lib/theme_orchestrator.sh|$config_dir/hypr/scripts/lib/theme_orchestrator.sh
 chmod_exec||$config_dir/hypr/scripts/theme-switch.sh
 chmod_exec||$config_dir/hypr/scripts/wpaperd-set.sh
 chmod_exec||$config_dir/hypr/scripts/bg-set.sh
