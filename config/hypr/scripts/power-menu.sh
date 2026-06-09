@@ -7,7 +7,7 @@ choice=$(echo -e "$options" | walker --dmenu --width 295 --minheight 1 --maxheig
 case "$choice" in
 *Lock*)     hyprlock ;;
 *Suspend*)  systemctl suspend ;;
-*Logout*)   hyprctl dispatch exit ;;
+*Logout*)   hyprctl dispatch 'hl.dsp.exit()' ;;
 *Restart*)  systemctl reboot ;;
 *Shutdown*) systemctl poweroff ;;
 esac
