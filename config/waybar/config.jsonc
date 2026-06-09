@@ -2,7 +2,6 @@
   "layer": "top",
   "position": "top",
   "modules-left": [
-        "custom/stream_status",
         "hyprland/workspaces"
     ],
   "modules-center": ["clock"],

@@ -59,6 +59,7 @@ chmod_exec||$HOME/.local/bin/tmux-sessionizer
 chmod_exec||$HOME/.local/bin/tmux-cht.sh
 dir||$HOME/.pi/agent/themes
 copy_dir|$root/config/pi/agent/themes|$HOME/.pi/agent/themes
+copy_file|$root/config/hypr/hyprland.lua|$config_dir/hypr/hyprland.lua
 copy_file|$root/config/hypr/hyprland.conf|$config_dir/hypr/hyprland.conf
 copy_file|$root/config/hypr/hyprlock.conf|$config_dir/hypr/hyprlock.conf
 copy_file|$root/config/hypr/hyprpaper.conf|$config_dir/hypr/hyprpaper.conf
@@ -214,6 +215,12 @@ dotfiles_apply_manifest() {
                 if [[ -e "$destination" ]]; then
                     _dotfiles_log "[+] Marking executable $destination"
                     chmod +x "$destination"
+                fi
+                ;;
+            remove)
+                if [[ -e "$destination" ]]; then
+                    _dotfiles_log "[+] Removing legacy $destination"
+                    rm -f "$destination"
                 fi
                 ;;
             *)

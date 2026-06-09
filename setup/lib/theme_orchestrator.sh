@@ -137,6 +137,7 @@ theme_plan() {
     cat <<PLAN
 persist|$home/.config/hypr/current-theme|$theme
 symlink|$home/.config/hypr/themes/$theme.conf|$home/.config/hypr/colors.conf
+symlink|$home/.config/hypr/themes/$theme.lua|$home/.config/hypr/colors.lua
 symlink|$home/.config/waybar/themes/$theme.css|$home/.config/waybar/themes/current.css
 symlink|$home/.config/kitty/themes/$theme.conf|$home/.config/kitty/current-theme.conf
 symlink|$home/.config/rofi/colors/$theme.rasi|$home/.config/rofi/colors/current.rasi
@@ -197,6 +198,7 @@ theme_apply() {
     bg_dir="$home/.config/backgrounds"
 
     _theme_ln_sf "$hypr_themes/$theme.conf" "$home/.config/hypr/colors.conf"
+    _theme_ln_sf "$hypr_themes/$theme.lua" "$home/.config/hypr/colors.lua"
     _theme_ln_sf "$waybar_themes/$theme.css" "$home/.config/waybar/themes/current.css"
     _theme_ln_sf "$kitty_themes/$theme.conf" "$home/.config/kitty/current-theme.conf"
     pkill -SIGUSR1 -x kitty 2>/dev/null || true
