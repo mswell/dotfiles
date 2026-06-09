@@ -7,7 +7,7 @@ Version: 0.5.1
 Installed globally at:
 
 ```text
-~/.<REDACTED>.ts
+~/.pi/agent/extensions/pi-harness/index.ts
 ```
 
 Project data is stored per repository in:

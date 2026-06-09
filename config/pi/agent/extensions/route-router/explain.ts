@@ -1,4 +1,4 @@
-import { MODEL_CATALOG, shortModel, supportsRouteBase, <REDACTED> } from "./model-catalog";
+import { MODEL_CATALOG, shortModel, supportsRouteBase, ROUTE_BASE_LABEL } from "./model-catalog";
 import type { RouteConfig, RouteDecision } from "./types";
 
 export interface RuntimeStatusInput {
@@ -41,7 +41,7 @@ export function formatStatus(input: RuntimeStatusInput): string {
 
 	if (!supported && input.config.mode !== "off") {
 		out += "\n";
-		out += `  Dormant reason: current model is not ${<REDACTED>}\n`;
+		out += `  Dormant reason: current model is not ${ROUTE_BASE_LABEL}\n`;
 	}
 
 	if (input.lastDecision) {
@@ -64,7 +64,7 @@ export function formatStatus(input: RuntimeStatusInput): string {
 export function formatWhy(decision: RouteDecision | undefined, input: RuntimeStatusInput): string {
 	if (!decision) {
 		if (!supportsRouteBase(input.currentProvider, input.currentModelId)) {
-			return `Route Router: dormant\nReason: current model is not ${<REDACTED>}`;
+			return `Route Router: dormant\nReason: current model is not ${ROUTE_BASE_LABEL}`;
 		}
 		return "Route Router: no decision yet in this session.";
 	}
