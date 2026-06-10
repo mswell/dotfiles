@@ -13,6 +13,15 @@
   pager = delta
   hooksPath = ~/.config/git/hooks
 
+# Global pre-commit scanner defaults. Override per repo with:
+#   git config hooks.secretScan false
+#   git config hooks.secretScanMode warn
+#   git config hooks.genericSecretMode block
+[hooks]
+  secretScan = true
+  secretScanMode = block
+  genericSecretMode = warn
+
 [interactive]
   diffFilter = delta --color-only --features=interactive
 

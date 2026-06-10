@@ -1,10 +1,30 @@
 #!/usr/bin/env bash
-# pre-commit: block secrets and sensitive data from being committed
+# pre-commit: lightweight staged secret scanner
+#
+# Defaults are intentionally low-friction:
+#   - scan only ADDED staged lines, not the whole file
+#   - block high-confidence secrets and sensitive filenames
+#   - warn on generic password/token/api-key heuristics
+#   - stay silent when nothing suspicious is found
+#
+# Controls:
+#   SKIP_SECRET_SCAN=1 git commit ...
+#   git config --local  hooks.secretScan false        # disable in one repo
+#   git config --global hooks.secretScanMode warn     # never block, only warn
+#   git config --local  hooks.genericSecretMode block # make generic rules strict
+#   Add "secret-scan:allow" to an intentional false-positive line.
 
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-RESET='\033[0m'
+if [[ -t 1 ]]; then
+    RED='\033[0;31m'
+    YELLOW='\033[0;33m'
+    CYAN='\033[0;36m'
+    RESET='\033[0m'
+else
+    RED=''
+    YELLOW=''
+    CYAN=''
+    RESET=''
+fi
 
 ERRORS=0
 WARNINGS=0
@@ -13,9 +33,54 @@ err()  { echo -e "${RED}[BLOCKED]${RESET} $*"; ((ERRORS++)); }
 warn() { echo -e "${YELLOW}[WARN]${RESET}   $*"; ((WARNINGS++)); }
 info() { echo -e "${CYAN}[INFO]${RESET}    $*"; }
 
+lower() { tr '[:upper:]' '[:lower:]' <<< "${1:-}"; }
+
+is_truthy() {
+    case "$(lower "${1:-}")" in
+        1|true|yes|on) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Fast escape hatch for emergency commits. `git commit --no-verify` also works.
+if is_truthy "${SKIP_SECRET_SCAN:-}"; then
+    exit 0
+fi
+
+SECRET_SCAN_ENABLED="${GIT_HOOK_SECRET_SCAN:-$(git config --type=bool --get hooks.secretScan 2>/dev/null || printf 'true')}"
+case "$(lower "$SECRET_SCAN_ENABLED")" in
+    false|0|no|off|disabled) exit 0 ;;
+esac
+
+SECRET_SCAN_MODE="$(lower "${GIT_HOOK_SECRET_SCAN_MODE:-$(git config --get hooks.secretScanMode 2>/dev/null || printf 'block')}")"
+GENERIC_MODE="$(lower "${GIT_HOOK_GENERIC_SECRET_MODE:-$(git config --get hooks.genericSecretMode 2>/dev/null || printf 'warn')}")"
+VERBOSE="${GIT_HOOK_SECRET_SCAN_VERBOSE:-$(git config --type=bool --get hooks.secretScanVerbose 2>/dev/null || printf 'false')}"
+
+case "$SECRET_SCAN_MODE" in
+    block|warn) ;;
+    off|false|disabled) exit 0 ;;
+    *)
+        warn "Invalid hooks.secretScanMode='$SECRET_SCAN_MODE' — using 'block'."
+        SECRET_SCAN_MODE="block"
+        ;;
+esac
+
+case "$GENERIC_MODE" in
+    off|warn|block) ;;
+    *)
+        warn "Invalid hooks.genericSecretMode='$GENERIC_MODE' — using 'warn'."
+        GENERIC_MODE="warn"
+        ;;
+esac
+
 # ---------------------------------------------------------------------------
-# 1. Blocked filenames — never commit these
+# 1. Staged files
 # ---------------------------------------------------------------------------
+
+mapfile -d '' STAGED_FILES < <(git diff --cached --name-only --diff-filter=ACMRT -z)
+[[ ${#STAGED_FILES[@]} -eq 0 ]] && exit 0
+
+# Blocked filenames — never commit real copies of these.
 BLOCKED_FILES=(
     '\.env$'
     '\.env\.'
@@ -40,115 +105,199 @@ BLOCKED_FILES=(
 # Template/sample files are documentation, not real secrets — skip them.
 TEMPLATE_SUFFIX_RE='\.(example|sample|template|dist|tpl)$'
 
-while IFS= read -r -d '' file; do
+record_blockable() {
+    if [[ "$SECRET_SCAN_MODE" == "warn" ]]; then
+        warn "$*"
+    else
+        err "$*"
+    fi
+}
+
+for file in "${STAGED_FILES[@]}"; do
     grep -qiE "$TEMPLATE_SUFFIX_RE" <<< "$file" && continue
+
     for pattern in "${BLOCKED_FILES[@]}"; do
         if grep -qiE "$pattern" <<< "$file"; then
-            err "Sensitive filename: $file  (matches: $pattern)"
+            record_blockable "Sensitive filename: $file  (matches: $pattern)"
         fi
     done
-done < <(git diff --cached --name-only -z)
+done
 
 # ---------------------------------------------------------------------------
-# 2. Content patterns — scan staged file contents
+# 2. Content patterns — scan only added staged lines
 # ---------------------------------------------------------------------------
 
 # Pattern format: "LABEL|||REGEX"
-PATTERNS=(
+# High-confidence rules block by default.
+HIGH_CONFIDENCE_PATTERNS=(
     # Private keys
     "Private key header|||-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"
 
     # AWS
-    "AWS Access Key ID|||AKIA[0-9A-Z]{16}"
-    "AWS Secret Access Key|||(aws_secret_access_key|AWS_SECRET_ACCESS_KEY)\s*[=:]\s*[A-Za-z0-9+/]{40}"
-
-    # Generic high-entropy secrets (must be QUOTED — unquoted RHS like
-    # `client_secret = settings.X` is a variable reference, not a literal).
-    # Charset includes ~ and = because Entra ID / base64-padded secrets use them.
-    "API key assignment|||(api[_-]?key|apikey)\s*[=:]\s*[\"'][A-Za-z0-9_\-\.+/~=]{20,}[\"']"
-    "Secret assignment|||(secret[_-]?key|client_secret|app_secret)\s*[=:]\s*[\"'][A-Za-z0-9_\-\.+/~=]{20,}[\"']"
-    "Password assignment|||(password|passwd)\s*[=:]\s*[\"'][^\"']{8,}[\"']"
-    "Token assignment|||(access_token|auth_token|bearer_token|refresh_token|api_token)\s*[=:]\s*[\"'][A-Za-z0-9_\-\.+/~=]{20,}[\"']"
+    "AWS Access Key ID|||(^|[^A-Z0-9])AKIA[0-9A-Z]{16}([^A-Z0-9]|$)"
+    "AWS Secret Access Key|||(aws_secret_access_key|AWS_SECRET_ACCESS_KEY)[[:space:]]*[=:][[:space:]]*[A-Za-z0-9+/]{40}"
 
     # Provider-specific tokens
     "GitHub token|||gh[ps]_[A-Za-z0-9]{36}"
     "GitHub fine-grained token|||github_pat_[A-Za-z0-9_]{82}"
-    "Slack token|||xox[baprs]-[A-Za-z0-9\-]+"
+    "Slack token|||xox[baprs]-[A-Za-z0-9-]+"
     "Stripe key|||sk_(live|test)_[A-Za-z0-9]{24,}"
-    "SendGrid key|||SG\.[A-Za-z0-9_\-]{22}\.[A-Za-z0-9_\-]{43}"
+    "SendGrid key|||SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}"
     "Twilio SID|||\bAC[a-f0-9]{32}\b"
-    "HackerOne token|||[Hh]1[_-]?token\s*[=:]\s*[A-Za-z0-9_\-\.]{20,}"
-    "Google API key|||AIza[0-9A-Za-z\-_]{35}"
-    "Heroku key|||[Hh]eroku[_-]?(api[_-]?)?key\s*[=:]\s*[\"']?[a-f0-9\-]{36,}"
-
-    # JWT (only flag if it looks like a real one, 3 base64url parts — skip hash fields)
-    "JWT token|||eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
+    "HackerOne token|||[Hh]1[_-]?token[[:space:]]*[=:][[:space:]]*[\"']?[A-Za-z0-9_.-]{20,}"
+    "Google API key|||AIza[0-9A-Za-z_-]{35}"
+    "Heroku key|||[Hh]eroku[_-]?(api[_-]?)?key[[:space:]]*[=:][[:space:]]*[\"']?[a-f0-9-]{36,}"
 
     # Pi / Claude / AI provider keys
-    "Anthropic API key|||sk-ant-[A-Za-z0-9_\-]{40,}"
+    "Anthropic API key|||sk-ant-[A-Za-z0-9_-]{40,}"
     "OpenAI API key|||sk-[A-Za-z0-9]{48}"
 )
 
-# Files to skip scanning (binary, compiled, known-safe patterns)
+# Generic heuristics are useful, but noisy. Warn by default; set
+# hooks.genericSecretMode=block when you want strict behavior for a repo.
+GENERIC_PATTERNS=(
+    "API key assignment|||\b(api[_-]?key|apikey)\b[[:space:]]*[=:][[:space:]]*[\"'][A-Za-z0-9_.+/~=-]{20,}[\"']"
+    "Secret assignment|||\b(secret[_-]?key|client_secret|app_secret)\b[[:space:]]*[=:][[:space:]]*[\"'][A-Za-z0-9_.+/~=-]{20,}[\"']"
+    "Password assignment|||\b(password|passwd)\b[[:space:]]*[=:][[:space:]]*[\"'][^\"']{8,}[\"']"
+    "Token assignment|||\b(access_token|auth_token|bearer_token|refresh_token|api_token)\b[[:space:]]*[=:][[:space:]]*[\"'][A-Za-z0-9_.+/~=-]{20,}[\"']"
+    "JWT token|||eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
+)
+
+# Files to skip scanning (binary, compiled, generated, known-safe patterns).
 SKIP_EXTENSIONS='^\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|mp3|pdf|zip|tar|gz|bz2|xz|exe|bin|so|a|o|pyc|class)$'
+SKIP_PATH_RE='(^|/)(manifest\.json|checksums|SHASUMS|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb|poetry\.lock|Pipfile\.lock|Cargo\.lock|go\.sum)$|\.lock$'
+ALLOW_LINE_RE='secret-scan:allow|gitleaks:allow|trufflehog:ignore'
 
-while IFS= read -r -d '' file; do
-    # Skip deleted files
-    git diff --cached --diff-filter=D --name-only -z | grep -qzF "$file" && continue
+should_skip_content_file() {
+    local file="$1"
+    local ext=".${file##*.}"
 
-    # Skip by extension
-    ext=".${file##*.}"
-    grep -qiE "$SKIP_EXTENSIONS" <<< "$ext" && continue
+    grep -qiE "$SKIP_EXTENSIONS" <<< "$ext" && return 0
+    grep -qiE "$TEMPLATE_SUFFIX_RE" <<< "$file" && return 0
+    grep -qE '(^|/)\.gf/' <<< "$file" && return 0
+    grep -qiE "$SKIP_PATH_RE" <<< "$file" && return 0
 
-    # Skip template/sample/example files — those are documentation, not secrets.
-    grep -qiE "$TEMPLATE_SUFFIX_RE" <<< "$file" && continue
+    return 1
+}
 
-    # Skip GF grep pattern files (they contain regex fragments, not real secrets)
-    grep -q '\.gf/' <<< "$file" && continue
+redact_line() {
+    # Avoid echoing full secrets into terminal scrollback/logs.
+    sed -E 's/[A-Za-z0-9_+\/.~=-]{16,}/***REDACTED***/g' <<< "$1"
+}
 
-    # Skip manifest/hash files — they contain hex digests, not secrets
-    grep -qiE '(manifest\.json|checksums|SHASUMS|\.lock)$' <<< "$file" && continue
+record_content_issue() {
+    local severity="$1"
+    local label="$2"
+    local file="$3"
+    local lineno="$4"
+    local line_text="$5"
+    local sample
 
-    # Get staged content
-    content=$(git show ":$file" 2>/dev/null) || continue
+    sample="$(redact_line "$line_text")"
+    sample="$(sed 's/^[[:space:]]*//' <<< "$sample")"
 
-    for entry in "${PATTERNS[@]}"; do
+    if [[ "$severity" == "generic" ]]; then
+        [[ "$GENERIC_MODE" == "off" ]] && return 0
+        if [[ "$GENERIC_MODE" == "block" && "$SECRET_SCAN_MODE" == "block" ]]; then
+            err "$label in ${CYAN}$file:$lineno${RESET}"
+        else
+            warn "$label in ${CYAN}$file:$lineno${RESET}"
+        fi
+    else
+        record_blockable "$label in ${CYAN}$file:$lineno${RESET}"
+    fi
+
+    printf '         %s\n' "${sample:0:160}"
+}
+
+staged_added_lines() {
+    local file="$1"
+
+    git diff --cached --unified=0 --no-ext-diff --no-color -- "$file" |
+        awk '
+            /^@@ / {
+                header = $0
+                sub(/^@@ [^+]*\+/, "", header)
+                sub(/ .*/, "", header)
+                sub(/,.*/, "", header)
+                new_line = header - 1
+                next
+            }
+            /^\+\+\+ / { next }
+            /^--- / { next }
+            /^\+/ {
+                new_line++
+                print new_line ":" substr($0, 2)
+                next
+            }
+            /^ / { new_line++; next }
+        '
+}
+
+scan_line_against_patterns() {
+    local severity="$1"
+    local file="$2"
+    local lineno="$3"
+    local line_text="$4"
+    shift 4
+
+    local entry label regex
+    for entry in "$@"; do
         label="${entry%%|||*}"
         regex="${entry##*|||}"
 
-        # grep with line numbers; suppress errors for binary files.
-        # Use here-strings instead of `echo ... | grep` so large staged content
-        # cannot make echo report a Broken pipe if grep exits early.
-        matches=$(grep -inE "$regex" <<< "$content" 2>/dev/null) || continue
-        if [[ -n "$matches" ]]; then
-            while IFS= read -r match; do
-                lineno="${match%%:*}"
-                line_text="${match#*:}"
-                line_text=$(sed 's/^[[:space:]]*//' <<< "$line_text")
-                err "$label in ${CYAN}$file:$lineno${RESET}"
-                echo "         ${line_text:0:120}"
-            done <<< "$matches"
+        if grep -qiE "$regex" <<< "$line_text" 2>/dev/null; then
+            record_content_issue "$severity" "$label" "$file" "$lineno" "$line_text"
         fi
     done
-done < <(git diff --cached --name-only -z)
+}
+
+for file in "${STAGED_FILES[@]}"; do
+    should_skip_content_file "$file" && continue
+
+    while IFS= read -r added; do
+        [[ -z "$added" ]] && continue
+
+        lineno="${added%%:*}"
+        line_text="${added#*:}"
+
+        # Explicit per-line allow for intentional fixtures/examples.
+        grep -qiE "$ALLOW_LINE_RE" <<< "$line_text" && continue
+
+        scan_line_against_patterns "high" "$file" "$lineno" "$line_text" "${HIGH_CONFIDENCE_PATTERNS[@]}"
+        scan_line_against_patterns "generic" "$file" "$lineno" "$line_text" "${GENERIC_PATTERNS[@]}"
+    done < <(staged_added_lines "$file")
+done
 
 # ---------------------------------------------------------------------------
 # 3. Result
 # ---------------------------------------------------------------------------
-echo ""
+
 if [[ $ERRORS -gt 0 ]]; then
+    echo ""
     echo -e "${RED}╔══════════════════════════════════════════════╗${RESET}"
     echo -e "${RED}║  Commit blocked: $ERRORS secret(s) detected        ║${RESET}"
     echo -e "${RED}╚══════════════════════════════════════════════╝${RESET}"
     echo ""
-    echo -e "  Fix the issues above, then commit again."
-    echo -e "  If this is a false positive, use:  ${YELLOW}git commit --no-verify${RESET}"
+    echo "  Fix the issue(s), or if it is intentional/false-positive:"
+    echo -e "  - one commit:       ${YELLOW}git commit --no-verify${RESET}"
+    echo -e "  - one run:          ${YELLOW}SKIP_SECRET_SCAN=1 git commit ...${RESET}"
+    echo -e "  - one repo warn:    ${YELLOW}git config hooks.secretScanMode warn${RESET}"
+    echo -e "  - one repo disable: ${YELLOW}git config hooks.secretScan false${RESET}"
     echo ""
     exit 1
 fi
 
 if [[ $WARNINGS -gt 0 ]]; then
-    info "$WARNINGS warning(s) found — review before pushing."
+    echo ""
+    info "$WARNINGS warning(s) found — commit allowed. Review before pushing."
+    echo -e "  Make generic rules strict with: ${YELLOW}git config hooks.genericSecretMode block${RESET}"
+    echo ""
+    exit 0
+fi
+
+if [[ "$(lower "$VERBOSE")" == "true" ]]; then
+    info "Secret scan OK"
 fi
 
 exit 0
