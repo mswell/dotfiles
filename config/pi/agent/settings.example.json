@@ -1,8 +1,8 @@
 {
-  "lastChangelogVersion": "0.79.0",
-  "theme": "wellpunk-light",
-  "defaultProvider": "github-copilot",
-  "defaultModel": "claude-sonnet-4.6",
+  "lastChangelogVersion": "0.79.1",
+  "theme": "wellpunk-dark",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-mcp-adapter",

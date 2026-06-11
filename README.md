@@ -165,7 +165,7 @@ config/
 │   ├── themes/              # p10k + autosuggestion colors per theme
 │   └── .zshrc
 ├── hypr/
-│   ├── hyprland.conf
+│   ├── hyprland.lua
 │   ├── hyprlock.conf
 │   ├── themes/              # wellpunk-dark.conf + wellpunk-light.conf + tokyonight.conf
 │   └── scripts/

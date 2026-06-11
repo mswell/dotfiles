@@ -260,7 +260,7 @@ config/
 │   └── lua/plugins/
 │       └── colorscheme.lua  # reads current-theme at startup
 ├── hypr/
-│   ├── hyprland.conf
+│   ├── hyprland.lua      # Hyprland config source of truth
 │   ├── hyprlock.conf     # Omarchy style: blurred screenshot, centered input only
 │   ├── themes/           # wellpunk-dark.conf, wellpunk-light.conf, tokyonight.conf
 │   ├── backgrounds/      # per-theme wallpaper directories

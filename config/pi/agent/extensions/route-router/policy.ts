@@ -1,6 +1,6 @@
 import { providerForRole, supportsRouteBase, ROUTE_BASE_LABEL } from "./model-catalog";
 import { extractSignals, type PromptSignals } from "./signals";
-import type { EffectiveRouteMode, ModelRole, RouteDecision, RouteInput, ThinkingLevel } from "./types";
+import type { EffectiveRouteMode, ModelRole, RiskTier, RouteDecision, RouteInput, ThinkingLevel } from "./types";
 
 interface RouteChoice {
 	role: ModelRole;
@@ -23,7 +23,7 @@ function dormant(input: RouteInput, reason: string): RouteDecision {
 	};
 }
 
-function choiceToDecision(input: RouteInput, effectiveMode: EffectiveRouteMode, choice: RouteChoice, signals: string[]): RouteDecision {
+function choiceToDecision(input: RouteInput, effectiveMode: EffectiveRouteMode, choice: RouteChoice, signals: string[], riskTier: RiskTier): RouteDecision {
 	const manual = input.mode === "manual";
 	return {
 		active: true,
@@ -33,6 +33,7 @@ function choiceToDecision(input: RouteInput, effectiveMode: EffectiveRouteMode, 
 		targetRole: choice.role,
 		targetProvider: providerForRole(choice.role),
 		thinking: choice.thinking,
+		riskTier,
 		confidence: choice.confidence,
 		signals,
 		reason: choice.reason,
@@ -51,6 +52,41 @@ function heavyThinking(s: { critical: boolean; explicitMaxReasoning: boolean }, 
 	if (s.explicitMaxReasoning) return "xhigh";
 	if (s.critical && mode === "max") return "xhigh";
 	return "high";
+}
+
+export function assessRiskTier(s: PromptSignals, input: RouteInput): RiskTier {
+	const roughContextTokens = input.roughContextTokens ?? 0;
+	const recentToolCalls = input.recentToolCalls ?? 0;
+	const toolHeavy = recentToolCalls >= 6;
+	const codeOrSensitive = s.implementation || s.debug || s.security || s.securityHeavy || s.bugbounty || s.architecture || s.pocOrScript || s.report;
+
+	if (s.explicitMaxReasoning || s.critical || s.securityHeavy) return "critical";
+	if (s.hasImages && (s.security || s.debug || s.architecture)) return "critical";
+
+	if (toolHeavy || s.debug || s.architecture || s.implementation || s.pocOrScript || s.report || s.largeContext || roughContextTokens > 120_000) {
+		return "full";
+	}
+
+	if (s.summarization || s.security || s.bugbounty || s.hasImages || roughContextTokens > 20_000) {
+		return "lite";
+	}
+
+	if (s.isAck || (s.isSimple && !codeOrSensitive) || (s.length < 80 && !codeOrSensitive)) {
+		return "trivial";
+	}
+
+	return "lite";
+}
+
+function trivialChoice(riskTier: RiskTier): RouteChoice | undefined {
+	if (riskTier !== "trivial") return undefined;
+	return {
+		role: "copilotFast",
+		thinking: "low",
+		confidence: 0.95,
+		reason: "trivial risk tier routes to Copilot fast models with low thinking",
+		escalation: "Riskier planning, implementation, debug, or security signals escalate to scout/work/oracle roles.",
+	};
 }
 
 function explicitChoice(s: PromptSignals, mode: EffectiveRouteMode): RouteChoice | undefined {
@@ -111,6 +147,8 @@ function chooseCheap(input: RouteInput): RouteChoice {
 	const s = extractSignals(input.prompt, input);
 	const explicit = explicitChoice(s, "cheap");
 	if (explicit) return explicit;
+	const trivial = trivialChoice(assessRiskTier(s, input));
+	if (trivial) return trivial;
 
 	if (s.hasImages) {
 		return {
@@ -134,6 +172,8 @@ function chooseDev(input: RouteInput): RouteChoice {
 	const s = extractSignals(input.prompt, input);
 	const explicit = explicitChoice(s, "dev");
 	if (explicit) return explicit;
+	const trivial = trivialChoice(assessRiskTier(s, input));
+	if (trivial) return trivial;
 
 	if (s.hasImages) {
 		return {
@@ -196,6 +236,8 @@ function chooseBugbounty(input: RouteInput): RouteChoice {
 	const s = extractSignals(input.prompt, input);
 	const explicit = explicitChoice(s, "bugbounty");
 	if (explicit) return explicit;
+	const trivial = trivialChoice(assessRiskTier(s, input));
+	if (trivial) return trivial;
 
 	if (s.hasImages) {
 		return {
@@ -248,6 +290,8 @@ function chooseMax(input: RouteInput): RouteChoice {
 	const s = extractSignals(input.prompt, input);
 	const explicit = explicitChoice(s, "max");
 	if (explicit) return explicit;
+	const trivial = trivialChoice(assessRiskTier(s, input));
+	if (trivial) return trivial;
 
 	if (s.hasImages) {
 		return {
@@ -318,7 +362,8 @@ export function decideRoute(input: RouteInput): RouteDecision {
 	}
 
 	const effectiveMode: EffectiveRouteMode = input.mode === "manual" ? "dev" : input.mode;
-	const signals = extractSignals(input.prompt, input).labels;
+	const signalSet = extractSignals(input.prompt, input);
+	const riskTier = assessRiskTier(signalSet, input);
 	const choice = chooseForMode(input, effectiveMode);
-	return choiceToDecision(input, effectiveMode, choice, signals);
+	return choiceToDecision(input, effectiveMode, choice, signalSet.labels, riskTier);
 }

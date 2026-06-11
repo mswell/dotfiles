@@ -1,4 +1,4 @@
--- Hyprland Lua config — migrated from hyprland.conf (Hyprland 0.55+)
+-- Hyprland Lua config — source of truth (Hyprland 0.55+)
 -- Theme colors loaded from symlink managed by theme-switch.sh
 
 local home = os.getenv("HOME")
@@ -39,6 +39,7 @@ local fileManager = "nautilus"
 local menu        = "walker"
 local browser     = "google-chrome-stable --new-window --enable-features=UseOzonePlatform --ozone-platform=wayland"
 local notes       = "obsidian"
+local passwordManager = "proton-pass"
 local webapp      = browser .. " --app"
 local editor      = "code"
 
@@ -237,7 +238,7 @@ hl.bind("CTRL + ALT + X", hl.dsp.exit())
 
 -- Web apps
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(webapp .. "=https://chatgpt.com"))
-hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(webapp .. "=https://www.perplexity.ai/"))
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(passwordManager))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(webapp .. "=https://claude.ai"))
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(webapp .. "=https://gemini.google.com"))
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd(webapp .. "=https://youtube.com"))

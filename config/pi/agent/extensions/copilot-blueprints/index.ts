@@ -865,6 +865,21 @@ function detectBlueprintSuggestion(text: string): BlueprintSuggestion | undefine
 	return undefined;
 }
 
+function finalJudgePrompt(run: ActiveRun): string {
+	return `Final judge pass required for blueprint ${run.name}.
+
+Run a concise adversarial self-review now. If subagent reviewer/oracle is available, use it; otherwise do the judge pass yourself.
+
+Check:
+- Did the implementation satisfy the original request?
+- Are there concrete bugs, regressions, security issues, or missing validations?
+- Were commands/tests actually run? If not, say why.
+- Fix only concrete required issues; do not chase style nits.
+- Update ${run.runDir}/review.md and ${run.runDir}/result.md if practical.
+
+End your final response with: FINAL_JUDGE_DONE`;
+}
+
 function helpText(): string {
 	return `Copilot blueprints
 
@@ -1059,22 +1074,13 @@ export default function copilotBlueprints(pi: ExtensionAPI) {
 		if (activeRun.requiresJudge && !activeRun.judgeRequested && !text.includes("FINAL_JUDGE_DONE")) {
 			activeRun = { ...activeRun, judgeRequested: true };
 			pi.appendEntry("copilot-blueprint-judge-requested", activeRun);
+			const prompt = finalJudgePrompt(activeRun);
 			pi.sendMessage({
 				customType: "copilot-blueprint-final-judge",
-				content: `Final judge pass required for blueprint ${activeRun.name}.
-
-Run a concise adversarial self-review now. If subagent reviewer/oracle is available, use it; otherwise do the judge pass yourself.
-
-Check:
-- Did the implementation satisfy the original request?
-- Are there concrete bugs, regressions, security issues, or missing validations?
-- Were commands/tests actually run? If not, say why.
-- Fix only concrete required issues; do not chase style nits.
-- Update ${activeRun.runDir}/review.md and ${activeRun.runDir}/result.md if practical.
-
-End your final response with: FINAL_JUDGE_DONE`,
+				content: prompt,
 				display: true,
-			}, { triggerTurn: true });
+			}, { triggerTurn: false, deliverAs: "nextTurn" });
+			pi.sendUserMessage(prompt, { deliverAs: "followUp" });
 			return;
 		}
 

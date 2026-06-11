@@ -26,6 +26,7 @@ yay_packages="
     wl-clipboard
     librewolf-bin
     obsidian
+    proton-pass-bin
     pavucontrol
     git-delta
     vlc

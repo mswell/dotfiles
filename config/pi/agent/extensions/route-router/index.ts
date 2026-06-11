@@ -1,9 +1,10 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { loadConfig, saveConfig, getConfigPath } from "./config";
 import { formatStatus, formatWhy, statusChip } from "./explain";
-import { MODEL_ROLE_ORDER, providerForRole, resolveModelRole, shortModel, supportsRouteBase } from "./model-catalog";
+import { formatTokenBudget, getModelCapabilities, hasContextHeadroom, MODEL_ROLE_ORDER, providerForRole, resolveModelRole, shortModel, supportsRouteBase } from "./model-catalog";
 import { decideRoute } from "./policy";
-import { ROUTE_MODES, isRouteMode, type RouteConfig, type RouteDecision, type RouteMode, type SupportedProvider, type ThinkingLevel } from "./types";
+import { createTelemetryRecorder, routeApplyTelemetryEvent, routeDecisionTelemetryEvent, routeFallbackSkipTelemetryEvent } from "./telemetry";
+import { ROUTE_MODES, isRouteMode, type ModelRole, type RouteConfig, type RouteDecision, type RouteMode, type SupportedProvider, type ThinkingLevel } from "./types";
 
 const STATE_ENTRY = "route-router-state";
 const STATUS_KEY = "route-router";
@@ -70,6 +71,7 @@ export default async function routeRouter(pi: ExtensionAPI) {
 	let promptCounter = 0;
 	let lastFamilySwitchAtPrompt = -999;
 	const health = new Map<string, ModelHealthEntry>();
+	const telemetry = createTelemetryRecorder();
 
 	function healthKey(provider: string, modelId: string): string {
 		return `${provider}/${modelId}`;
@@ -84,6 +86,19 @@ export default async function routeRouter(pi: ExtensionAPI) {
 			return true;
 		}
 		return false;
+	}
+
+	function recordFallbackSkip(decision: RouteDecision, provider: SupportedProvider, modelId: string, reason: string, contextTokens?: number): void {
+		if (!decision.targetRole) return;
+		void telemetry.record(routeFallbackSkipTelemetryEvent({
+			mode: decision.mode,
+			riskTier: decision.riskTier,
+			targetRole: decision.targetRole as ModelRole,
+			provider,
+			modelId,
+			contextTokens,
+			reason,
+		}));
 	}
 
 	function markUnhealthy(provider: string | undefined, modelId: string | undefined, error: string): void {
@@ -166,9 +181,11 @@ export default async function routeRouter(pi: ExtensionAPI) {
 		updateStatus(ctx);
 	}
 
-	function shouldStayForAntiChurn(decision: RouteDecision, targetProvider: SupportedProvider, ctx: ExtensionContext): boolean {
+	function shouldStayForAntiChurn(decision: RouteDecision, targetProvider: SupportedProvider, ctx: ExtensionContext, requiredInputTokens?: number): boolean {
 		const provider = currentProvider(ctx);
-		if (!isSupportedProvider(provider)) return false;
+		const modelId = currentModelId(ctx);
+		if (!isSupportedProvider(provider) || !modelId) return false;
+		if (!hasContextHeadroom(modelId, requiredInputTokens)) return false;
 		if (decision.explicit) return false;
 
 		const belowConfidenceThreshold = decision.confidence < config.switchConfidenceThreshold;
@@ -182,13 +199,18 @@ export default async function routeRouter(pi: ExtensionAPI) {
 			return decision;
 		}
 
-		const resolved = resolveModelRole(ctx.modelRegistry, decision.targetRole, isHealthy);
+		const requiredInputTokens = ctx.getContextUsage()?.tokens ?? undefined;
+		const resolved = resolveModelRole(ctx.modelRegistry, decision.targetRole, isHealthy, {
+			requiredInputTokens,
+			onFallbackSkip: (skip) => recordFallbackSkip(decision, skip.provider, skip.modelId, skip.reason, requiredInputTokens),
+		});
 		if (!resolved) {
 			pi.setThinkingLevel(decision.thinking);
+			const contextNote = requiredInputTokens ? ` Context=${formatTokenBudget(requiredInputTokens)} tokens.` : "";
 			return annotateDecision(decision, {
 				applied: false,
 				appliedThinking: pi.getThinkingLevel() as ThinkingLevel,
-				applyNote: `No healthy available model for role ${decision.targetRole}; adjusted thinking only. Use /route health or /route reset-health.`,
+				applyNote: `No healthy context-safe available model for role ${decision.targetRole}; adjusted thinking only.${contextNote} Use /route health, /route reset-health, or reduce/stage context before retrying.`,
 			});
 		}
 
@@ -198,7 +220,7 @@ export default async function routeRouter(pi: ExtensionAPI) {
 		const targetProvider = providerForRole(decision.targetRole);
 		const targetFullName = `${targetProvider}/${resolved.id}`;
 
-		if (shouldStayForAntiChurn(nextDecision, targetProvider, ctx)) {
+		if (shouldStayForAntiChurn(nextDecision, targetProvider, ctx, requiredInputTokens)) {
 			pi.setThinkingLevel(decision.thinking);
 			return annotateDecision(nextDecision, {
 				antiChurn: true,
@@ -279,12 +301,17 @@ export default async function routeRouter(pi: ExtensionAPI) {
 
 	pi.on("before_agent_start", async (event, ctx) => {
 		if (config.mode === "off") {
+			const usage = ctx.getContextUsage();
 			lastDecision = decideRoute({
 				mode: config.mode,
 				currentProvider: currentProvider(ctx),
 				currentModelId: currentModelId(ctx),
 				prompt: "",
+				roughContextTokens: usage?.tokens ?? undefined,
+				hasImages: hasImages(event.images),
+				recentToolCalls,
 			});
+			void telemetry.record(routeDecisionTelemetryEvent(lastDecision, usage?.tokens ?? undefined));
 			updateStatus(ctx);
 			return;
 		}
@@ -302,6 +329,7 @@ export default async function routeRouter(pi: ExtensionAPI) {
 		});
 
 		lastDecision = decision;
+		void telemetry.record(routeDecisionTelemetryEvent(decision, usage?.tokens ?? undefined));
 		if (!decision.active) {
 			updateStatus(ctx);
 			return;
@@ -312,11 +340,13 @@ export default async function routeRouter(pi: ExtensionAPI) {
 				apply: false,
 				applyNote: "Manual mode: suggestion only; no model or thinking changes applied.",
 			});
+			void telemetry.record(routeApplyTelemetryEvent(lastDecision, usage?.tokens ?? undefined));
 			updateStatus(ctx);
 			return;
 		}
 
 		lastDecision = await applyDecision(decision, ctx);
+		void telemetry.record(routeApplyTelemetryEvent(lastDecision, usage?.tokens ?? undefined));
 		updateStatus(ctx);
 	});
 
@@ -380,11 +410,18 @@ export default async function routeRouter(pi: ExtensionAPI) {
 			}
 
 			if (arg === "models") {
-				const lines: string[] = ["Route model fallbacks (healthy resolution):"];
+				const contextTokens = ctx.getContextUsage()?.tokens ?? undefined;
+				const suffix = contextTokens ? ` for current context ${formatTokenBudget(contextTokens)}` : "";
+				const lines: string[] = [`Route model fallbacks (healthy/context-safe resolution${suffix}):`];
 				for (const role of MODEL_ROLE_ORDER) {
-					const resolved = resolveModelRole(ctx.modelRegistry, role, isHealthy);
+					const resolved = resolveModelRole(ctx.modelRegistry, role, isHealthy, { requiredInputTokens: contextTokens });
 					const provider = providerForRole(role);
-					lines.push(`  ${role}: ${resolved ? `${provider}/${resolved.id} (${shortModel(provider, resolved.id)})` : "unavailable"}`);
+					if (!resolved) {
+						lines.push(`  ${role}: unavailable`);
+						continue;
+					}
+					const caps = getModelCapabilities(resolved.id);
+					lines.push(`  ${role}: ${provider}/${resolved.id} (${shortModel(provider, resolved.id)}; safe ${formatTokenBudget(caps.safeInputTokens)}/${formatTokenBudget(caps.effectiveContextTokens)}; ${caps.costTier})`);
 				}
 				ctx.ui.notify(lines.join("\n"), "info");
 				return;

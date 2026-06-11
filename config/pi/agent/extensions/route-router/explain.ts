@@ -51,6 +51,7 @@ export function formatStatus(input: RuntimeStatusInput): string {
 		out += `    Apply: ${input.lastDecision.apply}\n`;
 		out += `    Target: ${targetText(input.lastDecision)}\n`;
 		out += `    Thinking: ${fmt(input.lastDecision.thinking)}\n`;
+		out += `    Risk tier: ${fmt(input.lastDecision.riskTier)}\n`;
 		out += `    Confidence: ${input.lastDecision.confidence.toFixed(2)}\n`;
 		out += `    Reason: ${input.lastDecision.reason}\n`;
 		if (input.lastDecision.applyNote) out += `    Note: ${input.lastDecision.applyNote}\n`;
@@ -78,6 +79,7 @@ export function formatWhy(decision: RouteDecision | undefined, input: RuntimeSta
 	out += `  Apply: ${decision.apply}\n`;
 	out += `  Target: ${targetText(decision)}\n`;
 	out += `  Thinking: ${fmt(decision.thinking)}\n`;
+	out += `  Risk tier: ${fmt(decision.riskTier)}\n`;
 	out += `  Confidence: ${decision.confidence.toFixed(2)}\n`;
 	out += `  Reason: ${decision.reason}\n`;
 	if (decision.escalation) out += `  Escalation: ${decision.escalation}\n`;

@@ -4,6 +4,7 @@ export type RouteMode = (typeof ROUTE_MODES)[number];
 export type EffectiveRouteMode = Exclude<RouteMode, "manual" | "off">;
 export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 export type SupportedProvider = "github-copilot";
+export type RiskTier = "trivial" | "lite" | "full" | "critical";
 export type ModelRole =
 	| "copilotFast"
 	| "copilotScout"
@@ -47,6 +48,7 @@ export interface RouteDecision {
 	targetRole?: ModelRole;
 	targetProvider?: SupportedProvider;
 	thinking?: ThinkingLevel;
+	riskTier?: RiskTier;
 	confidence: number;
 	signals: string[];
 	reason: string;
