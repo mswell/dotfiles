@@ -1,195 +1,217 @@
 {
   "manifestVersion": 1,
-  "lastBackupAt": "2026-06-11T12:48:51.491Z",
+  "lastBackupAt": "2026-06-13T16:54:24.216Z",
   "files": {
     "agent/settings.example.json": {
-      "hash": "sha256:d0ff1b3a25335408224540bac3025f4f5b7d36a7ec3f9bdf834700ce4bf9b3e3",
-      "backedUpAt": "2026-06-11T12:48:50.597Z",
-      "size": 1744
+      "hash": "sha256:c0c1a5757a8a006c30fc4f67dbd3243c0ed4ec623931b07bda66ca2b8fb9d6fd",
+      "backedUpAt": "2026-06-13T16:34:23.004Z",
+      "size": 1363
     },
     "agent/extensions/guardrails.json": {
       "hash": "sha256:81a73fc0f872991b72496c9f76c4d6210adb293e38a27a48abba99c846fe6fc6",
-      "backedUpAt": "2026-06-11T12:48:50.640Z",
+      "backedUpAt": "2026-06-13T16:34:23.742Z",
       "size": 191
     },
     "agent/extensions/hypr-theme-sync.js": {
       "hash": "sha256:576a2dfbf6b9b2a4c209dc5dd57e7afc33c1966aea5a938e633d43251983bd11",
-      "backedUpAt": "2026-06-11T12:48:50.678Z",
+      "backedUpAt": "2026-06-13T16:34:23.765Z",
       "size": 2412
     },
     "agent/extensions/pi-harness/README.md": {
-      "hash": "sha256:c73956b2a508ec7730b6376fcf0f6a712a23e64646ac0abbadf19875734e5697",
-      "backedUpAt": "2026-06-11T12:48:50.719Z",
-      "size": 9235
+      "hash": "sha256:7bf62ba4b7f92b861faf23d297a9151ec9303d71885c7ff967fa98c2fc59a5b6",
+      "backedUpAt": "2026-06-13T16:34:23.850Z",
+      "size": 9893
     },
     "agent/extensions/pi-skill-audit/README.md": {
       "hash": "sha256:c22331bbdc547127bc016201e5c212b3c1e9a80ec6e1d5c82187d48b05eb7fe0",
-      "backedUpAt": "2026-06-11T12:48:50.758Z",
+      "backedUpAt": "2026-06-13T16:34:24.038Z",
       "size": 2935
     },
     "agent/extensions/ui-ux-design/index.ts": {
-      "hash": "sha256:15b6e7e54ffd74cd6f3aa32da0638dedf3763b1e1b311116a6fccdd5a19ecbc2",
-      "version": "0.2.0",
-      "backedUpAt": "2026-06-11T12:48:51.486Z",
-      "size": 38261
+      "hash": "sha256:c60890b8943328d6d31ca770ab6d4a33a6413fdedca3fb3ce8842a3ea66cf2c1",
+      "version": "0.1.0",
+      "backedUpAt": "2026-06-13T16:34:24.080Z",
+      "size": 16961
     },
     "agent/themes/tokyonight.json": {
-      "hash": "sha256:5a3bc4dd55009a0eac35919d6426260dc7769852d96fa71ce425b9898225c775",
-      "backedUpAt": "2026-06-11T12:48:51.487Z",
-      "size": 2113
+      "hash": "sha256:8324200abc602896c7ec77a3530ef4ba78d4aec76444b17d524f0d935a45f7c4",
+      "backedUpAt": "2026-06-13T16:34:24.082Z",
+      "size": 2197
     },
     "agent/themes/wellpunk-dark.json": {
-      "hash": "sha256:2b72551d60c773c56bddbf9f5a3734ec473943e904783f5def84e685c9670b9f",
-      "backedUpAt": "2026-06-11T12:48:51.488Z",
-      "size": 2100
+      "hash": "sha256:c0b86806ea27183692956d916304bcdb488ce99fb1d4fae4722f0f8a010ed528",
+      "backedUpAt": "2026-06-13T16:34:24.083Z",
+      "size": 2178
     },
     "agent/themes/wellpunk-light.json": {
-      "hash": "sha256:6b7bda2d5688fdeba23bb280632f03f9b0d9ee0ef5b0f505b2793b07a022572e",
-      "backedUpAt": "2026-06-11T12:48:51.489Z",
-      "size": 2057
+      "hash": "sha256:2359f1c7b1eb38da88fe1396870c21d0d954fb0a67f95c2e854f39b57e36d192",
+      "backedUpAt": "2026-06-13T16:34:24.084Z",
+      "size": 2135
     },
     "agent/extensions/pi-config-backup/README.md": {
-      "hash": "sha256:5bc270a5debff227af3e757890d0fa0d3fe8f3bde5c21e9a18ac41b5d8c19d1b",
-      "backedUpAt": "2026-06-11T12:48:50.681Z",
-      "size": 2591
-    },
-    "agent/themes/vantablack.json": {
-      "hash": "sha256:5b5f196a5e00efd1ba97cbedad3cd8d3be671560b791971894e92c936a836afc",
-      "backedUpAt": "2026-06-11T12:48:51.488Z",
-      "size": 1892
-    },
-    "agent/themes/white.json": {
-      "hash": "sha256:0f296b6e82cde5b13a490d26cc9f610716787615920b9798bfc9367c858db411",
-      "backedUpAt": "2026-06-11T12:48:51.489Z",
-      "size": 1990
-    },
-    "agent/extensions/route-router/README.md": {
-      "hash": "sha256:d76c3dbd962a619c2f3a2263e03475934260d0f333cbdb08de77954e63bc9507",
-      "backedUpAt": "2026-06-11T12:48:50.798Z",
-      "size": 11338
-    },
-    "agent/extensions/route-router/config.ts": {
-      "hash": "sha256:3099e707b1be8bc668ce25d3cad61c90bebe6286f18e51882c6529383a173ccc",
-      "backedUpAt": "2026-06-11T12:48:50.874Z",
-      "size": 2443
-    },
-    "agent/extensions/route-router/explain.ts": {
-      "hash": "sha256:ccf8d4d895d22edff98282140dfa18617061726ab42210b3ec5bdb7f54722ec8",
-      "backedUpAt": "2026-06-11T12:48:50.948Z",
-      "size": 4601
-    },
-    "agent/extensions/route-router/index.ts": {
-      "hash": "sha256:026226f47583ab779827709ebcdae3ff33abfb3a4f8e6790c06ad8432516ea67",
-      "backedUpAt": "2026-06-11T12:48:50.983Z",
-      "size": 15414
-    },
-    "agent/extensions/route-router/model-catalog.ts": {
-      "hash": "sha256:9efe53f1a23984e632614846f3fa3f0e907790d629671afe4bf2d4af9f63cac7",
-      "backedUpAt": "2026-06-11T12:48:51.093Z",
-      "size": 9785
-    },
-    "agent/extensions/route-router/policy.ts": {
-      "hash": "sha256:23a1fa807722afd86708843a35533d5033cd49da8416871976835c51a35270e9",
-      "backedUpAt": "2026-06-11T12:48:51.130Z",
-      "size": 12156
-    },
-    "agent/extensions/route-router/signals.ts": {
-      "hash": "sha256:5e133436e6fe8519a4ba68baf24db186e994aeed1d6c978be9d19d81b12471d7",
-      "backedUpAt": "2026-06-11T12:48:51.169Z",
-      "size": 9270
-    },
-    "agent/extensions/route-router/test-policy.ts": {
-      "hash": "sha256:5b919057c359489948d53b7090e776df385393f535c37a09e311a5832e71f301",
-      "backedUpAt": "2026-06-11T12:48:51.390Z",
-      "size": 9845
-    },
-    "agent/extensions/route-router/types.ts": {
-      "hash": "sha256:a4240b11482d128f6163b337d739053a5f9ccdeab0e168961dd25a5a8de972bb",
-      "backedUpAt": "2026-06-11T12:48:51.458Z",
-      "size": 1733
-    },
-    "agent/extensions/copilot-blueprints/README.md": {
-      "hash": "sha256:1be98a6ee3bb72f6b0802d85c448647be71e65e8dc11a66eb886e8f709e26eeb",
-      "backedUpAt": "2026-06-11T12:48:50.602Z",
-      "size": 6849
-    },
-    "agent/extensions/copilot-blueprints/index.ts": {
-      "hash": "sha256:89e03cc8bb43ff4ffb34af36d90194d3571b98d62806b47bf6c8dfd60c564fc3",
-      "backedUpAt": "2026-06-11T12:48:50.639Z",
-      "size": 45767
+      "hash": "sha256:d0dfe92130db71d231da8065e7316483be6d87f70c4ddf38fd5606ce21b19abb",
+      "backedUpAt": "2026-06-13T16:34:23.766Z",
+      "size": 3354
     },
     "agent/extensions/pi-config-backup/index.ts": {
-      "hash": "sha256:a7d274379fa39a71ad18232b3e23c5b6069539602fb478de6d69f445d7cbd29e",
-      "version": "0.4.0",
-      "backedUpAt": "2026-06-11T12:48:50.717Z",
-      "size": 31104
+      "hash": "sha256:032f4004f3922a94278ad5027db0d650f67ba97a6e37b8bed6308b26bdbf86a4",
+      "backedUpAt": "2026-06-13T16:54:24.216Z",
+      "size": 29610,
+      "version": "0.4.0"
     },
     "agent/extensions/pi-harness/index.ts": {
-      "hash": "sha256:9b9e1ce1165c43e1ef910fc22ed47e5617136fed58a82d48415e8edb63b18e4f",
-      "version": "0.5.1",
-      "backedUpAt": "2026-06-11T12:48:50.756Z",
-      "size": 112310
+      "hash": "sha256:ac77982e31cfe645c921b7f32b15baa4796bcae614ce9dd4844f60dec40cd020",
+      "version": "0.4.5",
+      "backedUpAt": "2026-06-13T16:34:23.934Z",
+      "size": 94910
     },
     "agent/extensions/pi-skill-audit/index.ts": {
       "hash": "sha256:551766e0287f732e4875d910ebb8af2c5a21d8b04684e103d009f21294496085",
       "version": "0.1.0",
-      "backedUpAt": "2026-06-11T12:48:50.796Z",
+      "backedUpAt": "2026-06-13T16:34:24.058Z",
       "size": 39765
     },
-    "agent/extensions/route-router/blueprint.ts": {
-      "hash": "sha256:c27e6c9dfc7de0f7ef8cd9b99cf0dd28c4972fafd67ab2bc89c08e76c88b1f15",
-      "backedUpAt": "2026-06-11T12:48:50.838Z",
-      "size": 8522
+    "agent/extensions/diff-review/README.md": {
+      "hash": "sha256:1168dca6dc5e2653af94fcb76f6cf847eeeb835fd75eff690a01d780957475a8",
+      "backedUpAt": "2026-06-13T16:54:24.216Z",
+      "size": 1973
     },
-    "agent/extensions/route-router/config.json": {
-      "hash": "sha256:12ef453c13120e459ad8c1e888bd3f9335132a7015eb25c4e554c6e1eaffcf1d",
-      "backedUpAt": "2026-06-11T12:48:50.839Z",
-      "size": 114
+    "agent/extensions/diff-review/git.ts": {
+      "hash": "sha256:847823fbb55b690818f6f3012b92205f0a696d845d5cc269e4b5c5f629ce5a11",
+      "backedUpAt": "2026-06-13T16:34:23.606Z",
+      "size": 12927
     },
-    "agent/extensions/route-router/context-staging.ts": {
-      "hash": "sha256:a35950c13552c53188b869b9602e3726f3fcd7015331e1eeb0e961db525e45cf",
-      "backedUpAt": "2026-06-11T12:48:50.910Z",
-      "size": 6588
+    "agent/extensions/diff-review/index.ts": {
+      "hash": "sha256:48e28c98886f851c15f741a916122f00d3726fb73a3a4cf0b0f4c249df8875cb",
+      "backedUpAt": "2026-06-13T16:54:24.216Z",
+      "size": 12918
     },
-    "agent/extensions/route-router/judge-policy.ts": {
-      "hash": "sha256:ddaa5952fdaaf892e8e169891dbd1cee596e565d282e631f6b1746945ac0fb7d",
-      "backedUpAt": "2026-06-11T12:48:51.021Z",
-      "size": 5957
+    "agent/extensions/diff-review/package-lock.json": {
+      "hash": "sha256:fb0e94ee7409f244a4cb7340ae3e1fac41c0f4cdeea0cd39c1ac8dfb56c81b03",
+      "backedUpAt": "2026-06-13T16:54:24.216Z",
+      "size": 76247
     },
-    "agent/extensions/route-router/materiality-policy.ts": {
-      "hash": "sha256:e3b8784e52aa842c644aabdcae67252beaeecdad23a13369f4419ef2dfd2e4fc",
-      "backedUpAt": "2026-06-11T12:48:51.059Z",
-      "size": 6816
+    "agent/extensions/diff-review/package.json": {
+      "hash": "sha256:25b00ef992306d50176aa33f5e780219d340abb63fdc59231385e8224d53a854",
+      "backedUpAt": "2026-06-13T16:34:23.633Z",
+      "size": 324
     },
-    "agent/extensions/route-router/telemetry.ts": {
-      "hash": "sha256:91ca4b37b09efb8b5bfa8ee3e95995e439d5d6f7ebf1dd779138b076a86ab444",
-      "backedUpAt": "2026-06-11T12:48:51.206Z",
-      "size": 6826
+    "agent/extensions/diff-review/prompt.ts": {
+      "hash": "sha256:e5b40410806945cb6d7b537f844652b39086c513ad5d7d4cf60de10b5fd882b7",
+      "backedUpAt": "2026-06-13T16:34:23.654Z",
+      "size": 2270
     },
-    "agent/extensions/route-router/test-blueprint.ts": {
-      "hash": "sha256:eeddcf0feca69eeea7415237f4313dc817c542e235f5d30d2d3403ef02736a6b",
-      "backedUpAt": "2026-06-11T12:48:51.242Z",
-      "size": 3411
+    "agent/extensions/diff-review/types/glimpseui.d.ts": {
+      "hash": "sha256:7d51502e768e2599826aaa78e95fcefe9d9a06e1cc2e1d5a2799d478f6e4b012",
+      "backedUpAt": "2026-06-13T16:34:23.677Z",
+      "size": 2647
     },
-    "agent/extensions/route-router/test-context-staging.ts": {
-      "hash": "sha256:9b45ed0b5714630ff220379bd886b56790a06f17f82f284881de84bedd70d5b9",
-      "backedUpAt": "2026-06-11T12:48:51.279Z",
-      "size": 4582
+    "agent/extensions/diff-review/types.ts": {
+      "hash": "sha256:7f56c3bd882a064368a985a98fcebaa790f0f713592487c2f123557b720a56d2",
+      "backedUpAt": "2026-06-13T16:34:23.698Z",
+      "size": 2116
     },
-    "agent/extensions/route-router/test-judge-policy.ts": {
-      "hash": "sha256:2d3d0e5f7184dc33fe0a9d55a0f5710f2eb5eb4da33a04869338f3c3fc96a460",
-      "backedUpAt": "2026-06-11T12:48:51.317Z",
-      "size": 6623
+    "agent/extensions/diff-review/ui.ts": {
+      "hash": "sha256:dee514a9e935d5af3fe7c019f289226e6c32fc6c86fb522b28b9f966b4587af9",
+      "backedUpAt": "2026-06-13T16:34:23.719Z",
+      "size": 794
     },
-    "agent/extensions/route-router/test-materiality-policy.ts": {
-      "hash": "sha256:01ae67373b531ab514556d8a6e1bf65533c390a10bb062f938b35d26c254008a",
-      "backedUpAt": "2026-06-11T12:48:51.353Z",
-      "size": 5690
+    "agent/extensions/diff-review/web/app.js": {
+      "hash": "sha256:142f23082c904de30ef576d7408e9efd496bced15ad0ed6d7d0f4d5220eec505",
+      "backedUpAt": "2026-06-13T16:34:23.741Z",
+      "size": 44679
     },
-    "agent/extensions/route-router/test-telemetry.ts": {
-      "hash": "sha256:64687f7a344c50199a20987cf46d96aebeca3bc7cc60a1c27a7961be52428015",
-      "backedUpAt": "2026-06-11T12:48:51.429Z",
-      "size": 5449
+    "agent/extensions/pi-config-backup/index.js": {
+      "hash": "sha256:f032b3c50f0acec11c31ff0452a8b9d653fdeb793efee1598d20279863da9c62",
+      "backedUpAt": "2026-06-13T16:54:24.216Z",
+      "size": 32566,
+      "version": "0.4.0"
+    },
+    "agent/extensions/pi-config-backup/lib.ts": {
+      "hash": "sha256:cc84df39c30a1f5709bae98c545129906b5daec22e137dfc5aefd5e0ccd7833c",
+      "backedUpAt": "2026-06-13T16:34:23.827Z",
+      "size": 5195
+    },
+    "agent/extensions/pi-config-backup/test-lib.ts": {
+      "hash": "sha256:f3bf1422ad6c31a7dcf87dba9ced167224fc7b8d33fb3f49cfdc589238dd7242",
+      "version": "1.2.3",
+      "backedUpAt": "2026-06-13T16:34:23.849Z",
+      "size": 3883
+    },
+    "agent/extensions/pi-harness/KISS_ROADMAP.md": {
+      "hash": "sha256:dad0ad51ca7738556b9ae13b180084c7cd69d19caa5b18c9e6536e49efb7fea9",
+      "backedUpAt": "2026-06-13T16:34:23.849Z",
+      "size": 5299
+    },
+    "agent/extensions/pi-harness/blueprint-bridge.ts": {
+      "hash": "sha256:394e08b4c04291080ef453537f66679adbcc7484e61b521359537ed2caf07337",
+      "backedUpAt": "2026-06-13T16:34:23.870Z",
+      "size": 2616
+    },
+    "agent/extensions/pi-harness/config.ts": {
+      "hash": "sha256:ee9062e7eb577462bd8120d85bf31d977d230f23745e36b9b7b797b9b023d211",
+      "backedUpAt": "2026-06-13T16:34:23.891Z",
+      "size": 3427
+    },
+    "agent/extensions/pi-harness/goal-evaluator.ts": {
+      "hash": "sha256:adfc93d4f2c7ed95827bc8d611d222360c14688796fe57d5ae9758b8b12180c8",
+      "backedUpAt": "2026-06-13T16:34:23.911Z",
+      "size": 6120
+    },
+    "agent/extensions/pi-harness/judge-marker.ts": {
+      "hash": "sha256:15f708b78cfc6f507f578c3072b6dd55375516f3ce2c3835a02a00218af62e06",
+      "backedUpAt": "2026-06-13T16:34:23.955Z",
+      "size": 2365
+    },
+    "agent/extensions/pi-harness/test-blueprint-bridge.ts": {
+      "hash": "sha256:e683dae504d0796dc07ede5f4342b9ed8f2842024cf6eb3693d21a07b6ae7f49",
+      "backedUpAt": "2026-06-13T16:34:23.975Z",
+      "size": 3674
+    },
+    "agent/extensions/pi-harness/test-config.ts": {
+      "hash": "sha256:fa33c48c949420cc1ee73d4fe74a2f25c947fd1f352d010e1b3918eeefed380b",
+      "backedUpAt": "2026-06-13T16:34:23.996Z",
+      "size": 3675
+    },
+    "agent/extensions/pi-harness/test-goal-evaluator.ts": {
+      "hash": "sha256:b1b8aa03de3ae0f670c864da4991a054534d2dc1547452bee8b3aff90693b520",
+      "backedUpAt": "2026-06-13T16:34:24.017Z",
+      "size": 5838
+    },
+    "agent/extensions/pi-harness/test-judge-marker.ts": {
+      "hash": "sha256:9ee9de96b712f08ff64329f37111f9e84a8564f8f569971f45f66c750a36ad77",
+      "backedUpAt": "2026-06-13T16:34:24.037Z",
+      "size": 3401
+    },
+    "agent/prompts/cl.md": {
+      "hash": "sha256:974369d9b5548913e0041a150c43cfaf64e2dc054c0a599990412cf7b297fa89",
+      "backedUpAt": "2026-06-13T16:34:24.080Z",
+      "size": 2163
+    },
+    "agent/prompts/is.md": {
+      "hash": "sha256:bd78d8932b9cb79a13a553819b2239e89f6b74acce8768fc2cea65975aa515bc",
+      "backedUpAt": "2026-06-13T16:34:24.080Z",
+      "size": 1856
+    },
+    "agent/prompts/ok.md": {
+      "hash": "sha256:f7a14299c960de4090f114febecad9f859380015b1bdfbd0167c62e824901211",
+      "backedUpAt": "2026-06-13T16:34:24.081Z",
+      "size": 1025
+    },
+    "agent/prompts/pr.md": {
+      "hash": "sha256:1ba8e6cba91354e27bc4976d237c291691e9a064cee2132cef7656e3ceb46e20",
+      "backedUpAt": "2026-06-13T16:34:24.081Z",
+      "size": 2189
+    },
+    "agent/prompts/sa.md": {
+      "hash": "sha256:7b590798a5526e6620c6052cb688afd1d7ff2c2ca9426f8a28b5110a94ddbd7a",
+      "backedUpAt": "2026-06-13T16:34:24.082Z",
+      "size": 7570
+    },
+    "agent/prompts/wr.md": {
+      "hash": "sha256:29890db41a4ff0c2197a01a2b8c3cbfee28930cd7e6559941fc6c8ada6f5924c",
+      "backedUpAt": "2026-06-13T16:34:24.082Z",
+      "size": 1977
     }
   }
 }

@@ -1,68 +1,51 @@
 {
-  "lastChangelogVersion": "0.79.1",
+  "lastChangelogVersion": "0.79.3",
   "theme": "wellpunk-dark",
-  "defaultProvider": "openai-codex",
+  "defaultProvider": "github-copilot",
   "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "medium",
+  "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
-    "npm:pi-subagents"
+    "npm:pi-context",
+    "npm:@spences10/pi-skills",
+    "npm:@petechu/pi-answer-studio"
   ],
-  "subagents": {
-    "agentOverrides": {
-      "scout": {
-        "model": "github-copilot/gemini-3.5-flash",
-        "fallbackModels": [
-          "<REDACTED>",
-          "github-copilot/gpt-5.4-mini",
-          "github-copilot/claude-haiku-4.5"
-        ],
-        "thinking": "low",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls"
-        ],
-        "completionGuard": false
+  "answer": {
+    "systemPrompt": "Extract only explicit questions from the assistant message. Return concise question text, useful context, and choices when present. Ignore rhetorical questions and code/comments unless the assistant is asking the user to decide something.",
+    "extractionModels": [
+      {
+        "provider": "github-copilot",
+        "id": "gpt-5-mini"
       },
-      "reviewer": {
-        "model": "github-copilot/gpt-5.5",
-        "fallbackModels": [
-          "github-copilot/claude-sonnet-4.6",
-          "github-copilot/claude-opus-4.7",
-          "github-copilot/gpt-5.4"
-        ],
-        "thinking": "medium"
+      {
+        "provider": "github-copilot",
+        "id": "gpt-5.4-mini"
       },
-      "oracle": {
-        "model": "github-copilot/gpt-5.5",
-        "fallbackModels": [
-          "github-copilot/claude-opus-4.7",
-          "github-copilot/claude-sonnet-4.6"
-        ],
-        "thinking": "high"
-      },
-      "researcher": {
-        "model": "github-copilot/claude-sonnet-4.6",
-        "fallbackModels": [
-          "github-copilot/gpt-5.5",
-          "github-copilot/claude-opus-4.7"
-        ],
-        "thinking": "medium"
-      },
-      "context-builder": {
-        "model": "github-copilot/gemini-3.5-flash",
-        "fallbackModels": [
-          "<REDACTED>",
-          "github-copilot/gpt-5.4-mini",
-          "github-copilot/claude-haiku-4.5"
-        ],
-        "thinking": "low"
+      {
+        "provider": "github-copilot",
+        "id": "gemini-3-flash-preview"
       }
+    ],
+    "answerTemplates": [
+      {
+        "label": "Direto",
+        "template": "{{answer}}"
+      },
+      {
+        "label": "Com pergunta",
+        "template": "{{question}}\nResposta: {{answer}}"
+      },
+      {
+        "label": "Preciso de detalhes",
+        "template": "Preciso de mais detalhes sobre: "
+      }
+    ],
+    "drafts": {
+      "enabled": true,
+      "autosaveMs": 1000,
+      "promptOnRestore": true
     }
-  },
-  "hideThinkingBlock": false
+  }
 }

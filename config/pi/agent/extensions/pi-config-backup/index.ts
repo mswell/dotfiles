@@ -3,8 +3,18 @@ import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
-import * as crypto from "node:crypto";
-import { execSync } from "node:child_process";
+import {
+	JSON_FILE_RE,
+	TEXT_FILE_RE,
+	TS_FILE_RE,
+	expandHome,
+	extractVersion,
+	fileHash,
+	redactText,
+	sanitizeJson,
+	shouldSkipEntry,
+	syntaxCheck,
+} from "./lib.ts";
 
 const VERSION = "0.4.0";
 const DEFAULT_DESTINATION = "~/Projects/dotfiles/config/pi";
@@ -12,22 +22,8 @@ const PI_AGENT_DIR = path.join(os.homedir(), ".pi", "agent");
 const AGENTS_SKILLS_DIR = path.join(os.homedir(), ".agents", "skills");
 const PRE_RESTORE_SNAPSHOT_DIR = path.join(PI_AGENT_DIR, ".pre-restore-snapshot");
 const MANIFEST_FILENAME = ".backup-manifest.json";
-
-const SENSITIVE_KEY_RE = /(api[_-]?key|token|secret|password|passwd|cookie|credential|oauth|authorization|bearer|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|session[_-]?token|pat|sessionid|csrf|xsrf)/i;
-const SKIP_NAME_RE = /^(sessions|node_modules|\.git|\.cache|cache|tmp|temp|logs?|npm|git|\.pre-restore-snapshot)$/i;
-const SKIP_FILE_RE = /(\.env($|\.)|secret|secrets|credential|credentials|cookie|cookies|oauth|auth|token|tokens|keychain|known_hosts|id_rsa|id_ed25519|\.pem$|\.p12$|\.pfx$|\.key$|\.crt$|secrets\.json$|credentials\.json$)/i;
-const TEXT_FILE_RE = /\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|md|txt|yaml|yml|toml|sh|bash|zsh|fish|ini|conf|config|gitignore)$/i;
-const JSON_FILE_RE = /\.json$/i;
-const TS_JS_FILE_RE = /\.(ts|tsx|js|jsx|mjs|cjs)$/i;
-const VERSION_RE = /(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/;
+const MANAGED_DIRS = ["extensions", "prompts", "themes"];
 const MAX_COPY_BYTES = 1024 * 1024;
-const SECRET_LINE_RE = /(authorization|proxy-authorization|cookie|set-cookie)\s*:\s*[^\n\r]+/gi;
-const BEARER_RE = /Bearer\s+[A-Za-z0-9._~+\/-]{16,}=*/gi;
-const JWT_RE = /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\b/g;
-const PRIVATE_KEY_RE = /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g;
-const SECRET_ASSIGNMENT_RE = /(^|\n)(\s*)([A-Z0-9_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|COOKIE|OAUTH|AUTHORIZATION|CLIENT[_-]?SECRET|PRIVATE[_-]?KEY|ACCESS[_-]?TOKEN|REFRESH[_-]?TOKEN|SESSION[_-]?TOKEN|CSRF|XSRF)[A-Z0-9_]*)\s*[:=]\s*([^\n\r]+)/g;
-const GENERIC_SECRET_VALUE_RE = /\b[A-Za-z0-9+\/_-]{32,}=*\b/g;
-const SUSPICIOUS_SECRET_CONTENT_RE = /(?:-----BEGIN [A-Z ]*PRIVATE KEY-----|Bearer\s+[A-Za-z0-9._~+\/-]{16,}=*|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}|(?:authorization|cookie|set-cookie)\s*:|(?:api[_-]?key|token|secret|password|passwd|cookie|credential|oauth|authorization|bearer|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|session[_-]?token|pat|sessionid|csrf|xsrf)\s*[:=])/i;
 
 // --- Manifest types ---
 
@@ -51,6 +47,8 @@ type BackupResult = {
 	filesWritten: string[];
 	filesSkipped: Array<{ path: string; reason: string }>;
 	filesPruned: string[];
+	warnings: string[];
+	redactedFiles: number;
 	dryRun: boolean;
 };
 
@@ -77,21 +75,13 @@ type BackupParamsType = Static<typeof BackupParams>;
 const RestoreParams = Type.Object({
 	source: Type.Optional(Type.String({ description: `Source directory. Defaults to ${DEFAULT_DESTINATION}.` })),
 	dryRun: Type.Optional(Type.Boolean({ description: "Preview what would be copied without writing files." })),
-	force: Type.Optional(Type.Boolean({ description: "Overwrite diverged local files without checking." })),
-	// sync vs merge mode
-	sync: Type.Optional(Type.Boolean({ description: "Sync mode: delete local managed files not in the backup so the destination is an exact mirror of the source. Use this to keep machines identical. Alias: --sync on the command line." })),
-	merge: Type.Optional(Type.Boolean({ description: "Merge mode (default): restore new/updated files from backup without deleting local extras. Alias: --merge on the command line." })),
+	force: Type.Optional(Type.Boolean({ description: "Overwrite diverged or untracked local files (and settings.json) without checking." })),
+	prune: Type.Optional(Type.Boolean({ description: "Remove local extension/prompt/theme files that no longer exist in the backup (mirror restore)." })),
 });
 
 type RestoreParamsType = Static<typeof RestoreParams>;
 
 // --- Utility functions ---
-
-function expandHome(inputPath: string): string {
-	if (inputPath === "~") return os.homedir();
-	if (inputPath.startsWith("~/")) return path.join(os.homedir(), inputPath.slice(2));
-	return inputPath;
-}
 
 async function exists(filePath: string): Promise<boolean> {
 	try {
@@ -104,25 +94,6 @@ async function exists(filePath: string): Promise<boolean> {
 
 async function ensureDir(dir: string, dryRun: boolean): Promise<void> {
 	if (!dryRun) await fs.mkdir(dir, { recursive: true });
-}
-
-function fileHash(content: Buffer): string {
-	return `sha256:${crypto.createHash("sha256").update(content).digest("hex")}`;
-}
-
-function extractVersion(content: string): string | undefined {
-	const match = content.match(VERSION_RE);
-	return match?.[1];
-}
-
-function syntaxCheck(filePath: string): { ok: boolean; error?: string } {
-	if (!TS_JS_FILE_RE.test(filePath)) return { ok: true };
-	try {
-		execSync(`node --check "${filePath}"`, { stdio: "pipe", timeout: 10000 });
-		return { ok: true };
-	} catch (err: any) {
-		return { ok: false, error: err.stderr?.toString()?.slice(0, 200) || "syntax error" };
-	}
 }
 
 // --- Manifest operations ---
@@ -143,54 +114,12 @@ async function saveManifest(dotfilesDir: string, manifest: BackupManifest, dryRu
 	await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
 }
 
-// --- Sanitization (unchanged from original) ---
-
-function sanitizeJson(value: unknown): unknown {
-	if (Array.isArray(value)) return value.map(sanitizeJson);
-	if (value && typeof value === "object") {
-		const output: Record<string, unknown> = {};
-		for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-			output[key] = SENSITIVE_KEY_RE.test(key) ? "<REDACTED>" : sanitizeJson(nested);
-		}
-		return output;
-	}
-	if (typeof value === "string") return redactText(value);
-	return value;
-}
-
-function redactText(input: string): string {
-	let text = input;
-	text = text.replace(PRIVATE_KEY_RE, "<REDACTED_PRIVATE_KEY>");
-	text = text.replace(BEARER_RE, "Bearer <REDACTED>");
-	text = text.replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|sk-ant-[A-Za-z0-9_-]{16,}|github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9_]{20,})\b/g, "<REDACTED>");
-	text = text.replace(JWT_RE, "<REDACTED_JWT>");
-	text = text.replace(SECRET_ASSIGNMENT_RE, "$1$2$3=<REDACTED>");
-	text = text.replace(SECRET_LINE_RE, "$1: <REDACTED>");
-	text = text.replace(/\b(?:AKIA|ASIA|AIDA|ANPA|AROA|AGPA|A3T[A-Z0-9])[A-Z0-9]{12,}\b/g, "<REDACTED_AWS_KEY>");
-	text = text.replace(GENERIC_SECRET_VALUE_RE, (value) => {
-		if (value.length < 32) return value;
-		if (/^[A-Za-z]+$/.test(value)) return value;
-		return "<REDACTED>";
-	});
-	return text;
-}
-
-function containsSensitiveContent(text: string): boolean {
-	return SUSPICIOUS_SECRET_CONTENT_RE.test(text);
-}
-
 async function readJsonFile(filePath: string): Promise<unknown | undefined> {
 	try {
 		return JSON.parse(await fs.readFile(filePath, "utf8"));
 	} catch {
 		return undefined;
 	}
-}
-
-function shouldSkipEntry(name: string): string | undefined {
-	if (SKIP_NAME_RE.test(name)) return "sensitive or generated directory";
-	if (SKIP_FILE_RE.test(name)) return "sensitive-looking filename";
-	return undefined;
 }
 
 // --- Backup logic ---
@@ -213,13 +142,15 @@ async function copySanitizedFile(source: string, destination: string, result: Ba
 		return;
 	}
 
-	// Syntax check for .ts/.js files before backing up
-	if (TS_JS_FILE_RE.test(source)) {
+	// Syntax check for JS/TS files before backing up. Loadable JS that fails is
+	// excluded; TypeScript that fails is kept with a warning (see lib.syntaxCheck).
+	if (LOADABLE_OR_TS(source)) {
 		const check = syntaxCheck(source);
 		if (!check.ok) {
 			result.filesSkipped.push({ path: source, reason: `syntax error: ${check.error}` });
 			return;
 		}
+		if (check.warning) result.warnings.push(`${source}: ${check.warning}`);
 	}
 
 	const rawContent = await fs.readFile(source);
@@ -227,9 +158,20 @@ async function copySanitizedFile(source: string, destination: string, result: Ba
 	const relPath = path.relative(dotfilesDir, destination);
 
 	if (JSON_FILE_RE.test(source)) {
+		if (shouldPreserveJsonKeys(source)) {
+			const textContent = rawContent.toString("utf8");
+			const version = extractVersion(textContent);
+			const sanitized = redactText(textContent);
+			if (sanitized !== textContent) result.redactedFiles++;
+			await writeTextToBackup(destination, sanitized, result);
+			manifest.files[relPath] = { hash, version, backedUpAt: new Date().toISOString(), size: stat.size };
+			return;
+		}
+
 		try {
 			const parsed = JSON.parse(rawContent.toString("utf8"));
 			const sanitized = sanitizeJson(parsed);
+			if (JSON.stringify(sanitized) !== JSON.stringify(parsed)) result.redactedFiles++;
 			await writeJsonToBackup(destination, sanitized, result);
 			manifest.files[relPath] = { hash, backedUpAt: new Date().toISOString(), size: stat.size };
 			return;
@@ -238,28 +180,23 @@ async function copySanitizedFile(source: string, destination: string, result: Ba
 
 	if (TEXT_FILE_RE.test(source)) {
 		const textContent = rawContent.toString("utf8");
-		const isSourceCode = TS_JS_FILE_RE.test(source);
-
-		// Source code files (.ts/.js) are copied verbatim — they are code, not config.
-		// Redaction and sensitive-content checks are only for config/text files.
-		if (isSourceCode) {
-			const version = extractVersion(textContent);
-			await writeTextToBackup(destination, textContent, result);
-			manifest.files[relPath] = { hash, version, backedUpAt: new Date().toISOString(), size: stat.size };
-			return;
-		}
-
-		if (containsSensitiveContent(textContent)) {
-			result.filesSkipped.push({ path: source, reason: "contains sensitive content" });
-			return;
-		}
 		const version = extractVersion(textContent);
-		await writeTextToBackup(destination, redactText(textContent), result);
+		const sanitized = redactText(textContent);
+		if (sanitized !== textContent) result.redactedFiles++;
+		await writeTextToBackup(destination, sanitized, result);
 		manifest.files[relPath] = { hash, version, backedUpAt: new Date().toISOString(), size: stat.size };
 		return;
 	}
 
 	result.filesSkipped.push({ path: source, reason: "non-text file" });
+}
+
+function LOADABLE_OR_TS(filePath: string): boolean {
+	return /\.(js|cjs|mjs|jsx)$/i.test(filePath) || TS_FILE_RE.test(filePath);
+}
+
+function shouldPreserveJsonKeys(filePath: string): boolean {
+	return /(?:^|[\\/])(?:package-lock|npm-shrinkwrap)\.json$/i.test(filePath);
 }
 
 async function copySanitizedDir(source: string, destination: string, result: BackupResult, manifest: BackupManifest, dotfilesDir: string): Promise<void> {
@@ -274,6 +211,10 @@ async function copySanitizedDir(source: string, destination: string, result: Bac
 			result.filesSkipped.push({ path: src, reason });
 			continue;
 		}
+		if (entry.isSymbolicLink()) {
+			result.filesSkipped.push({ path: src, reason: "symlink (not followed)" });
+			continue;
+		}
 		if (entry.isDirectory()) await copySanitizedDir(src, dst, result, manifest, dotfilesDir);
 		else if (entry.isFile()) await copySanitizedFile(src, dst, result, manifest, dotfilesDir);
 		else result.filesSkipped.push({ path: src, reason: "not a regular file or directory" });
@@ -282,7 +223,7 @@ async function copySanitizedDir(source: string, destination: string, result: Bac
 
 async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResult> {
 	const destination = path.resolve(expandHome(params.destination || DEFAULT_DESTINATION));
-	const result: BackupResult = { destination, filesWritten: [], filesSkipped: [], filesPruned: [], dryRun: Boolean(params.dryRun) };
+	const result: BackupResult = { destination, filesWritten: [], filesSkipped: [], filesPruned: [], warnings: [], redactedFiles: 0, dryRun: Boolean(params.dryRun) };
 	const manifest = await loadManifest(destination);
 
 	await ensureDir(destination, result.dryRun);
@@ -291,7 +232,9 @@ async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResu
 	const settings = await readJsonFile(settingsPath);
 	if (settings !== undefined) {
 		const dstPath = path.join(destination, "agent", "settings.example.json");
-		await writeJsonToBackup(dstPath, sanitizeJson(settings), result);
+		const sanitized = sanitizeJson(settings);
+		if (JSON.stringify(sanitized) !== JSON.stringify(settings)) result.redactedFiles++;
+		await writeJsonToBackup(dstPath, sanitized, result);
 		const rawContent = await fs.readFile(settingsPath);
 		const relPath = path.relative(destination, dstPath);
 		manifest.files[relPath] = { hash: fileHash(rawContent), backedUpAt: new Date().toISOString(), size: rawContent.length };
@@ -300,7 +243,7 @@ async function backupPiConfig(params: BackupParamsType = {}): Promise<BackupResu
 	}
 
 	// Note: `skills` is intentionally excluded — Pi skills are controlled by a separate project.
-	for (const dirName of ["extensions", "prompts", "themes"]) {
+	for (const dirName of MANAGED_DIRS) {
 		await copySanitizedDir(path.join(PI_AGENT_DIR, dirName), path.join(destination, "agent", dirName), result, manifest, destination);
 	}
 
@@ -401,38 +344,13 @@ async function createPreRestoreSnapshot(filesToRestore: string[], dryRun: boolea
 	return PRE_RESTORE_SNAPSHOT_DIR;
 }
 
-async function pruneRestoreOrphans(dir: string, expectedFiles: Set<string>, result: RestoreResult): Promise<boolean> {
-	const entries = await fs.readdir(dir, { withFileTypes: true });
-	let emptied = true;
-	for (const entry of entries) {
-		const full = path.join(dir, entry.name);
-		if (entry.isDirectory()) {
-			const childEmpty = await pruneRestoreOrphans(full, expectedFiles, result);
-			if (childEmpty) {
-				result.filesPruned.push(full);
-				if (!result.dryRun) {
-					try { await fs.rm(full, { recursive: true, force: true }); } catch {}
-				}
-			} else {
-				emptied = false;
-			}
-		} else if (entry.isFile()) {
-			if (expectedFiles.has(path.resolve(full))) {
-				emptied = false;
-				continue;
-			}
-			result.filesPruned.push(full);
-			if (!result.dryRun) {
-				try { await fs.rm(full, { force: true }); } catch {}
-			}
-		} else {
-			emptied = false;
-		}
-	}
-	return emptied;
+interface RestoreCandidate {
+	src: string;
+	dst: string;
+	manifestKey: string;
 }
 
-async function collectRestoreFiles(srcDir: string, dstDir: string, files: Array<{ src: string; dst: string }>): Promise<void> {
+async function collectRestoreFiles(srcDir: string, dstDir: string, manifestPrefix: string, files: RestoreCandidate[]): Promise<void> {
 	if (!(await exists(srcDir))) return;
 	const entries = await fs.readdir(srcDir, { withFileTypes: true });
 	for (const entry of entries) {
@@ -440,9 +358,36 @@ async function collectRestoreFiles(srcDir: string, dstDir: string, files: Array<
 		if (reason) continue;
 		const src = path.join(srcDir, entry.name);
 		const dst = path.join(dstDir, entry.name);
-		if (entry.isDirectory()) await collectRestoreFiles(src, dst, files);
-		else if (entry.isFile()) files.push({ src, dst });
+		const key = `${manifestPrefix}/${entry.name}`;
+		if (entry.isDirectory()) await collectRestoreFiles(src, dst, key, files);
+		else if (entry.isFile()) files.push({ src, dst, manifestKey: key });
 	}
+}
+
+async function pruneLocalOrphans(localDir: string, keepSet: Set<string>, result: RestoreResult): Promise<boolean> {
+	if (!(await exists(localDir))) return true;
+	const entries = await fs.readdir(localDir, { withFileTypes: true });
+	let emptied = true;
+	for (const entry of entries) {
+		const full = path.join(localDir, entry.name);
+		if (shouldSkipEntry(entry.name)) { emptied = false; continue; }
+		if (entry.isDirectory()) {
+			const childEmpty = await pruneLocalOrphans(full, keepSet, result);
+			if (childEmpty) {
+				result.filesPruned.push(full);
+				if (!result.dryRun) { try { await fs.rm(full, { recursive: true, force: true }); } catch {} }
+			} else {
+				emptied = false;
+			}
+		} else if (entry.isFile()) {
+			if (keepSet.has(path.resolve(full))) { emptied = false; continue; }
+			result.filesPruned.push(full);
+			if (!result.dryRun) { try { await fs.rm(full, { force: true }); } catch {} }
+		} else {
+			emptied = false;
+		}
+	}
+	return emptied;
 }
 
 async function restorePiConfig(params: RestoreParamsType = {}): Promise<RestoreResult> {
@@ -466,78 +411,72 @@ async function restorePiConfig(params: RestoreParamsType = {}): Promise<RestoreR
 		throw new Error(`Invalid backup: missing agent directory at ${agentSrcDir}`);
 	}
 
-	// Load manifest to check divergence
 	const manifest = await loadManifest(sourceDir);
 
-	// Collect all files that would be restored
-	const filesToRestore: Array<{ src: string; dst: string }> = [];
-
-	// Settings
+	// Settings is special: the backup is a SANITIZED example (secrets redacted),
+	// so we never auto-overwrite a populated settings.json. Restore only when it
+	// is missing, or when --force is given (explicitly accepting the redacted copy).
 	const settingsExamplePath = path.join(agentSrcDir, "settings.example.json");
 	const settingsDstPath = path.join(destination, "settings.json");
+	const settingsToRestore: RestoreCandidate[] = [];
 	if (await exists(settingsExamplePath)) {
-		if (await exists(settingsDstPath)) {
-			result.filesSkipped.push({ path: settingsExamplePath, reason: "settings.json already exists in destination" });
+		if (!(await exists(settingsDstPath))) {
+			settingsToRestore.push({ src: settingsExamplePath, dst: settingsDstPath, manifestKey: "agent/settings.example.json" });
+		} else if (params.force) {
+			settingsToRestore.push({ src: settingsExamplePath, dst: settingsDstPath, manifestKey: "agent/settings.example.json" });
+			result.filesSkipped.push({ path: settingsExamplePath, reason: "--force: overwriting settings.json with SANITIZED example (redacted secrets)" });
 		} else {
-			filesToRestore.push({ src: settingsExamplePath, dst: settingsDstPath });
+			const entry = manifest.files["agent/settings.example.json"];
+			const diverged = entry ? fileHash(await fs.readFile(settingsDstPath)) !== entry.hash : true;
+			result.filesSkipped.push({
+				path: settingsExamplePath,
+				reason: diverged
+					? "settings.json exists and differs from backup (sanitized example; use --force to overwrite)"
+					: "settings.json already exists (in sync; use --force to re-apply example)",
+			});
 		}
 	}
 
-	// Directories
-	// Note: `skills` is intentionally excluded — Pi skills are controlled by a separate project.
-	for (const dirName of ["extensions", "prompts", "themes"]) {
-		const srcDir = path.join(agentSrcDir, dirName);
-		const dstDir = path.join(destination, dirName);
-		await collectRestoreFiles(srcDir, dstDir, filesToRestore);
+	// Managed directories.
+	const dirCandidates: RestoreCandidate[] = [];
+	for (const dirName of MANAGED_DIRS) {
+		await collectRestoreFiles(path.join(agentSrcDir, dirName), path.join(destination, dirName), `agent/${dirName}`, dirCandidates);
 	}
 
-	// Check divergence for each file
-	const safeFiles: Array<{ src: string; dst: string }> = [];
-	const divergedFiles: Array<{ src: string; dst: string; localVersion?: string; backupVersion?: string }> = [];
+	const allCandidates = [...settingsToRestore, ...dirCandidates];
 
-	for (const { src, dst } of filesToRestore) {
-		if (!(await exists(dst))) {
-			// New file, safe to restore
-			safeFiles.push({ src, dst });
-			continue;
-		}
+	const safeFiles: RestoreCandidate[] = [];
+	const divergedFiles: Array<RestoreCandidate & { localVersion?: string; backupVersion?: string }> = [];
 
-		if (params.force) {
-			safeFiles.push({ src, dst });
-			continue;
-		}
-
-		// Compare local file hash with what manifest recorded at backup time
-		const relDst = path.relative(destination, dst);
-		// Map destination path to manifest key (agent/extensions/... relative to dotfiles root)
-		const manifestKey = `agent/${relDst}`;
+	for (const cand of allCandidates) {
+		const { src, dst, manifestKey } = cand;
+		if (!(await exists(dst))) { safeFiles.push(cand); continue; }
+		if (params.force) { safeFiles.push(cand); continue; }
+		// settings handled above; if it reached safeFiles via !exists it's fine.
 		const manifestEntry = manifest.files[manifestKey];
-
 		if (!manifestEntry) {
-			// No manifest entry — file existed locally but was never tracked; safe to restore (overwrite with backup)
-			safeFiles.push({ src, dst });
+			// File exists locally but the backup never tracked it. Don't clobber
+			// untracked local edits silently — skip and report.
+			result.filesSkipped.push({ path: dst, reason: "exists locally but not tracked in backup manifest (use --force to overwrite)" });
 			continue;
 		}
-
-		// Compare current local file hash with the hash at backup time
 		const localContent = await fs.readFile(dst);
-		const localHash = fileHash(localContent);
-
-		if (localHash === manifestEntry.hash) {
-			// Local file unchanged since backup — safe to overwrite
-			safeFiles.push({ src, dst });
+		if (fileHash(localContent) === manifestEntry.hash) {
+			safeFiles.push(cand);
 		} else {
-			// Local file was modified since last backup — DIVERGED
 			const localVersion = TEXT_FILE_RE.test(dst) ? extractVersion(localContent.toString("utf8")) : undefined;
-			divergedFiles.push({ src, dst, localVersion, backupVersion: manifestEntry.version });
+			divergedFiles.push({ ...cand, localVersion, backupVersion: manifestEntry.version });
 		}
 	}
 
-	// Create pre-restore snapshot of files we'll overwrite
-	const snapshotTargets = safeFiles.filter(({ dst }) => exists(dst)).map(({ dst }) => dst);
+	// Snapshot the files we are about to overwrite (skip settings example dst since
+	// it's only written when missing or forced).
+	const snapshotTargets: string[] = [];
+	for (const { dst } of safeFiles) {
+		if (await exists(dst)) snapshotTargets.push(dst);
+	}
 	result.snapshotDir = await createPreRestoreSnapshot(snapshotTargets, result.dryRun);
 
-	// Restore safe files
 	for (const { src, dst } of safeFiles) {
 		if (!result.dryRun) {
 			await fs.mkdir(path.dirname(dst), { recursive: true });
@@ -546,28 +485,43 @@ async function restorePiConfig(params: RestoreParamsType = {}): Promise<RestoreR
 		result.filesWritten.push(dst);
 	}
 
-	// --sync: delete local extras so destination is an exact mirror of the backup
-	// --merge (default): restore files without deleting local extras
-	const isSyncMode = params.sync === true;
-	if (isSyncMode) {
-		const expected = new Set(filesToRestore.map(({ dst }) => path.resolve(dst)));
-		const managedRoots = [path.join(destination, "extensions"), path.join(destination, "prompts"), path.join(destination, "themes")];
-		for (const root of managedRoots) {
-			if (!(await exists(root))) continue;
-			await pruneRestoreOrphans(root, expected, result);
+	for (const { dst, localVersion, backupVersion } of divergedFiles) {
+		result.filesDiverged.push({ path: path.relative(destination, dst), localVersion, backupVersion });
+	}
+
+	// Optional mirror prune: remove local managed files that aren't in the backup.
+	if (params.prune) {
+		const keepSet = new Set(dirCandidates.map(({ dst }) => path.resolve(dst)));
+		for (const dirName of MANAGED_DIRS) {
+			await pruneLocalOrphans(path.join(destination, dirName), keepSet, result);
 		}
 	}
 
-	// Record diverged files
-	for (const { dst, localVersion, backupVersion } of divergedFiles) {
-		result.filesDiverged.push({
-			path: path.relative(destination, dst),
-			localVersion,
-			backupVersion,
-		});
-	}
-
 	return result;
+}
+
+async function undoLastRestore(dryRun: boolean): Promise<{ restored: string[]; snapshotDir: string; found: boolean }> {
+	const restored: string[] = [];
+	if (!(await exists(PRE_RESTORE_SNAPSHOT_DIR))) {
+		return { restored, snapshotDir: PRE_RESTORE_SNAPSHOT_DIR, found: false };
+	}
+	const walk = async (dir: string): Promise<void> => {
+		const entries = await fs.readdir(dir, { withFileTypes: true });
+		for (const entry of entries) {
+			const full = path.join(dir, entry.name);
+			if (entry.isDirectory()) { await walk(full); continue; }
+			if (!entry.isFile()) continue;
+			const rel = path.relative(PRE_RESTORE_SNAPSHOT_DIR, full);
+			const target = path.join(PI_AGENT_DIR, rel);
+			if (!dryRun) {
+				await fs.mkdir(path.dirname(target), { recursive: true });
+				await fs.copyFile(full, target);
+			}
+			restored.push(target);
+		}
+	};
+	await walk(PRE_RESTORE_SNAPSHOT_DIR);
+	return { restored, snapshotDir: PRE_RESTORE_SNAPSHOT_DIR, found: true };
 }
 
 // --- Formatting ---
@@ -589,36 +543,26 @@ ${includeAgentsSkills ? "- `agents/skills/` sanitized copy of `~/.agents/skills/
 ## Intentionally not copied
 
 - \`~/.pi/agent/sessions/\`
+- \`~/.pi/agent/skills/\` (managed by a separate project)
 - package caches/install dirs such as \`npm/\`, \`git/\`, \`node_modules/\`
+- symlinks (not followed)
 - files with sensitive-looking names
 - API keys, tokens, cookies, OAuth material, and similar strings
-- Files with syntax errors (validated with node --check)
 
-## Restore modes
+## Syntax validation
 
-Use \`/pi-restore\` or the \`pi_config_restore\` tool.
+- Loadable JS (\`.js/.cjs/.mjs/.jsx\`) is validated with \`node --check\`; files with errors are skipped.
+- TypeScript sources are best-effort checked but never skipped on parse failure (kept with a warning).
 
-| Mode | Command | Behavior |
-|------|---------|----------|
-| **merge** (default) | \`/pi-restore\` or \`/pi-restore --merge\` | Restore new/updated files; keep local extras that are not in the backup |
-| **sync** | \`/pi-restore --sync\` | Restore + delete local extras so the machine is an exact mirror of the backup |
+## Restore
 
-Guardrails (both modes):
+Use \`/pi-restore\` or the \`pi_config_restore\` tool. Guardrails:
 - Files modified locally since last backup are **skipped** (not overwritten)
+- Local files not tracked in the backup manifest are **skipped** (use \`--force\`)
+- \`settings.json\` is never auto-overwritten (the backup is a sanitized example); use \`--force\` to apply it
 - A pre-restore snapshot is saved to \`~/.pi/agent/.pre-restore-snapshot/\`
-- Use \`--force\` to override divergence protection
-
-### Keeping machines in sync
-
-\`\`\`bash
-# On the source machine (after changes):
-/pi-backup
-git commit && git push
-
-# On each other machine:
-git pull
-/pi-restore --sync
-\`\`\`
+- \`/pi-restore-undo\` rolls back the most recent restore from that snapshot
+- \`--force\` overrides divergence/untracked protection; \`--prune\` mirrors the backup by removing local orphans
 `;
 }
 
@@ -628,7 +572,9 @@ function formatBackupResult(result: BackupResult): string {
 	const skipped = result.filesSkipped.length ? `, ${result.filesSkipped.length} skipped` : "";
 	const prunedLabel = result.dryRun ? "would prune" : "pruned";
 	const pruned = result.filesPruned.length ? `, ${result.filesPruned.length} ${prunedLabel}` : "";
-	return `Pi config backup ${verb}: ${result.filesWritten.length} files ${fileLabel}${skipped}${pruned} → ${result.destination}`;
+	const redacted = result.redactedFiles ? `, ${result.redactedFiles} redacted` : "";
+	const warned = result.warnings.length ? `, ${result.warnings.length} warning(s)` : "";
+	return `Pi config backup ${verb}: ${result.filesWritten.length} files ${fileLabel}${skipped}${pruned}${redacted}${warned} → ${result.destination}`;
 }
 
 function formatRestoreResult(result: RestoreResult): string {
@@ -639,18 +585,15 @@ function formatRestoreResult(result: RestoreResult): string {
 		`Files ${result.dryRun ? "would write" : "written"}: ${result.filesWritten.length}`,
 	];
 	if (result.snapshotDir) {
-		lines.push(`Pre-restore snapshot: ${result.snapshotDir}`);
+		lines.push(`Pre-restore snapshot: ${result.snapshotDir} (undo with /pi-restore-undo)`);
+	}
+	if (result.filesPruned.length) {
+		lines.push(`Pruned (mirror): ${result.filesPruned.length}`);
 	}
 	if (result.filesSkipped.length) {
 		lines.push(`Skipped: ${result.filesSkipped.length}`);
 		for (const item of result.filesSkipped.slice(0, 10)) {
 			lines.push(`  - ${item.path}: ${item.reason}`);
-		}
-	}
-	if (result.filesPruned.length) {
-		lines.push("", `🧹 ${result.filesPruned.length} extra file(s) pruned to mirror backup:`);
-		for (const item of result.filesPruned.slice(0, 20)) {
-			lines.push(`  - ${item}`);
 		}
 	}
 	if (result.filesDiverged.length) {
@@ -670,24 +613,43 @@ function formatRestoreResult(result: RestoreResult): string {
 
 export default function piConfigBackup(pi: ExtensionAPI) {
 	pi.registerCommand("pi-restore", {
-		description: "Restore Pi configuration from dotfiles (with divergence protection)",
+		description: "Restore Pi configuration from dotfiles (divergence protection; --force, --prune, --dry-run)",
 		handler: async (args, ctx) => {
 			const parts = args.trim().split(/\s+/).filter(Boolean);
 			const dryRun = parts.includes("--dry-run");
 			const force = parts.includes("--force");
-			const sync = parts.includes("--sync") || parts.includes("--mirror"); // --mirror kept as alias
-			const merge = parts.includes("--merge");
+			const prune = parts.includes("--prune");
 			const source = parts.find((part) => !part.startsWith("--"));
 			try {
-				const result = await restorePiConfig({ source, dryRun, force, sync, merge });
+				const result = await restorePiConfig({ source, dryRun, force, prune });
 				ctx.ui.setWidget("pi-restore", undefined);
-				const mode = sync ? "sync" : "merge";
-				const msg = result.filesDiverged.length
-					? `Pi config restore [${mode}]: ${result.filesWritten.length} files restored, ${result.filesDiverged.length} skipped (locally modified)`
-					: `Pi config restore [${mode}] ${dryRun ? "dry-run " : ""}complete: ${result.filesWritten.length} files written${result.filesPruned.length ? `, ${result.filesPruned.length} pruned` : ""}`;
+				const extras = [
+					result.filesDiverged.length ? `${result.filesDiverged.length} diverged` : "",
+					result.filesSkipped.length ? `${result.filesSkipped.length} skipped` : "",
+					result.filesPruned.length ? `${result.filesPruned.length} pruned` : "",
+				].filter(Boolean).join(", ");
+				const msg = `Pi config restore ${dryRun ? "dry-run " : ""}complete: ${result.filesWritten.length} written${extras ? ` (${extras})` : ""}`;
 				ctx.ui.notify(msg, result.filesDiverged.length ? "warning" : "info");
 			} catch (error) {
 				ctx.ui.notify(`pi-restore failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+			}
+		},
+	});
+
+	pi.registerCommand("pi-restore-undo", {
+		description: "Roll back the most recent /pi-restore using the pre-restore snapshot (--dry-run)",
+		handler: async (args, ctx) => {
+			const dryRun = args.trim().split(/\s+/).includes("--dry-run");
+			try {
+				const result = await undoLastRestore(dryRun);
+				ctx.ui.setWidget("pi-restore-undo", undefined);
+				if (!result.found) {
+					ctx.ui.notify("No pre-restore snapshot found — nothing to undo.", "warning");
+					return;
+				}
+				ctx.ui.notify(`Restore undo ${dryRun ? "dry-run " : ""}complete: ${result.restored.length} file(s) rolled back from snapshot`, "info");
+			} catch (error) {
+				ctx.ui.notify(`pi-restore-undo failed: ${error instanceof Error ? error.message : String(error)}`, "error");
 			}
 		},
 	});
@@ -716,9 +678,9 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 		promptSnippet: "Restore Pi configuration from dotfiles",
 		promptGuidelines: [
 			"Use pi_config_restore to load backup configurations into the local Pi agent directory.",
-			"Restore skips files that were modified locally since last backup. Use force: true to override.",
-			"Use sync: true for sync mode (mirror): restores and deletes local extras so the destination matches the backup exactly. This is what you want to keep machines in sync.",
-		"Use merge: true (or omit) for merge mode (default): restores new/updated files but keeps local extras.",
+			"Restore skips files that were modified locally since last backup or not tracked in the manifest. Use force: true to override.",
+			"settings.json is never auto-overwritten (the backup is a sanitized example); force: true applies the redacted example.",
+			"Use prune: true to mirror the backup by removing local extension/prompt/theme files absent from the backup.",
 		],
 		parameters: RestoreParams,
 		async execute(_toolCallId, params: RestoreParamsType) {
@@ -752,7 +714,7 @@ export default function piConfigBackup(pi: ExtensionAPI) {
 		promptGuidelines: [
 			"Use pi_config_backup only when the user asks to back up Pi configuration files.",
 			"pi_config_backup must not copy sessions, API keys, tokens, cookies, OAuth material, private keys, or auth files.",
-			"pi_config_backup validates syntax of .ts/.js files before backing up (skips files with errors).",
+			"pi_config_backup validates loadable JS with node --check; TypeScript is kept even if the best-effort check cannot parse it (reported as a warning).",
 		],
 		parameters: BackupParams,
 		async execute(_toolCallId, params: BackupParamsType): Promise<any> {

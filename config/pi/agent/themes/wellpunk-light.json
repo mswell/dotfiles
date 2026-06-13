@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.<REDACTED>.json",
+  "$schema": "https://raw.githubusercontent.com/badlogic/pi-mono/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
   "name": "wellpunk-light",
   "vars": {
     "accent": "#6e6e6e",

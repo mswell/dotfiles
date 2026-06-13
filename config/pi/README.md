@@ -14,33 +14,23 @@ This directory is intended to be committed to dotfiles. It excludes or redacts s
 ## Intentionally not copied
 
 - `~/.pi/agent/sessions/`
+- `~/.pi/agent/skills/` (managed by a separate project)
 - package caches/install dirs such as `npm/`, `git/`, `node_modules/`
+- symlinks (not followed)
 - files with sensitive-looking names
 - API keys, tokens, cookies, OAuth material, and similar strings
-- Files with syntax errors (validated with node --check)
 
-## Restore modes
+## Syntax validation
 
-Use `/pi-restore` or the `pi_config_restore` tool.
+- Loadable JS (`.js/.cjs/.mjs/.jsx`) is validated with `node --check`; files with errors are skipped.
+- TypeScript sources are best-effort checked but never skipped on parse failure (kept with a warning).
 
-| Mode | Command | Behavior |
-|------|---------|----------|
-| **merge** (default) | `/pi-restore` or `/pi-restore --merge` | Restore new/updated files; keep local extras that are not in the backup |
-| **sync** | `/pi-restore --sync` | Restore + delete local extras so the machine is an exact mirror of the backup |
+## Restore
 
-Guardrails (both modes):
+Use `/pi-restore` or the `pi_config_restore` tool. Guardrails:
 - Files modified locally since last backup are **skipped** (not overwritten)
+- Local files not tracked in the backup manifest are **skipped** (use `--force`)
+- `settings.json` is never auto-overwritten (the backup is a sanitized example); use `--force` to apply it
 - A pre-restore snapshot is saved to `~/.pi/agent/.pre-restore-snapshot/`
-- Use `--force` to override divergence protection
-
-### Keeping machines in sync
-
-```bash
-# On the source machine (after changes):
-/pi-backup
-git commit && git push
-
-# On each other machine:
-git pull
-/pi-restore --sync
-```
+- `/pi-restore-undo` rolls back the most recent restore from that snapshot
+- `--force` overrides divergence/untracked protection; `--prune` mirrors the backup by removing local orphans

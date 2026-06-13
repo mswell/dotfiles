@@ -2,26 +2,46 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Type, type Static } from "typebox";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import {
+	DEFAULT_GOAL_EVALUATOR_TIMEOUT_MS,
+	DEFAULT_GOAL_MAX_TURNS,
+	MAX_GOAL_EVALUATOR_TIMEOUT_MS,
+	evaluateGoalWithShell,
+	parseGoalInput,
+	setGoalEvaluatorRedactor,
+	type GoalEvaluation,
+	type GoalEvaluatorMode,
+	type ParsedGoalInput as ExternalParsedGoalInput,
+	type ShellEvaluatorOptions,
+} from "./goal-evaluator.ts";
+import { detectJudgeMarker, extractAssistantText, judgeMarkerEntryId } from "./judge-marker.ts";
+import { parseHandoff, shouldConsumeHandoff, shouldProceedWithHandoff, type BlueprintHandoff } from "./blueprint-bridge.ts";
+import { formatStatusPromptContext, getHarnessConfig, type HarnessContextMode } from "./config.ts";
+export { parseHandoff, shouldConsumeHandoff };
+export { evaluateGoalWithShell, parseGoalInput };
+export { detectJudgeMarker, extractAssistantText, judgeMarkerEntryId };
+export type { GoalEvaluation, ShellEvaluatorOptions };
 
-const VERSION = "0.5.1";
+const VERSION = "0.4.5";
 const HARNESS_DIR = path.join(".pi", "harness");
 const EVENTS_FILE = "events.jsonl";
 const SUMMARY_FILE = "summary.md";
 const TRACE_RECENT_LIMIT = 25;
-const DEFAULT_GOAL_MAX_TURNS = 10;
 const GOAL_CONVERSATION_ENTRY_LIMIT = 80;
 const WIDGET_MODE: "off" | "compact" = "off";
-const HARNESS_CONTEXT_MODE_ENV = "PI_HARNESS_CONTEXT";
-type HarnessContextMode = "off" | "minimal" | "lean";
-const DEFAULT_CONTEXT_MODE: HarnessContextMode = "minimal";
-const LEAN_CONTEXT_LIMIT = 2200;
-const MINIMAL_CONTEXT_LIMIT = 900;
+const LEAN_CONTEXT_LIMIT = 4500;
 const PHASES = ["P", "R", "E", "V", "C"] as const;
 const MEMORY_TYPES = ["facts", "preferences", "patterns", "mistakes", "playbooks", "glossary"] as const;
 type MemoryType = (typeof MEMORY_TYPES)[number];
 const MEMORY_DIR = "memory";
 let turnStartCleanupHookInstalled = false;
 const activeGoalEvaluations = new Set<string>();
+// Per-root tracker for the FINAL_JUDGE_DONE bridge (Track B.2): keep the
+// identity of the last assistant entry that already produced an auto-evidence
+// + setPhase(V), so we never double-fire on the same turn.
+const processedJudgeMarkers = new Map<string, string>();
+// Per-root tracker for the entry-side blueprint handoff bridge (Track B/C).
+const consumedBlueprintHandoffs = new Map<string, string>();
 const HARNESS_STATUS_WIDGET = "pi-harness";
 const HARNESS_COMMAND_OUTPUT_WIDGET = "pi-harness-command-output";
 const PHASE_LABELS: Record<Phase, string> = {
@@ -45,6 +65,9 @@ interface GoalState {
 	turns: number;
 	maxTurns: number;
 	maxMinutes?: number;
+	evaluatorMode?: GoalEvaluatorMode;
+	evaluatorCmd?: string;
+	evaluatorTimeoutMs?: number;
 	lastEvaluatorReason?: string;
 	lastEvaluationAt?: string;
 	achievedAt?: string;
@@ -90,7 +113,6 @@ const HarnessParams = Type.Object({
 		Type.Literal("closeTask"),
 		Type.Literal("recordDecision"),
 		Type.Literal("recordEvidence"),
-		Type.Literal("recordCheck"),
 		Type.Literal("recordNote"),
 		Type.Literal("appendIdea"),
 		Type.Literal("readContext"),
@@ -113,16 +135,11 @@ const HarnessParams = Type.Object({
 		Type.Literal("reflect"),
 		Type.Literal("reflectAi"),
 		Type.Literal("memoryCandidates"),
-		Type.Literal("memoryAudit"),
-		Type.Literal("memoryDedupe"),
 		Type.Literal("improveReport"),
-	], { description: "Harness action." }),
-	title: Type.Optional(Type.String({ description: "Task title." })),
-	text: Type.Optional(Type.String({ description: "Action text; remember/forget use 'type: content'." })),
-	command: Type.Optional(Type.String({ description: "Check command/name." })),
-	exitCode: Type.Optional(Type.Number({ description: "Check exit code." })),
-	passed: Type.Optional(Type.Boolean({ description: "Check passed." })),
-	phase: Type.Optional(Type.Union(PHASES.map((p) => Type.Literal(p)) as any, { description: "PREVC phase." })),
+	], { description: "Harness action to run." }),
+	title: Type.Optional(Type.String({ description: "Task title for startTask." })),
+	text: Type.Optional(Type.String({ description: "Text for decisions, evidence, notes, ideas, project context, policy, contract, plan, report note, or memory content. For remember: 'type: content'. For recall: optional type filter. For forget: 'type: content substring'." })),
+	phase: Type.Optional(Type.Union(PHASES.map((p) => Type.Literal(p)) as any, { description: "PREVC phase: P, R, E, V, C." })),
 });
 
 type HarnessParamsType = Static<typeof HarnessParams>;
@@ -252,56 +269,7 @@ async function ensureHarness(root: string): Promise<HarnessIndex> {
 	if (!(await exists(path.join(dir, "decisions.md")))) {
 		await writeText(path.join(dir, "decisions.md"), "# Decisions\n\nDurable project decisions recorded by pi-harness.\n");
 	}
-	await ensureGitignore(root);
 	return index;
-}
-
-/**
- * Ensure the project .gitignore has the correct pi-harness policy:
- *   - .pi/runs/*          → ignored (ephemeral session logs)
- *   - !.pi/runs/index.jsonl → tracked (lightweight historical evidence)
- *   - .pi/harness/        → NOT ignored (durable project state)
- *
- * Uses a glob pattern (.pi/runs/*) instead of a directory pattern (.pi/runs/)
- * so that git negation rules can re-include index.jsonl.
- */
-async function ensureGitignore(root: string): Promise<void> {
-	const gitignorePath = path.join(root, ".gitignore");
-	let content = "";
-	try {
-		content = await fs.readFile(gitignorePath, "utf8");
-	} catch {
-		// file does not exist yet — will be created
-	}
-
-	// Migrate: upgrade .pi/runs/ (directory form) to .pi/runs/* (glob form)
-	// so that !.pi/runs/index.jsonl negation can work.
-	content = content.replace(/^\.pi\/runs\/$/m, ".pi/runs/*");
-
-	const trimmedLines = content.split("\n").map((l) => l.trim());
-	const hasRunsGlob = trimmedLines.includes(".pi/runs/*");
-	const hasIndexException = trimmedLines.includes("!.pi/runs/index.jsonl");
-
-	if (hasRunsGlob && hasIndexException) {
-		// Both present; write back in case we performed the directory→glob migration
-		await fs.writeFile(gitignorePath, content, "utf8");
-		return;
-	}
-
-	const additions: string[] = [];
-	if (!hasRunsGlob) {
-		additions.push("");
-		additions.push("# Pi session run logs (ephemeral — blueprint, commands.jsonl, context/)");
-		additions.push(".pi/runs/*");
-	}
-	if (!hasIndexException) {
-		if (additions.length === 0) additions.push(""); // blank separator
-		additions.push("# Preserve run index as lightweight historical evidence");
-		additions.push("!.pi/runs/index.jsonl");
-	}
-
-	if (content.length > 0 && !content.endsWith("\n")) content += "\n";
-	await fs.writeFile(gitignorePath, content + additions.join("\n") + "\n", "utf8");
 }
 
 async function getActiveTask(root: string): Promise<TaskState | undefined> {
@@ -407,21 +375,6 @@ async function completeTaskState(root: string, task: TaskState, note?: string): 
 	if (note) {
 		await appendText(path.join(taskDir(root, task), "evidence.md"), `\n## ${now()}\n\n${note}\n`);
 	}
-	// Anti-laziness check: verify plan coverage before completing
-	let coverageWarning = "";
-	try {
-		const dir = taskDir(root, task);
-		const planText = await readText(path.join(dir, "plan.md"));
-		const evidenceText = await readText(path.join(dir, "evidence.md"));
-		const planItems = extractPlanItems(planText);
-		if (planItems.length >= 3) {
-			const coverage = computeCoverage(planItems, evidenceText, "");
-			coverageWarning = buildCoverageWarning(coverage);
-			if (coverageWarning) {
-				await appendTrace(root, { type: "coverage_warning", taskId: task.id, covered: coverage.covered, total: coverage.total });
-			}
-		}
-	} catch { /* non-critical */ }
 	// Auto-reflect: generate memory candidates before closing
 	let reflectionHint = "";
 	try {
@@ -456,7 +409,7 @@ async function completeTaskState(root: string, task: TaskState, note?: string): 
 	task.updatedAt = now();
 	await appendTrace(root, { type: "task_done", taskId: task.id, title: task.title });
 	await saveTask(root, task);
-	return { task, reflectionHint: `${coverageWarning}${reflectionHint}` };
+	return { task, reflectionHint };
 }
 
 async function closeTask(root: string, text?: string): Promise<{ task: TaskState; reflectionHint: string }> {
@@ -496,333 +449,6 @@ function summarizeToolInput(toolName: string, input: unknown): Record<string, un
 	return {};
 }
 
-function shellCommandFromInput(input: unknown): string | undefined {
-	const data = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
-	return typeof data.command === "string" ? data.command : undefined;
-}
-
-function isLikelyMutatingShellCommand(command: string): boolean {
-	return [
-		/(^|[;&|\n]\s*)(cp|mv|mkdir|touch|ln|tee|truncate)\b/i,
-		/(^|[;&|\n]\s*)(sed\s+-i|perl\s+-pi)\b/i,
-		/(^|\s)(>|>>)\s*\S+/i,
-		/\bgit\s+(add|commit|rm|clean|reset|restore|checkout|switch|rebase|merge|stash|tag|push)\b/i,
-		/\b(npm|pnpm|yarn)\s+(install|i|ci|add|remove|rm|uninstall|unlink|publish)\b/i,
-		/\b(npm|pnpm|yarn)\s+(run\s+)?build\b/i,
-		/\b(vite|rollup|webpack|next)\s+build\b/i,
-		/(^|[;&|\n]\s*)tsc\b(?![^;&|\n]*\s--noEmit\b)/i,
-	].some((pattern) => pattern.test(command));
-}
-
-function mutatingToolReason(toolName: string, input: unknown): string | undefined {
-	if (toolName === "edit" || toolName === "write") return `${toolName} modifies files`;
-	if (toolName === "bash") {
-		const command = shellCommandFromInput(input);
-		if (command && isLikelyMutatingShellCommand(command)) return `bash appears mutating: ${redact(command)}`;
-	}
-	return undefined;
-}
-
-// ─── Dynamic Workflow Features ───────────────────────────────────────────────
-
-// Feature 1: Anti-laziness tracker
-// Extracts enumerated items from plan text and computes evidence coverage.
-
-interface PlanItem {
-	text: string;
-	checked: boolean;
-}
-
-function extractPlanItems(planText: string): PlanItem[] {
-	const items: PlanItem[] = [];
-	for (const line of planText.split("\n")) {
-		const trimmed = line.trim();
-		// Match markdown checklist items: - [ ] or - [x]
-		const checklistMatch = trimmed.match(/^[-*]\s*\[([ xX])\]\s+(.+)/);
-		if (checklistMatch) {
-			items.push({ text: checklistMatch[2].trim(), checked: checklistMatch[1] !== " " });
-			continue;
-		}
-		// Match numbered list items: 1. or 1)
-		const numberedMatch = trimmed.match(/^\d+[.)\s]\s*(.+)/);
-		if (numberedMatch && numberedMatch[1].length > 5) {
-			items.push({ text: numberedMatch[1].trim(), checked: false });
-			continue;
-		}
-		// Match bullet items with substantive content (skip headers, phase labels)
-		const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
-		if (bulletMatch && bulletMatch[1].length > 10 && !/^(planning|review|execution|validation|confirmation)$/i.test(bulletMatch[1].trim())) {
-			items.push({ text: bulletMatch[1].trim(), checked: false });
-		}
-	}
-	return items;
-}
-
-function computeCoverage(planItems: PlanItem[], evidenceText: string, checksText: string): { covered: number; total: number; uncovered: string[] } {
-	if (planItems.length === 0) return { covered: 0, total: 0, uncovered: [] };
-	const evidenceLower = `${evidenceText}\n${checksText}`.toLowerCase();
-	const uncovered: string[] = [];
-	let covered = 0;
-	for (const item of planItems) {
-		if (item.checked) {
-			covered++;
-			continue;
-		}
-		// Check if evidence/checks mention keywords from this item
-		const keywords = item.text.toLowerCase()
-			.replace(/[^a-z0-9\s]/g, " ")
-			.split(/\s+/)
-			.filter((w) => w.length > 3);
-		const matchCount = keywords.filter((kw) => evidenceLower.includes(kw)).length;
-		const coverageRatio = keywords.length > 0 ? matchCount / keywords.length : 0;
-		if (coverageRatio >= 0.4) {
-			covered++;
-		} else {
-			uncovered.push(item.text);
-		}
-	}
-	return { covered, total: planItems.length, uncovered };
-}
-
-function buildCoverageWarning(coverage: { covered: number; total: number; uncovered: string[] }): string {
-	if (coverage.total < 3) return ""; // Not enough items to be meaningful
-	const pct = Math.round((coverage.covered / coverage.total) * 100);
-	if (pct >= 80) return ""; // Good coverage
-	const lines = [
-		"",
-		`⚠️  Anti-laziness check: plan coverage is ${pct}% (${coverage.covered}/${coverage.total} items addressed).`,
-		"Items without evidence:",
-		...coverage.uncovered.slice(0, 8).map((item) => `  - ${item.slice(0, 100)}`),
-	];
-	if (coverage.uncovered.length > 8) lines.push(`  ... and ${coverage.uncovered.length - 8} more`);
-	lines.push("", "Consider recording evidence for remaining items before completing, or adjust the plan to reflect actual scope.");
-	return lines.join("\n");
-}
-
-// Feature 2: Auto-adversarial review suggestion
-// When transitioning to V phase, suggest spawning a fresh-context reviewer.
-
-function buildAdversarialReviewSuggestion(contractText: string, planText: string): string {
-	// Extract done criteria from contract
-	const criteriaLines: string[] = [];
-	let inCriteria = false;
-	for (const line of contractText.split("\n")) {
-		if (/^##\s*(done\s*criteria|acceptance|success)/i.test(line.trim())) {
-			inCriteria = true;
-			continue;
-		}
-		if (inCriteria && /^##\s/.test(line.trim())) break;
-		if (inCriteria && line.trim()) criteriaLines.push(line.trim());
-	}
-
-	// If no explicit criteria, extract scope items
-	if (criteriaLines.length === 0) {
-		let inScope = false;
-		for (const line of contractText.split("\n")) {
-			if (/^##\s*scope/i.test(line.trim())) { inScope = true; continue; }
-			if (inScope && /^##\s/.test(line.trim())) break;
-			if (inScope && line.trim().startsWith("-")) criteriaLines.push(line.trim());
-		}
-	}
-
-	const criteria = criteriaLines.slice(0, 6).join("\n");
-	const planSummary = planText.split("\n").filter((l) => l.trim().startsWith("-") || /^\d+[.)]/.test(l.trim())).slice(0, 6).join("\n");
-
-	const lines = [
-		"",
-		"🔍 **Adversarial review suggestion** — entering Validation phase.",
-		"To combat self-preferential bias, consider spawning a fresh-context reviewer:",
-		"",
-		"```",
-		`/run reviewer "Adversarially validate this implementation against the contract criteria. Check each item below and report evidence of pass/fail with file:line references. Be skeptical — challenge assumptions.`,
-	];
-	if (criteria) lines.push("", "Criteria:", criteria);
-	if (planSummary) lines.push("", "Plan items:", planSummary);
-	lines.push("", "Report:", "- For each criterion: PASS/FAIL with evidence", "- Missing test coverage", "- Edge cases not addressed", "- Potential regressions\"");
-	lines.push("```");
-	lines.push("", "This reviewer won't have seen your execution reasoning, eliminating self-preferential bias.");
-	return lines.join("\n");
-}
-
-// Feature 3: Workflow pattern suggestions
-// Detects task patterns in plan/contract text and suggests appropriate workflow shapes.
-
-interface WorkflowPattern {
-	name: string;
-	description: string;
-	trigger: (text: string) => boolean;
-	suggestion: string;
-}
-
-const WORKFLOW_PATTERNS: WorkflowPattern[] = [
-	{
-		name: "fan-out-and-synthesize",
-		description: "Large number of similar items to process independently",
-		trigger: (text) => {
-			const hasMultipleItems = (text.match(/^\s*[-*]\s+/gm) ?? []).length >= 8 ||
-				(text.match(/^\s*\d+[.)]/gm) ?? []).length >= 8;
-			const hasAuditPattern = /\b(audit|review|check|scan|validate|inspect|analyze|test)\b.*\b(all|every|each|endpoints?|files?|modules?|routes?|components?)\b/i.test(text);
-			const hasMigrationPattern = /\b(migrate|rename|refactor|update|convert)\b.*\b(all|every|each|across|everywhere)\b/i.test(text);
-			return hasMultipleItems || hasAuditPattern || hasMigrationPattern;
-		},
-		suggestion: [
-			"**Fan-out-and-synthesize**: Split items across parallel subagents, each in a clean context.",
-			"```",
-			`subagent({ tasks: [`,
-			`  { agent: "worker", task: "Process item 1...", output: "results/item-1.md" },`,
-			`  { agent: "worker", task: "Process item 2...", output: "results/item-2.md" },`,
-			`  // ... one per item`,
-			`], concurrency: 4 })`,
-			"```",
-			"Prevents agentic laziness (each agent completes one focused item) and goal drift (clean context per item).",
-		].join("\n"),
-	},
-	{
-		name: "adversarial-verification",
-		description: "Claims, findings, or results that need independent verification",
-		trigger: (text) => {
-			return /\b(verify|validate|fact[- ]?check|prove|confirm|cross[- ]?check|assert)\b/i.test(text) &&
-				/\b(claims?|findings?|results?|reports?|assertions?)\b/i.test(text);
-		},
-		suggestion: [
-			"**Adversarial verification**: Spawn verifiers that challenge each finding independently.",
-			"```",
-			`subagent({ chain: [`,
-			`  { agent: "worker", task: "Produce findings/claims..." },`,
-			`  { parallel: [`,
-			`    { agent: "reviewer", task: "Adversarially verify finding 1 from {previous}" },`,
-			`    { agent: "reviewer", task: "Adversarially verify finding 2 from {previous}" },`,
-			`  ] },`,
-			`  { agent: "context-builder", task: "Synthesize verified results from {previous}" }`,
-			`] })`,
-			"```",
-			"Eliminates self-preferential bias: verifiers can't see the original reasoning.",
-		].join("\n"),
-	},
-	{
-		name: "deep-research",
-		description: "Research question requiring multiple sources/angles",
-		trigger: (text) => {
-			return /\b(research|investigate|explore|study|compare|benchmark|evaluate\s+options)\b/i.test(text) &&
-				(/\b(sources?|angles?|perspectives?|approaches|alternatives|options)\b/i.test(text) ||
-				 /\b(pros?\s*(and|&|\/)\s*cons?|trade[- ]?offs?|comparison)\b/i.test(text));
-		},
-		suggestion: [
-			"**Deep research**: Fan out search angles, fetch, cross-check, synthesize.",
-			"```",
-			`subagent({ chain: [`,
-			`  { parallel: [`,
-			`    { agent: "researcher", task: "Research angle 1: ..." },`,
-			`    { agent: "researcher", task: "Research angle 2: ..." },`,
-			`    { agent: "scout", task: "Local codebase context for: ..." },`,
-			`  ] },`,
-			`  { agent: "context-builder", task: "Cross-check and synthesize from {previous}" }`,
-			`] })`,
-			"```",
-			"Each researcher has a clean context, avoiding confirmation bias across sources.",
-		].join("\n"),
-	},
-	{
-		name: "loop-until-done",
-		description: "Iterative fix/check loop with unknown completion point",
-		trigger: (text) => {
-			return /\b(until|loop|iterate|repeat|keep\s+going|fix.*until|zero\s+(errors?|warnings?|failures?))\b/i.test(text) &&
-				/\b(pass|clean|green|no\s+(more|remaining)|all.*fixed|exit\s*0)\b/i.test(text);
-		},
-		suggestion: [
-			"**Loop-until-done**: Use goal mode with budgeted turns instead of manual iteration.",
-			"```",
-			`/harness goal --max-turns 8 <verifiable stop condition>`,
-			"```",
-			"Or for parallel hypothesis testing:",
-			"```",
-			`subagent({ chain: [`,
-			`  { agent: "scout", task: "Identify all remaining failures" },`,
-			`  { agent: "worker", task: "Fix issues from {previous}", acceptance: {`,
-			`    verify: [{ id: "check", command: "npm test" }],`,
-			`    maxFinalizationTurns: 3`,
-			`  } }`,
-			`] })`,
-			"```",
-			"Prevents goal drift: acceptance contract holds the stop condition outside the context window.",
-		].join("\n"),
-	},
-	{
-		name: "classify-and-route",
-		description: "Mixed-type items needing different handling per category",
-		trigger: (text) => {
-			return /\b(classify|categorize|triage|sort|route|bucket|prioritize)\b/i.test(text) &&
-				/\b(type|category|severity|priority|kind|class)\b/i.test(text);
-		},
-		suggestion: [
-			"**Classify-and-route**: First classify items, then route each category to specialized agents.",
-			"```",
-			`subagent({ chain: [`,
-			`  { agent: "scout", task: "Classify items by type/severity", outputSchema: {`,
-			`    type: "object", properties: { items: { type: "array", items: {`,
-			`      type: "object", properties: { id: {type:"string"}, category: {type:"string"}, task: {type:"string"} }`,
-			`    } } }`,
-			`  }, as: "classified" },`,
-			`  { expand: { from: { output: "classified", path: "/items" }, maxItems: 20 },`,
-			`    parallel: { agent: "worker", task: "Handle {item.category} item: {item.task}" },`,
-			`    collect: { as: "results" } }`,
-			`] })`,
-			"```",
-			"Uses dynamic fanout: the classifier decides how many workers spawn.",
-		].join("\n"),
-	},
-	{
-		name: "tournament",
-		description: "Choosing best option from multiple competing approaches",
-		trigger: (text) => {
-			return /\b(best|choose|pick|select|compare|rank|tournament|compete|winner)\b/i.test(text) &&
-				/\b(approach|option|solution|design|implementation|candidate|alternative|name)\b/i.test(text);
-		},
-		suggestion: [
-			"**Tournament**: Multiple agents compete, then a judge selects the winner.",
-			"```",
-			`subagent({ chain: [`,
-			`  { parallel: [`,
-			`    { agent: "worker", task: "Approach A: ...", as: "approachA" },`,
-			`    { agent: "worker", task: "Approach B: ...", as: "approachB" },`,
-			`    { agent: "worker", task: "Approach C: ...", as: "approachC" },`,
-			`  ] },`,
-			`  { agent: "reviewer", task: "Judge approaches against rubric: ... Outputs: {previous}" }`,
-			`] })`,
-			"```",
-			"Each competitor works independently; the judge sees only results, not process.",
-		].join("\n"),
-	},
-];
-
-function detectWorkflowPatterns(text: string): WorkflowPattern[] {
-	return WORKFLOW_PATTERNS.filter((p) => p.trigger(text));
-}
-
-function buildWorkflowSuggestions(patterns: WorkflowPattern[]): string {
-	if (patterns.length === 0) return "";
-	const lines = [
-		"",
-		"🔄 **Workflow pattern detected** — consider using subagent orchestration:",
-		"",
-	];
-	for (const pattern of patterns.slice(0, 2)) {
-		lines.push(pattern.suggestion, "");
-	}
-	lines.push("These patterns combat agentic laziness, self-preferential bias, and goal drift by isolating work in focused subagent contexts.");
-	return lines.join("\n");
-}
-
-async function recordPhaseActionNotice(root: string, toolName: string, input: unknown): Promise<void> {
-	const task = await getActiveTask(root);
-	if (!task || task.status !== "active" || task.phase === "E") return;
-	const reason = mutatingToolReason(toolName, input);
-	if (!reason) return;
-	const note = `Phase notice: mutating action during ${task.phase} (${PHASE_LABELS[task.phase]}): ${reason}. Treat this as execution work; validate before claiming done.`;
-	await appendText(path.join(taskDir(root, task), "journal.md"), `\n## ${now()}\n\n${note}\n`);
-	await appendTrace(root, { type: "phase_action_notice", taskId: task.id, phase: task.phase, toolName, reason });
-}
-
 async function autoInferPhase(root: string, inferredPhase: Phase): Promise<void> {
 	const task = await getActiveTask(root);
 	if (!task || task.status !== "active") return;
@@ -859,33 +485,6 @@ async function recordEvidence(root: string, text: string): Promise<void> {
 	await autoInferPhase(root, "V");
 }
 
-async function recordCheck(root: string, check: { command?: string; exitCode?: number; passed?: boolean; text?: string }): Promise<void> {
-	const task = await getActiveTask(root);
-	if (!task) throw new Error("No active task. Use startTask first.");
-	const passed = typeof check.passed === "boolean"
-		? check.passed
-		: typeof check.exitCode === "number"
-			? check.exitCode === 0
-			: undefined;
-	const status = passed === undefined ? "UNKNOWN" : passed ? "PASS" : "FAIL";
-	const lines = [
-		`\n## ${now()}`,
-		`Check: ${status}`,
-	];
-	if (check.command?.trim()) lines.push(`Command: \`${redact(check.command.trim())}\``);
-	if (typeof check.exitCode === "number") lines.push(`Exit code: ${check.exitCode}`);
-	if (check.text?.trim()) lines.push("", check.text.trim());
-	await appendText(path.join(taskDir(root, task), "evidence.md"), `${lines.join("\n")}\n`);
-	await appendTrace(root, {
-		type: "check",
-		taskId: task.id,
-		status,
-		command: check.command ? redact(check.command) : undefined,
-		exitCode: check.exitCode,
-	});
-	await autoInferPhase(root, "V");
-}
-
 async function recordNote(root: string, text: string): Promise<void> {
 	const task = await getActiveTask(root);
 	if (!task) throw new Error("No active task. Use startTask first.");
@@ -901,26 +500,10 @@ async function appendIdea(root: string, text: string): Promise<void> {
 	await appendTrace(root, { type: "idea", text: redact(text) });
 }
 
-function parseGoalInput(input: string): { condition: string; maxTurns: number; maxMinutes?: number } {
-	let text = input.trim();
-	let maxTurns = DEFAULT_GOAL_MAX_TURNS;
-	let maxMinutes: number | undefined;
-	text = text.replace(/--max-turns(?:=|\s+)(\d+)/gi, (_match, value) => {
-		maxTurns = Math.max(1, Number(value));
-		return " ";
-	});
-	text = text.replace(/--turns(?:=|\s+)(\d+)/gi, (_match, value) => {
-		maxTurns = Math.max(1, Number(value));
-		return " ";
-	});
-	text = text.replace(/--max-minutes(?:=|\s+)(\d+)/gi, (_match, value) => {
-		maxMinutes = Math.max(1, Number(value));
-		return " ";
-	});
-	const condition = text.replace(/\s+/g, " ").trim();
-	if (!condition) throw new Error("Goal condition is required. Usage: /harness goal [--max-turns 10] <verifiable condition>");
-	return { condition, maxTurns, maxMinutes };
-}
+export interface ParsedGoalInput extends ExternalParsedGoalInput {}
+
+// parseEvaluatorFlag, parseGoalInput, evaluateGoalWithShell and their tunables
+// live in ./goal-evaluator.ts to keep them dependency-free and unit-testable.
 
 async function readGoal(root: string, task?: TaskState): Promise<GoalState | undefined> {
 	const active = task ?? await getActiveTask(root);
@@ -946,9 +529,21 @@ async function setGoal(root: string, text: string): Promise<GoalState> {
 		turns: 0,
 		maxTurns: parsed.maxTurns,
 		maxMinutes: parsed.maxMinutes,
+		evaluatorMode: parsed.evaluatorCmd ? "shell" : "model",
+		evaluatorCmd: parsed.evaluatorCmd,
+		evaluatorTimeoutMs: parsed.evaluatorCmd ? (parsed.evaluatorTimeoutMs ?? DEFAULT_GOAL_EVALUATOR_TIMEOUT_MS) : undefined,
 	};
 	await writeGoal(root, task, goal);
-	await appendTrace(root, { type: "goal_set", taskId: task.id, maxTurns: goal.maxTurns, maxMinutes: goal.maxMinutes, condition: redact(goal.condition) });
+	await appendTrace(root, {
+		type: "goal_set",
+		taskId: task.id,
+		maxTurns: goal.maxTurns,
+		maxMinutes: goal.maxMinutes,
+		condition: redact(goal.condition),
+		evaluatorMode: goal.evaluatorMode,
+		evaluatorCmd: goal.evaluatorCmd ? redact(goal.evaluatorCmd) : undefined,
+		evaluatorTimeoutMs: goal.evaluatorTimeoutMs,
+	});
 	return goal;
 }
 
@@ -987,6 +582,14 @@ function formatGoal(goal: GoalState | undefined): string {
 		`Created: ${goal.createdAt}`,
 	];
 	if (goal.maxMinutes) lines.push(`Max minutes: ${goal.maxMinutes}`);
+	const evaluatorMode = goal.evaluatorMode ?? (goal.evaluatorCmd ? "shell" : "model");
+	if (evaluatorMode === "shell" && goal.evaluatorCmd) {
+		const timeoutMs = goal.evaluatorTimeoutMs ?? DEFAULT_GOAL_EVALUATOR_TIMEOUT_MS;
+		lines.push(`Evaluator: shell (exit 0 = achieved) timeout=${timeoutMs}ms`);
+		lines.push(`Evaluator cmd: ${goal.evaluatorCmd}`);
+	} else {
+		lines.push(`Evaluator: model (LLM transcript review)`);
+	}
 	if (goal.lastEvaluationAt) lines.push(`Last evaluation: ${goal.lastEvaluationAt}`);
 	if (goal.lastEvaluatorReason) lines.push(`Reason: ${goal.lastEvaluatorReason}`);
 	if (goal.achievedAt) lines.push(`Achieved: ${goal.achievedAt}`);
@@ -997,22 +600,6 @@ function formatGoal(goal: GoalState | undefined): string {
 
 function truncate(value: string, max = 4000): string {
 	return value.length <= max ? value : `${value.slice(0, max)}\n\n[truncated ${value.length - max} chars]`;
-}
-
-function getHarnessContextMode(): HarnessContextMode {
-	const raw = (process.env[HARNESS_CONTEXT_MODE_ENV] ?? process.env.PI_HARNESS_CONTEXT_MODE ?? DEFAULT_CONTEXT_MODE).trim().toLowerCase();
-	if (["0", "false", "none", "disabled", "off"].includes(raw)) return "off";
-	if (raw === "lean" || raw === "full") return "lean";
-	return "minimal";
-}
-
-function harnessOperatingRules(): string {
-	return [
-		"# pi-harness rules",
-		"",
-		"- Use harness only when durable project/task state is worth the token cost; skip it for quick or throwaway work.",
-		"- Load full detail with harness({ action: \"readContext\" }) only on demand; never store secrets in harness records.",
-	].join("\n");
 }
 
 async function recentTraceSection(root: string, task?: TaskState): Promise<string> {
@@ -1031,7 +618,7 @@ async function buildContext(root: string): Promise<string> {
 	const project = truncate(await readText(path.join(dir, "project.md")), 2500);
 	const policies = truncate(await readText(path.join(dir, "policies.md")), 2000);
 	const decisions = truncate(await readText(path.join(dir, "decisions.md")), 2500);
-	const currentSummary = truncate(await buildHarnessSummary(root), 1200);
+	const persistedSummary = truncate(await readText(path.join(dir, SUMMARY_FILE)), 2500);
 	let taskFiles = "";
 	if (active) {
 		const dir = taskDir(root, active);
@@ -1051,7 +638,7 @@ async function buildContext(root: string): Promise<string> {
 		`pi-harness v${VERSION}`,
 		`Root: ${root}`,
 		`Tasks: ${index.tasks.length}`,
-		currentSummary,
+		persistedSummary,
 		project,
 		policies,
 		decisions,
@@ -1071,9 +658,12 @@ async function buildLeanContext(root: string): Promise<string> {
 		active ? `Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]` : "Active task: none",
 	];
 
-	// Build a current prompt summary instead of trusting summary.md; the persisted
-	// file is for compaction recovery and can be stale during normal turns.
-	lines.push("", "## Harness Summary", truncate(await buildHarnessSummary(root), 900));
+	const persistedSummary = (await readText(path.join(dir, SUMMARY_FILE))).trim();
+	if (persistedSummary) {
+		lines.push("", "## Harness Summary", truncate(persistedSummary, 1600));
+	} else {
+		lines.push("", "## Project Context", truncate(await readText(path.join(dir, "project.md")), 1000));
+	}
 
 	if (active) {
 		const activeDir = taskDir(root, active);
@@ -1081,18 +671,18 @@ async function buildLeanContext(root: string): Promise<string> {
 		lines.push(
 			"",
 			"## Active Task Snapshot",
-			truncate(await readText(path.join(activeDir, "contract.md")), 350),
-			truncate(await readText(path.join(activeDir, "plan.md")), 350),
+			truncate(await readText(path.join(activeDir, "contract.md")), 700),
+			truncate(await readText(path.join(activeDir, "plan.md")), 700),
 			goal ? `### Goal\n${formatGoal(goal)}` : "",
 			"### Latest Evidence",
-			truncate((await recentLines(path.join(activeDir, "evidence.md"), 8)).join("\n"), 250),
+			truncate((await recentLines(path.join(activeDir, "evidence.md"), 12)).join("\n"), 500),
 			"### Latest Journal",
-			truncate((await recentLines(path.join(activeDir, "journal.md"), 6)).join("\n"), 200),
+			truncate((await recentLines(path.join(activeDir, "journal.md"), 10)).join("\n"), 450),
 		);
 	}
 
-	const recentDecisions = (await recentLines(path.join(dir, "decisions.md"), 10)).join("\n").trim();
-	if (recentDecisions) lines.push("", "## Recent Decisions", truncate(recentDecisions, 400));
+	const recentDecisions = (await recentLines(path.join(dir, "decisions.md"), 20)).join("\n").trim();
+	if (recentDecisions) lines.push("", "## Recent Decisions", truncate(recentDecisions, 800));
 
 	const leanMemory = await buildLeanMemory(root);
 	if (leanMemory) lines.push("", leanMemory);
@@ -1101,21 +691,17 @@ async function buildLeanContext(root: string): Promise<string> {
 	return truncate(lines.filter(Boolean).join("\n"), LEAN_CONTEXT_LIMIT);
 }
 
-async function buildMinimalContext(root: string): Promise<string> {
+async function buildPromptContext(root: string, mode: HarnessContextMode): Promise<string> {
+	if (mode === "off") return "";
+	if (mode === "lean") return await buildLeanContext(root);
 	const index = await loadIndex(root);
 	const active = await getActiveTask(root);
 	const openTasks = index.tasks.filter((task) => task.status !== "done");
-	const lines = [
-		`pi-harness v${VERSION} (context=minimal)`,
-		`Tasks: ${index.tasks.length} total, ${openTasks.length} open`,
-		active ? `Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]` : "Active task: none",
-	];
-	if (active) {
-		const goal = await readGoal(root, active);
-		if (goal?.status === "active") lines.push(`Goal: ${goal.condition} (${goal.turns}/${goal.maxTurns})`);
-	}
-	lines.push("Full detail is on disk; call harness({ action: \"readContext\" }) only when needed.");
-	return truncate(lines.join("\n"), MINIMAL_CONTEXT_LIMIT);
+	return formatStatusPromptContext({
+		activeTitle: active?.title,
+		phase: active?.phase,
+		openTasks: openTasks.length,
+	});
 }
 
 async function buildStatus(root: string): Promise<string> {
@@ -1126,7 +712,7 @@ async function buildStatus(root: string): Promise<string> {
 	const active = await getActiveTask(root);
 	const openTasks = index.tasks.filter((task) => task.status !== "done");
 	const doneTasks = index.tasks.length - openTasks.length;
-	const lines = [`pi-harness v${VERSION}`, `Root: ${root}`, `Prompt context: ${getHarnessContextMode()} (set ${HARNESS_CONTEXT_MODE_ENV}=off|minimal|lean)`, `Open tasks: ${openTasks.length}${doneTasks ? ` (done: ${doneTasks})` : ""}`];
+	const lines = [`pi-harness v${VERSION}`, `Root: ${root}`, `Open tasks: ${openTasks.length}${doneTasks ? ` (done: ${doneTasks})` : ""}`];
 	if (active) {
 		lines.push(`Active task: ${active.title} [${active.phase} ${PHASE_LABELS[active.phase]}]`);
 		const goal = await readGoal(root, active);
@@ -1727,13 +1313,6 @@ async function rememberMemory(root: string, text: string): Promise<string> {
 		await writeText(filePath, `# Memory: ${type}\n`);
 	}
 	const entry = content.startsWith("-") ? content : `- ${content}`;
-	const normalizeMemory = (value: string) => value.replace(/^[-*]\s*/, "").replace(/\s+/g, " ").trim().toLowerCase();
-	const existing = await readText(filePath);
-	const duplicate = existing.split("\n").some((line) => normalizeMemory(line) === normalizeMemory(entry));
-	if (duplicate) {
-		await appendTrace(root, { type: "memory_duplicate_skipped", memoryType: type, content: redact(content) });
-		return `Memory already exists in ${type}: ${content.slice(0, 120)}`;
-	}
 	await appendText(filePath, `${entry}\n`);
 	await appendTrace(root, { type: "memory_remember", memoryType: type, content: redact(content) });
 	return `Remembered in ${type}: ${content.slice(0, 120)}`;
@@ -1779,98 +1358,6 @@ async function forgetMemory(root: string, text: string): Promise<string> {
 	await writeText(filePath, filtered.join("\n"));
 	await appendTrace(root, { type: "memory_forget", memoryType: type, content: redact(content) });
 	return `Removed ${removed} entry(ies) from ${type}.`;
-}
-
-function normalizeMemoryLine(value: string): string {
-	return value.replace(/^[-*]\s*/, "").replace(/\s+/g, " ").trim().toLowerCase();
-}
-
-function memoryEntryLines(content: string): string[] {
-	return content.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("#"));
-}
-
-async function memoryAudit(root: string): Promise<string> {
-	await ensureHarness(root);
-	const lines = [
-		"# Memory Audit",
-		"",
-		`Generated: ${now()}`,
-		"",
-		"This is deterministic and read-only. Use `/harness memory-dedupe` to remove exact normalized duplicates.",
-		"",
-		"| Type | Entries | Duplicates | Prompted | Characters | Notes |",
-		"| --- | ---: | ---: | --- | ---: | --- |",
-	];
-	let totalEntries = 0;
-	let totalDuplicates = 0;
-	for (const type of MEMORY_TYPES) {
-		const content = await readText(memoryFilePath(root, type));
-		const entries = memoryEntryLines(content);
-		const seen = new Set<string>();
-		let duplicates = 0;
-		for (const entry of entries) {
-			const key = normalizeMemoryLine(entry);
-			if (seen.has(key)) duplicates++;
-			else seen.add(key);
-		}
-		totalEntries += entries.length;
-		totalDuplicates += duplicates;
-		const prompted = (["preferences", "playbooks", "mistakes"] as string[]).includes(type) ? "yes" : "no";
-		const notes: string[] = [];
-		if (duplicates) notes.push("dedupe recommended");
-		if (prompted === "yes" && content.length > 1200) notes.push("lean context may truncate");
-		if (!entries.length) notes.push("empty");
-		lines.push(`| ${type} | ${entries.length} | ${duplicates} | ${prompted} | ${content.length} | ${notes.join(", ") || "ok"} |`);
-	}
-	lines.push(
-		"",
-		"## Recommendations",
-		"",
-		totalDuplicates ? `- Run \`/harness memory-dedupe\` to remove ${totalDuplicates} duplicate entr${totalDuplicates === 1 ? "y" : "ies"}.` : "- No duplicate memory entries detected.",
-		"- Keep `preferences`, `playbooks`, and `mistakes` high-signal: these are injected into lean context.",
-		"- Store broad project facts in `facts` and domain vocabulary in `glossary`; they are available through recall but not always injected.",
-		"- Prefer durable, reusable lessons over one-off task notes.",
-	);
-	const report = lines.join("\n");
-	await writeText(path.join(harnessPath(root), "memory-audit.md"), report);
-	await appendTrace(root, { type: "memory_audit", entries: totalEntries, duplicates: totalDuplicates });
-	return report;
-}
-
-async function memoryDedupe(root: string): Promise<string> {
-	await ensureHarness(root);
-	const report: string[] = ["Memory dedupe:"];
-	let totalRemoved = 0;
-	for (const type of MEMORY_TYPES) {
-		const filePath = memoryFilePath(root, type);
-		const content = await readText(filePath);
-		if (!content.trim()) continue;
-		const output: string[] = [];
-		const seen = new Set<string>();
-		let removed = 0;
-		for (const line of content.split("\n")) {
-			const trimmed = line.trim();
-			if (!trimmed || trimmed.startsWith("#")) {
-				output.push(line);
-				continue;
-			}
-			const key = normalizeMemoryLine(trimmed);
-			if (seen.has(key)) {
-				removed++;
-				continue;
-			}
-			seen.add(key);
-			output.push(line);
-		}
-		if (removed) {
-			totalRemoved += removed;
-			await writeText(filePath, output.join("\n").replace(/\n{3,}/g, "\n\n"));
-		}
-		report.push(`- ${type}: removed ${removed}`);
-	}
-	await appendTrace(root, { type: "memory_dedupe", removed: totalRemoved });
-	report.push(`Total removed: ${totalRemoved}`);
-	return report.join("\n");
 }
 
 async function taskForReflection(root: string, selector?: string): Promise<TaskState> {
@@ -2057,7 +1544,7 @@ async function buildLeanMemory(root: string): Promise<string> {
 	for (const type of ["preferences", "playbooks", "mistakes"] as MemoryType[]) {
 		const content = (await readText(memoryFilePath(root, type))).trim();
 		if (content && content !== `# Memory: ${type}`) {
-			sections.push(truncate(content, 300));
+			sections.push(truncate(content, 600));
 		}
 	}
 	if (!sections.length) return "";
@@ -2083,31 +1570,11 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 		case "setPhase": {
 			if (!params.phase || !PHASES.includes(params.phase as Phase)) throw new Error("phase must be one of P, R, E, V, C");
 			const task = await setPhase(root, params.phase as Phase);
-			let phaseHint = "";
-			// Feature 2: Auto-adversarial review suggestion on V transition
-			if (params.phase === "V") {
-				try {
-					const dir = taskDir(root, task);
-					const contractText = await readText(path.join(dir, "contract.md"));
-					const planText = await readText(path.join(dir, "plan.md"));
-					phaseHint = buildAdversarialReviewSuggestion(contractText, planText);
-				} catch { /* non-critical */ }
-			}
-			return `Set phase to ${task.phase} (${PHASE_LABELS[task.phase]}).${phaseHint}`;
+			return `Set phase to ${task.phase} (${PHASE_LABELS[task.phase]}).`;
 		}
 		case "advancePhase": {
 			const task = await advancePhase(root);
-			let advanceHint = "";
-			// Also suggest adversarial review when advancing into V
-			if (task.phase === "V") {
-				try {
-					const dir = taskDir(root, task);
-					const contractText = await readText(path.join(dir, "contract.md"));
-					const planText = await readText(path.join(dir, "plan.md"));
-					advanceHint = buildAdversarialReviewSuggestion(contractText, planText);
-				} catch { /* non-critical */ }
-			}
-			return `Advanced to ${task.phase} (${PHASE_LABELS[task.phase]}).${advanceHint}`;
+			return `Advanced to ${task.phase} (${PHASE_LABELS[task.phase]}).`;
 		}
 		case "completeTask": {
 			const { task, reflectionHint } = await completeTask(root, params.text);
@@ -2125,10 +1592,6 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			if (!params.text) throw new Error("text is required for recordEvidence");
 			await recordEvidence(root, params.text);
 			return "Evidence recorded.";
-		case "recordCheck":
-			if (!params.text && !params.command) throw new Error("text or command is required for recordCheck");
-			await recordCheck(root, { command: params.command, exitCode: params.exitCode, passed: params.passed, text: params.text });
-			return "Check recorded.";
 		case "recordNote":
 			if (!params.text) throw new Error("text is required for recordNote");
 			await recordNote(root, params.text);
@@ -2160,10 +1623,7 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			await writeText(path.join(taskDir(root, task), "contract.md"), params.text);
 			await appendTrace(root, { type: "contract_update", taskId: task.id });
 			await autoInferPhase(root, "P");
-			// Feature 3: Workflow pattern suggestions
-			const contractPatterns = detectWorkflowPatterns(params.text);
-			const contractSuggestions = buildWorkflowSuggestions(contractPatterns);
-			return `Task contract updated.${contractSuggestions}`;
+			return "Task contract updated.";
 		}
 		case "updatePlan":
 		case "recordPlan": {
@@ -2173,10 +1633,7 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			await writeText(path.join(taskDir(root, task), "plan.md"), params.text);
 			await appendTrace(root, { type: "plan_update", taskId: task.id });
 			await autoInferPhase(root, "P");
-			// Feature 3: Workflow pattern suggestions
-			const planPatterns = detectWorkflowPatterns(params.text);
-			const planSuggestions = buildWorkflowSuggestions(planPatterns);
-			return `Task plan updated.${planSuggestions}`;
+			return "Task plan updated.";
 		}
 		case "setGoal": {
 			if (!params.text) throw new Error("text is required for setGoal");
@@ -2215,10 +1672,6 @@ async function handleHarness(root: string, params: HarnessParamsType): Promise<s
 			throw new Error("reflectAi requires Pi extension context; use /harness reflect-ai.");
 		case "memoryCandidates":
 			return await memoryCandidates(root, params.text);
-		case "memoryAudit":
-			return await memoryAudit(root);
-		case "memoryDedupe":
-			return await memoryDedupe(root);
 		case "improveReport":
 			return await improveReport(root);
 		default:
@@ -2243,13 +1696,13 @@ function commandHelp(): string {
 		"  close <task-id> [note]        mark any task as done by id/slug/title",
 		"  decision <text>              record durable decision",
 		"  evidence <text>              record validation evidence",
-		"  check [pass|fail] <cmd> -- <summary>  record structured validation check",
 		"  note <text>                  append an operational task journal note",
 		"  idea <text>                  append a task idea/backlog item",
 		"  contract <markdown>          replace active task contract",
 		"  plan <markdown>              replace active task plan",
 		"  goal [status]                show active task goal status",
-		"  goal [--max-turns N] <cond>  set an autonomous verifiable goal",
+		"  goal [--max-turns N] [--max-minutes N] [--evaluator \"<cmd>\"] [--evaluator-timeout <ms>] <cond>",
+		"                               set an autonomous verifiable goal (shell evaluator runs cmd each turn; exit 0 = achieved)",
 		"  goal clear                   clear active task goal",
 		"  goal achieved <evidence>     mark active task goal achieved",
 		"  summary                      show deterministic harness summary",
@@ -2261,8 +1714,6 @@ function commandHelp(): string {
 		"  reflect [task-id]            review active or selected task and suggest what to memorize",
 		"  reflect-ai [task-id]         ask current model for suggestions, then approve memories with checkboxes",
 		"  memory-candidates [task-id]  heuristic scan for memorizable lines in a task",
-		"  memory-audit                 deterministic report of memory counts, duplicates, prompt footprint",
-		"  memory-dedupe                remove exact normalized duplicate memory entries",
 		"  improve-report               generate improvement report from mistakes/patterns",
 	].join("\n");
 }
@@ -2276,24 +1727,10 @@ function commandOutputLines(output: string): string[] {
 	return visible;
 }
 
-function parseCheckArgs(rest: string): { command?: string; text?: string; exitCode?: number; passed?: boolean } {
-	let input = rest.trim();
-	let passed: boolean | undefined;
-	const statusMatch = input.match(/^(pass|passed|ok|fail|failed|error)\s+/i);
-	if (statusMatch) {
-		passed = /^(pass|passed|ok)$/i.test(statusMatch[1]!);
-		input = input.slice(statusMatch[0].length).trim();
-	}
-	const separator = input.indexOf(" -- ");
-	let command = separator >= 0 ? input.slice(0, separator).trim() : input;
-	let text = separator >= 0 ? input.slice(separator + 4).trim() : undefined;
-	const exitMatch = `${command} ${text ?? ""}`.match(/\bexit(?:=|\s+)(-?\d+)\b/i);
-	const exitCode = exitMatch ? Number(exitMatch[1]) : undefined;
-	if (typeof passed !== "boolean" && typeof exitCode === "number") passed = exitCode === 0;
-	command = command.replace(/\bexit(?:=|\s+)-?\d+\b/i, "").trim();
-	if (text) text = text.replace(/\bexit(?:=|\s+)-?\d+\b/i, "").trim();
-	return { command: command || undefined, text: text || undefined, exitCode, passed };
-}
+// evaluateGoalWithShell and the GoalEvaluation/ShellEvaluatorOptions types are
+// imported from ./goal-evaluator.ts at the top of the file and re-exported.
+// The redactor is wired up once so shell output is sanitized consistently.
+setGoalEvaluatorRedactor(redact);
 
 async function evaluateGoalWithModel(ctx: ExtensionContext, goal: GoalState): Promise<{ achieved: boolean; reason: string }> {
 	const model = ctx.modelRegistry.find("google", "gemini-2.5-flash") ?? ctx.model;
@@ -2348,6 +1785,7 @@ function goalFollowUpPrompt(goal: GoalState): string {
 }
 
 async function processGoalAfterAgent(pi: ExtensionAPI, ctx: ExtensionContext): Promise<void> {
+	if (!getHarnessConfig().goalAutoLoop) return;
 	const root = await resolveProjectRoot(ctx.cwd);
 	if (activeGoalEvaluations.has(root)) return;
 	const task = await getActiveTask(root);
@@ -2370,18 +1808,33 @@ async function processGoalAfterAgent(pi: ExtensionAPI, ctx: ExtensionContext): P
 
 		await writeGoal(root, task, goal);
 		let evaluation: { achieved: boolean; reason: string };
-		try {
-			evaluation = await evaluateGoalWithModel(ctx, goal);
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			evaluation = { achieved: false, reason: `Evaluator unavailable; continuing agent-driven goal loop. Agent should call achieveGoal when evidence proves completion. (${message})` };
-			await appendTrace(root, { type: "goal_evaluator_unavailable", taskId: task.id, error: redact(message) });
+		const evaluatorMode = goal.evaluatorMode ?? (goal.evaluatorCmd ? "shell" : "model");
+		if (evaluatorMode === "shell" && goal.evaluatorCmd) {
+			try {
+				evaluation = await evaluateGoalWithShell({
+					cwd: root,
+					cmd: goal.evaluatorCmd,
+					timeoutMs: goal.evaluatorTimeoutMs,
+				});
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				evaluation = { achieved: false, reason: `Shell evaluator failed to spawn: ${message}` };
+				await appendTrace(root, { type: "goal_evaluator_unavailable", taskId: task.id, mode: "shell", error: redact(message) });
+			}
+		} else {
+			try {
+				evaluation = await evaluateGoalWithModel(ctx, goal);
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				evaluation = { achieved: false, reason: `Evaluator unavailable; continuing agent-driven goal loop. Agent should call achieveGoal when evidence proves completion. (${message})` };
+				await appendTrace(root, { type: "goal_evaluator_unavailable", taskId: task.id, mode: "model", error: redact(message) });
+			}
 		}
 		goal = (await readGoal(root, task)) ?? goal;
 		if (goal.status !== "active") return;
 		goal.lastEvaluationAt = now();
 		goal.lastEvaluatorReason = evaluation.reason;
-		await appendTrace(root, { type: "goal_evaluation", taskId: task.id, achieved: evaluation.achieved, turns: goal.turns, reason: redact(evaluation.reason) });
+		await appendTrace(root, { type: "goal_evaluation", taskId: task.id, mode: evaluatorMode, achieved: evaluation.achieved, turns: goal.turns, reason: redact(evaluation.reason) });
 
 		if (evaluation.achieved) {
 			goal.status = "achieved";
@@ -2422,6 +1875,104 @@ async function processGoalAfterAgent(pi: ExtensionAPI, ctx: ExtensionContext): P
 		ctx.ui.notify(`pi-harness goal error: ${error instanceof Error ? error.message : String(error)}`, "error");
 	} finally {
 		activeGoalEvaluations.delete(root);
+	}
+}
+
+// Bridge between copilot-blueprints and pi-harness (Track B.2):
+// when an agent turn ends with the marker FINAL_JUDGE_DONE, automatically
+// record an evidence entry and advance the active task to phase V. Skips when
+// there is no harness, no active task, or the same marker entry was already
+// processed. Idempotent per assistant entry.
+async function processBlueprintJudgeMarker(ctx: ExtensionContext): Promise<void> {
+	if (!getHarnessConfig().blueprintBridge) return;
+	const root = await resolveProjectRoot(ctx.cwd);
+	if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
+	const branch = ctx.sessionManager.getBranch();
+	const marker = detectJudgeMarker(branch as readonly unknown[], processedJudgeMarkers.get(root));
+	if (!marker) return;
+	processedJudgeMarkers.set(root, marker.entryId);
+	const active = await getActiveTask(root);
+	if (!active) return;
+	try {
+		await recordEvidence(root, `FINAL_JUDGE_DONE marker observed in agent output at ${now()}`);
+		const phasePromoted = active.phase !== "V" && active.phase !== "C";
+		if (phasePromoted) await setPhase(root, "V");
+		await appendTrace(root, { type: "blueprint_judge_marker", taskId: active.id, phasePromoted, previousPhase: active.phase });
+		ctx.ui.notify(
+			phasePromoted
+				? `pi-harness: FINAL_JUDGE_DONE → phase V + evidence recorded`
+				: `pi-harness: FINAL_JUDGE_DONE → evidence recorded (phase already ${active.phase})`,
+			"info",
+		);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		await appendTrace(root, { type: "blueprint_judge_marker_error", taskId: active.id, error: redact(message) });
+	}
+}
+
+// Entry-side bridge (Track B/C): consume a copilot-blueprints handoff marker
+// and create a harness task in phase E with the rendered WorkflowSpec contract.
+// Best-effort + idempotent per runId. Marks the marker consumed so re-entry on
+// later turns does not recreate the task.
+//
+// Auto-init: a judged blueprint run is explicit intent for a structured
+// workflow, so when a fresh handoff is present we auto-initialize the harness
+// (creating .pi/harness/) even if the user never ran /harness init. Opt out by
+// setting PI_HARNESS_BLUEPRINT_AUTOINIT=0, in which case we only act when the
+// harness already exists.
+async function processBlueprintHandoff(ctx: ExtensionContext): Promise<void> {
+	const config = getHarnessConfig();
+	if (!config.blueprintBridge) return;
+	const root = await resolveProjectRoot(ctx.cwd);
+	const handoffPath = path.join(root, ".pi", "blueprint-handoff.json");
+	let raw: string;
+	try {
+		raw = await fs.readFile(handoffPath, "utf8");
+	} catch {
+		return; // no handoff pending
+	}
+	const handoff = parseHandoff(raw);
+	if (!handoff) return;
+	if (!shouldConsumeHandoff(handoff, consumedBlueprintHandoffs.get(root), Date.now())) return;
+
+	const harnessExisted = await exists(path.join(harnessPath(root), "index.json"));
+	const autoInitDisabled = !config.blueprintAutoInit;
+	if (!shouldProceedWithHandoff(harnessExisted, autoInitDisabled)) {
+		// Respect opt-out: do not create .pi/harness from a blueprint handoff.
+		return;
+	}
+
+	consumedBlueprintHandoffs.set(root, handoff.runId);
+	try {
+		// Do not clobber an unrelated active task; only auto-create when idle.
+		const active = await getActiveTask(root);
+		if (active && active.status === "active") {
+			await markHandoffConsumed(handoffPath, handoff);
+			return;
+		}
+		const title = `${handoff.blueprint}: ${handoff.mission || "(blueprint run)"}`.slice(0, 120);
+		const task = await startTask(root, title); // ensureHarness() auto-creates .pi/harness if missing
+		await writeText(path.join(taskDir(root, task), "contract.md"), handoff.contract);
+		await setPhase(root, "E");
+		await appendTrace(root, { type: "blueprint_handoff", taskId: task.id, runId: handoff.runId, blueprint: handoff.blueprint, autoInit: !harnessExisted });
+		await markHandoffConsumed(handoffPath, handoff);
+		ctx.ui.notify(
+			harnessExisted
+				? `pi-harness: blueprint ${handoff.blueprint} → task created in phase E`
+				: `pi-harness: initialized .pi/harness and created a task for blueprint ${handoff.blueprint} (phase E). Disable with PI_HARNESS_BLUEPRINT_AUTOINIT=0.`,
+			"info",
+		);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		await appendTrace(root, { type: "blueprint_handoff_error", runId: handoff.runId, error: redact(message) });
+	}
+}
+
+async function markHandoffConsumed(handoffPath: string, handoff: BlueprintHandoff): Promise<void> {
+	try {
+		await writeText(handoffPath, JSON.stringify({ ...handoff, consumed: true }, null, 2) + "\n");
+	} catch {
+		// ignore
 	}
 }
 
@@ -2475,11 +2026,6 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 			case "evidence":
 				output = await handleHarness(root, { action: "recordEvidence", text: rest } as HarnessParamsType);
 				break;
-			case "check": {
-				const parsed = parseCheckArgs(rest);
-				output = await handleHarness(root, { action: "recordCheck", ...parsed } as HarnessParamsType);
-				break;
-			}
 			case "note":
 				output = await handleHarness(root, { action: "recordNote", text: rest } as HarnessParamsType);
 				break;
@@ -2500,7 +2046,7 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 				} else {
 					output = await handleHarness(root, { action: "setGoal", text: rest } as HarnessParamsType);
 					const goal = await readGoal(root);
-					if (goal?.status === "active") goalKickoff = goalFollowUpPrompt(goal);
+					if (getHarnessConfig().goalAutoLoop && goal?.status === "active") goalKickoff = goalFollowUpPrompt(goal);
 				}
 				break;
 			case "summary":
@@ -2540,12 +2086,6 @@ async function runCommand(pi: ExtensionAPI, args: string, ctx: ExtensionContext)
 			case "memory-candidates":
 				output = await handleHarness(root, { action: "memoryCandidates", text: rest || undefined } as HarnessParamsType);
 				break;
-			case "memory-audit":
-				output = await handleHarness(root, { action: "memoryAudit" } as HarnessParamsType);
-				break;
-			case "memory-dedupe":
-				output = await handleHarness(root, { action: "memoryDedupe" } as HarnessParamsType);
-				break;
 			case "improve-report":
 				output = await handleHarness(root, { action: "improveReport" } as HarnessParamsType);
 				break;
@@ -2584,7 +2124,7 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerCommand("harness", {
 		description: "Project harness: durable context, PREVC tasks, goals, evidence, and reports",
 		getArgumentCompletions: (prefix) => {
-			const commands = ["init", "status", "tasks", "tasks-ui", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "check", "note", "idea", "contract", "plan", "goal", "summary", "rebuild-summary", "report", "remember", "recall", "forget", "reflect", "reflect-ai", "memory-candidates", "memory-audit", "memory-dedupe", "improve-report", "help"];
+			const commands = ["init", "status", "tasks", "tasks-ui", "context", "task", "phase", "advance", "done", "close", "decision", "evidence", "note", "idea", "contract", "plan", "goal", "summary", "rebuild-summary", "report", "remember", "recall", "forget", "reflect", "reflect-ai", "memory-candidates", "improve-report", "help"];
 			const filtered = commands.filter((cmd) => cmd.startsWith(prefix.trim()));
 			return filtered.length ? filtered.map((cmd) => ({ value: cmd, label: cmd })) : null;
 		},
@@ -2594,11 +2134,12 @@ export default function piHarness(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "harness",
 		label: "Harness",
-		description: "Manage durable pi-harness project/task state on disk.",
-		promptSnippet: "Manage durable project/task state via .pi/harness",
+		description: "Read or update explicit project-local pi-harness notes, tasks, evidence, summaries, and memory files.",
+		promptSnippet: "Explicit project-local notes/tasks/evidence in .pi/harness; use readContext only when needed.",
 		promptGuidelines: [
-			"Use harness only when durable project/task state is worth the token cost; skip it for quick or throwaway work.",
-			"Use harness readContext on demand, record checks/evidence for non-trivial completion, and never store secrets.",
+			"Use harness when durable project/task state is genuinely useful; prefer explicit actions over ceremony.",
+			"Record validation evidence before claiming a non-trivial change is complete.",
+			"Never store API keys, tokens, passwords, cookies, OAuth material, or authentication secrets in harness records.",
 		],
 		parameters: HarnessParams,
 		async execute(_toolCallId, params: HarnessParamsType, _signal, onUpdate, ctx) {
@@ -2637,42 +2178,55 @@ export default function piHarness(pi: ExtensionAPI) {
 
 	pi.on("agent_end", async (_event, ctx) => {
 		await processGoalAfterAgent(pi, ctx);
+		await processBlueprintJudgeMarker(ctx);
 	});
 
 	pi.on("before_agent_start", async (event, ctx) => {
+		const config = getHarnessConfig();
 		const root = await resolveProjectRoot(ctx.cwd);
+		// Blueprint handoff is intentionally opt-in. Pi's core philosophy keeps plan
+		// mode/workflow managers out of the default path.
+		if (config.blueprintBridge) await processBlueprintHandoff(ctx);
 		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
-		const mode = getHarnessContextMode();
-		if (mode === "off") return;
-		const context = mode === "lean" ? await buildLeanContext(root) : await buildMinimalContext(root);
+		const context = await buildPromptContext(root, config.contextMode);
 		const active = await getActiveTask(root);
 		const goal = active ? await readGoal(root, active) : undefined;
-		const goalInstructions = goal?.status === "active"
-			? `\n\n# pi-harness active goal\n\nGoal: ${goal.condition}\nBudget: ${goal.turns}/${goal.maxTurns} turns. When proven, record evidence and call harness({ action: "achieveGoal", text: "evidence summary" }); otherwise continue.`
+		const goalInstructions = config.goalAutoLoop && goal?.status === "active"
+			? `\n\n# pi-harness active goal\n\nCondition: ${goal.condition}\nProgress: ${goal.turns}/${goal.maxTurns} evaluated turns\nLast evaluator reason: ${goal.lastEvaluatorReason ?? "none yet"}\n\nWork toward this condition until it is verifiably satisfied or the budget is reached. Surface proof in the conversation, record validation evidence with harness({ action: "recordEvidence", text: ... }), then mark success with harness({ action: "achieveGoal", text: "evidence summary" }).`
+			: "";
+		if (!context && !goalInstructions) return;
+		const title = config.contextMode === "lean" ? "pi-harness lean project context" : "pi-harness";
+		const leanRules = config.contextMode === "lean"
+			? `\n\n# pi-harness operating rules\n\n- Treat .pi/harness as durable, project-local memory/workflow state; call harness({ action: "readContext" }) only when the lean context is insufficient.\n- For non-trivial tasks, keep an active harness task; call harness({ action: "updatePlan", text: ... }) or harness({ action: "updateContract", text: ... }) when scope changes; record validation evidence before final confirmation.\n- Record durable decisions with harness({ action: "recordDecision", text: ... }); use harness({ action: "recordNote", text: ... }) for handoffs/lessons and harness({ action: "appendIdea", text: ... }) for deferred ideas.\n- Never store secrets, tokens, cookies, OAuth material, private keys, or auth data in harness files.`
 			: "";
 		return {
-			systemPrompt: `${event.systemPrompt}\n\n# pi-harness context\n\n${context}${goalInstructions}\n\n${harnessOperatingRules()}`,
+			systemPrompt: `${event.systemPrompt}\n\n# ${title}\n\n${context}${goalInstructions}${leanRules}`,
 		};
 	});
 
 	pi.on("tool_call", async (event, ctx) => {
 		if (event.toolName === "harness") return;
+		const config = getHarnessConfig();
+		if (!config.traceTools && !config.autoPhaseFromTools) return;
 		const root = await resolveProjectRoot(ctx.cwd);
 		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
-		await appendTrace(root, {
-			type: "tool_call",
-			toolName: event.toolName,
-			input: summarizeToolInput(event.toolName, event.input),
-		});
-		await recordPhaseActionNotice(root, event.toolName, event.input);
-		// Auto-infer phase → E only for clear mutations. Read-only bash can be planning/review/validation.
-		if (event.toolName === "edit" || event.toolName === "write" || (event.toolName === "bash" && isLikelyMutatingShellCommand(shellCommandFromInput(event.input) ?? ""))) {
+		if (config.traceTools) {
+			await appendTrace(root, {
+				type: "tool_call",
+				toolName: event.toolName,
+				input: summarizeToolInput(event.toolName, event.input),
+			});
+		}
+		// Optional legacy behaviour: infer phase → E when execution tools are used.
+		if (config.autoPhaseFromTools && ["bash", "edit", "write"].includes(event.toolName)) {
 			await autoInferPhase(root, "E");
 		}
 	});
 
 	pi.on("tool_result", async (event, ctx) => {
 		if (event.toolName === "harness") return;
+		const config = getHarnessConfig();
+		if (!config.traceTools) return;
 		const root = await resolveProjectRoot(ctx.cwd);
 		if (!(await exists(path.join(harnessPath(root), "index.json")))) return;
 		await appendTrace(root, {
