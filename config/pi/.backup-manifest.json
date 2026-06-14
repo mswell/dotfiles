@@ -49,14 +49,14 @@
       "size": 2135
     },
     "agent/extensions/pi-config-backup/README.md": {
-      "hash": "sha256:d0dfe92130db71d231da8065e7316483be6d87f70c4ddf38fd5606ce21b19abb",
-      "backedUpAt": "2026-06-13T16:34:23.766Z",
-      "size": 3354
+      "hash": "sha256:27bb66a35aa68a333c6b4ffee0c4770a9948635f860d374d7b42621db77dee1a",
+      "backedUpAt": "2026-06-14T20:36:15.671Z",
+      "size": 3666
     },
     "agent/extensions/pi-config-backup/index.ts": {
-      "hash": "sha256:032f4004f3922a94278ad5027db0d650f67ba97a6e37b8bed6308b26bdbf86a4",
-      "backedUpAt": "2026-06-13T16:54:24.216Z",
-      "size": 29610,
+      "hash": "sha256:a443b68a3c76861467d57cd7fd24337a7b0cb3f9ba601dc6a9d0a3f93fe16966",
+      "backedUpAt": "2026-06-14T20:36:15.671Z",
+      "size": 30255,
       "version": "0.4.0"
     },
     "agent/extensions/pi-harness/index.ts": {
@@ -122,21 +122,21 @@
       "size": 44679
     },
     "agent/extensions/pi-config-backup/index.js": {
-      "hash": "sha256:f032b3c50f0acec11c31ff0452a8b9d653fdeb793efee1598d20279863da9c62",
-      "backedUpAt": "2026-06-13T16:54:24.216Z",
-      "size": 32566,
+      "hash": "sha256:cb3dd1721be22a2bc829d3dde49e89da886818fb8e8089ba83901eb5467a1cad",
+      "backedUpAt": "2026-06-14T20:36:15.671Z",
+      "size": 33408,
       "version": "0.4.0"
     },
     "agent/extensions/pi-config-backup/lib.ts": {
-      "hash": "sha256:cc84df39c30a1f5709bae98c545129906b5daec22e137dfc5aefd5e0ccd7833c",
-      "backedUpAt": "2026-06-13T16:34:23.827Z",
-      "size": 5195
+      "hash": "sha256:2326a5a07b043da850859ec51de0926ac209a80a22df70295662ade536e9c291",
+      "backedUpAt": "2026-06-14T20:36:15.671Z",
+      "size": 5614
     },
     "agent/extensions/pi-config-backup/test-lib.ts": {
-      "hash": "sha256:f3bf1422ad6c31a7dcf87dba9ced167224fc7b8d33fb3f49cfdc589238dd7242",
+      "hash": "sha256:67e3447d22461e5e4dfc358ecc36375f8be8dfa51b53fbc69f1f06167f7ed677",
       "version": "1.2.3",
-      "backedUpAt": "2026-06-13T16:34:23.849Z",
-      "size": 3883
+      "backedUpAt": "2026-06-14T20:36:15.671Z",
+      "size": 4841
     },
     "agent/extensions/pi-harness/KISS_ROADMAP.md": {
       "hash": "sha256:dad0ad51ca7738556b9ae13b180084c7cd69d19caa5b18c9e6536e49efb7fea9",
@@ -212,6 +212,11 @@
       "hash": "sha256:29890db41a4ff0c2197a01a2b8c3cbfee28930cd7e6559941fc6c8ada6f5924c",
       "backedUpAt": "2026-06-13T16:34:24.082Z",
       "size": 1977
+    },
+    "README.md": {
+      "hash": "sha256:1a41c20b62c3b143c8ecdb9af43f99a63be228f1a2b871edf27cb427b7f6c76e",
+      "backedUpAt": "2026-06-14T20:36:15.671Z",
+      "size": 1973
     }
   }
 }

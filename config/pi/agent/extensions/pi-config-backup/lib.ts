@@ -11,6 +11,9 @@ export const SKIP_NAME_RE = /^(sessions|node_modules|\.git|\.cache|cache|tmp|tem
 export const SKIP_FILE_RE = /(\.env($|\.)|secret|secrets|credential|credentials|cookie|cookies|oauth|auth|token|tokens|keychain|known_hosts|id_rsa|id_ed25519|\.pem$|\.p12$|\.pfx$)/i;
 export const TEXT_FILE_RE = /\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|md|txt|yaml|yml|toml|sh|bash|zsh|fish|ini|conf|config|gitignore)$/i;
 export const JSON_FILE_RE = /\.json$/i;
+// Files whose backed-up content should remain runnable/source-equivalent. If
+// redaction would alter one of these files, skip it instead of storing broken code.
+export const CODE_FILE_RE = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs|sh|bash|zsh|fish)$/i;
 // Files that Pi can load/execute directly and that `node --check` validates reliably.
 export const LOADABLE_JS_RE = /\.(js|cjs|mjs|jsx)$/i;
 // TypeScript sources: `node --check` is unreliable here (type stripping only
@@ -68,6 +71,10 @@ export function shouldSkipEntry(name: string): string | undefined {
 	if (SKIP_NAME_RE.test(name)) return "sensitive or generated directory";
 	if (SKIP_FILE_RE.test(name)) return "sensitive-looking filename";
 	return undefined;
+}
+
+export function redactionWouldBreakFile(filePath: string, original: string, sanitized: string): boolean {
+	return CODE_FILE_RE.test(filePath) && original !== sanitized;
 }
 
 export function redactText(input: string): string {

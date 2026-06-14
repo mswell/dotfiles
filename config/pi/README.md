@@ -25,6 +25,11 @@ This directory is intended to be committed to dotfiles. It excludes or redacts s
 - Loadable JS (`.js/.cjs/.mjs/.jsx`) is validated with `node --check`; files with errors are skipped.
 - TypeScript sources are best-effort checked but never skipped on parse failure (kept with a warning).
 
+## Redaction safety
+
+- If redaction would modify a code/script file (`.ts/.js/.sh` and related extensions), the file is skipped instead of backing up broken redacted code.
+- Move real secrets to `settings.json`/environment variables, or split fake test fixtures so they are assembled at runtime.
+
 ## Restore
 
 Use `/pi-restore` or the `pi_config_restore` tool. Guardrails:

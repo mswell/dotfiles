@@ -28,8 +28,11 @@ RESOLVED_PYTHON_VERSION=""
 RESOLVED_NODE_VERSION=""
 RESOLVED_PNPM_VERSION=""
 
-# Python tools to install globally
+# Python tools to install in the managed tools virtualenv
 PYTHON_TOOLS_ARRAY=("poetry" "ipython" "pytest" "black" "ruff" "mypy" "requests" "colorama" "pipx")
+
+# npm CLIs to install globally after Node.js is available through mise
+NPM_GLOBAL_TOOLS_ARRAY=("esbuild")
 
 # Directories
 VENVS="$HOME/.ve"
@@ -306,6 +309,31 @@ install_pnpm() {
 }
 
 # =============================================
+#  INSTALL NODE.JS GLOBAL TOOLS
+# =============================================
+install_node_tools() {
+    log_info "Installing global npm tools..."
+
+    eval "$(mise activate bash)" 2>/dev/null || true
+
+    if ! command_exists npm; then
+        log_error "npm not found; cannot install global npm tools"
+        return 1
+    fi
+
+    npm install -g "${NPM_GLOBAL_TOOLS_ARRAY[@]}"
+    hash -r 2>/dev/null || true
+
+    for tool in "${NPM_GLOBAL_TOOLS_ARRAY[@]}"; do
+        if command_exists "$tool"; then
+            log_success "$tool: $("$tool" --version 2>/dev/null | head -1)"
+        else
+            log_warning "$tool: installed package but command not found on PATH"
+        fi
+    done
+}
+
+# =============================================
 #  SETUP DIRECTORIES
 # =============================================
 setup_directories() {
@@ -455,6 +483,17 @@ check_installation() {
         warnings+=("pnpm")
     fi
 
+    # Check global npm tools
+    for tool in "${NPM_GLOBAL_TOOLS_ARRAY[@]}"; do
+        if command_exists "$tool"; then
+            log_success "$tool: $("$tool" --version 2>/dev/null | head -1)"
+            checks+=("$tool")
+        else
+            log_warning "$tool: not found"
+            warnings+=("$tool")
+        fi
+    done
+
     # Check Python tools in virtualenv
     local venv_name
     venv_name=$(python_venv_name)
@@ -550,6 +589,9 @@ print_usage() {
     echo "# Override default latest versions when needed"
     echo "  PYTHON_VERSION=3.12.7 NODE_VERSION=22 PNPM_VERSION=10 ./setup/devenv_install.sh"
     echo ""
+    echo "# npm CLIs installed globally by this setup"
+    echo "  ${NPM_GLOBAL_TOOLS_ARRAY[*]}"
+    echo ""
     echo "# Activate virtualenv for Python tools"
     echo "  source $VENVS/$(python_venv_name)/bin/activate"
     echo ""
@@ -574,6 +616,7 @@ main() {
     install_python
     install_nodejs
     install_pnpm
+    install_node_tools
     setup_directories
     setup_python_venv
     install_python_tools

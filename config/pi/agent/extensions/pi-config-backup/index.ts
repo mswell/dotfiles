@@ -11,6 +11,7 @@ import {
 	extractVersion,
 	fileHash,
 	redactText,
+	redactionWouldBreakFile,
 	sanitizeJson,
 	shouldSkipEntry,
 	syntaxCheck,
@@ -182,6 +183,12 @@ async function copySanitizedFile(source: string, destination: string, result: Ba
 		const textContent = rawContent.toString("utf8");
 		const version = extractVersion(textContent);
 		const sanitized = redactText(textContent);
+		if (redactionWouldBreakFile(source, textContent, sanitized)) {
+			const reason = "redaction would alter code/script file; move the secret to settings/env or split test fixtures before backing up";
+			result.filesSkipped.push({ path: source, reason });
+			result.warnings.push(`${source}: ${reason}`);
+			return;
+		}
 		if (sanitized !== textContent) result.redactedFiles++;
 		await writeTextToBackup(destination, sanitized, result);
 		manifest.files[relPath] = { hash, version, backedUpAt: new Date().toISOString(), size: stat.size };
@@ -553,6 +560,11 @@ ${includeAgentsSkills ? "- `agents/skills/` sanitized copy of `~/.agents/skills/
 
 - Loadable JS (\`.js/.cjs/.mjs/.jsx\`) is validated with \`node --check\`; files with errors are skipped.
 - TypeScript sources are best-effort checked but never skipped on parse failure (kept with a warning).
+
+## Redaction safety
+
+- If redaction would modify a code/script file (\`.ts/.js/.sh\` and related extensions), the file is skipped instead of backing up broken redacted code.
+- Move real secrets to \`settings.json\`/environment variables, or split fake test fixtures so they are assembled at runtime.
 
 ## Restore
 

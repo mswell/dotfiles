@@ -47,6 +47,7 @@ var SKIP_NAME_RE = /^(sessions|node_modules|\.git|\.cache|cache|tmp|temp|logs?|n
 var SKIP_FILE_RE = /(\.env($|\.)|secret|secrets|credential|credentials|cookie|cookies|oauth|auth|token|tokens|keychain|known_hosts|id_rsa|id_ed25519|\.pem$|\.p12$|\.pfx$)/i;
 var TEXT_FILE_RE = /\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|md|txt|yaml|yml|toml|sh|bash|zsh|fish|ini|conf|config|gitignore)$/i;
 var JSON_FILE_RE = /\.json$/i;
+var CODE_FILE_RE = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs|sh|bash|zsh|fish)$/i;
 var LOADABLE_JS_RE = /\.(js|cjs|mjs|jsx)$/i;
 var TS_FILE_RE = /\.(ts|tsx|mts|cts)$/i;
 var VERSION_RE = /(?:const|let|var)\s+VERSION\s*=\s*["']([^"']+)["']/;
@@ -82,6 +83,9 @@ function shouldSkipEntry(name) {
   if (SKIP_NAME_RE.test(name)) return "sensitive or generated directory";
   if (SKIP_FILE_RE.test(name)) return "sensitive-looking filename";
   return void 0;
+}
+function redactionWouldBreakFile(filePath, original, sanitized) {
+  return CODE_FILE_RE.test(filePath) && original !== sanitized;
 }
 function redactText(input) {
   let text = input;
@@ -212,6 +216,12 @@ async function copySanitizedFile(source, destination, result, manifest, dotfiles
     const textContent = rawContent.toString("utf8");
     const version = extractVersion(textContent);
     const sanitized = redactText(textContent);
+    if (redactionWouldBreakFile(source, textContent, sanitized)) {
+      const reason = "redaction would alter code/script file; move the secret to settings/env or split test fixtures before backing up";
+      result.filesSkipped.push({ path: source, reason });
+      result.warnings.push(`${source}: ${reason}`);
+      return;
+    }
     if (sanitized !== textContent) result.redactedFiles++;
     await writeTextToBackup(destination, sanitized, result);
     manifest.files[relPath] = { hash, version, backedUpAt: (/* @__PURE__ */ new Date()).toISOString(), size: stat2.size };
@@ -555,6 +565,11 @@ ${includeAgentsSkills ? "- `agents/skills/` sanitized copy of `~/.agents/skills/
 
 - Loadable JS (\`.js/.cjs/.mjs/.jsx\`) is validated with \`node --check\`; files with errors are skipped.
 - TypeScript sources are best-effort checked but never skipped on parse failure (kept with a warning).
+
+## Redaction safety
+
+- If redaction would modify a code/script file (\`.ts/.js/.sh\` and related extensions), the file is skipped instead of backing up broken redacted code.
+- Move real secrets to \`settings.json\`/environment variables, or split fake test fixtures so they are assembled at runtime.
 
 ## Restore
 

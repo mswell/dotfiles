@@ -6,6 +6,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import {
 	redactText,
+	redactionWouldBreakFile,
 	sanitizeJson,
 	syntaxCheck,
 	fileHash,
@@ -21,19 +22,26 @@ function tmpFile(name: string, content: string): string {
 	return p;
 }
 
+// Keep secret-like test fixtures out of contiguous source literals. pi-backup
+// redacts this file before storing it in dotfiles; if fixtures are already
+// present as complete strings, the backed-up test stops testing the redactor.
+function fixture(...parts: string[]): string {
+	return parts.join("");
+}
+
 test("redactText: provider keys, AWS, Google, Slack, GitLab", () => {
-	assert.match(redactText("key=<REDACTED>"), /<REDACTED>/);
-	assert.match(redactText("<REDACTED>"), /<REDACTED>/);
-	assert.match(redactText("<REDACTED>"), /<REDACTED>/);
-	assert.match(redactText("<REDACTED>"), /<REDACTED>/);
-	assert.match(redactText("<REDACTED>"), /<REDACTED>/);
-	assert.match(redactText("<REDACTED>"), /<REDACTED>/);
+	assert.match(redactText(fixture("key=sk-ant-", "0123456789abcdef0123")), /<REDACTED>/);
+	assert.match(redactText(fixture("github_pat_", "0123456789abcdefghij0")), /<REDACTED>/);
+	assert.match(redactText(fixture("glpat-", "abcdef0123456789ABCD")), /<REDACTED>/);
+	assert.match(redactText(fixture("AKIA", "IOSFODNN7EXAMPLE")), /<REDACTED>/);
+	assert.match(redactText(fixture("AIzaSy", "A1234567890abcdefghijklmnop_qrst")), /<REDACTED>/);
+	assert.match(redactText(fixture("xoxb-", "12345-abcdefABCDEF")), /<REDACTED>/);
 });
 
 test("redactText: bearer, JWT, header, KEY=value", () => {
-	assert.match(redactText("token = Bearer <REDACTED>"), /Bearer <REDACTED>/);
-	assert.match(redactText("t=<REDACTED_JWT>"), /<REDACTED_JWT>/);
-	assert.match(redactText("Cookie: sessionid=abc1234567890"), /Cookie: <REDACTED>/);
+	assert.match(redactText(fixture("token = Bearer ", "abcdefghijklmnop1234")), /Bearer <REDACTED>/);
+	assert.match(redactText(fixture("t=eyJ", "hbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", ".eyJzdWIiOiIxMjM0NTY3ODkwIn0", ".abcdefghij")), /<REDACTED_JWT>/);
+	assert.match(redactText(fixture("Co", "okie: session=abc123")), /[Cc]ookie: <REDACTED>/);
 	assert.match(redactText("API_KEY=supersecretvalue"), /API_KEY=<REDACTED>/);
 });
 
@@ -43,12 +51,19 @@ test("redactText: leaves benign text untouched", () => {
 });
 
 test("sanitizeJson: redacts sensitive keys and nested string values", () => {
-	const input = { apiKey: "abc", nested: { token: "x", note: "Bearer <REDACTED>" }, list: ["ok"] };
+	const input = { apiKey: "abc", nested: { token: "x", note: fixture("Bearer ", "abcdefghijklmnop1234") }, list: ["ok"] };
 	const out = sanitizeJson(input) as any;
 	assert.equal(out.apiKey, "<REDACTED>");
 	assert.equal(out.nested.token, "<REDACTED>");
 	assert.match(out.nested.note, /Bearer <REDACTED>/);
 	assert.deepEqual(out.list, ["ok"]);
+});
+
+test("redactionWouldBreakFile: blocks redacted code/scripts but allows docs", () => {
+	assert.equal(redactionWouldBreakFile("tool.ts", "const x = 'secret';", "const x = '<REDACTED>';"), true);
+	assert.equal(redactionWouldBreakFile("script.sh", "export TOKEN=x", "export TOKEN=<REDACTED>"), true);
+	assert.equal(redactionWouldBreakFile("notes.md", "Bearer abc", "Bearer <REDACTED>"), false);
+	assert.equal(redactionWouldBreakFile("tool.ts", "const x = 1;", "const x = 1;"), false);
 });
 
 test("syntaxCheck: valid JS passes", () => {

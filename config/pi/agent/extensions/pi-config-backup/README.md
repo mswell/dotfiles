@@ -64,6 +64,10 @@ This is a safety filter, not cryptographic proof. Review diffs before committing
 - `/pi-restore-undo` rolls back the most recent restore from that snapshot.
 - `--force` overrides divergence/untracked protection; `--prune` mirrors the backup by removing local orphans.
 
+## Redaction safety
+
+If redaction would alter a code/script file (`.ts/.js/.sh` and related extensions), backup skips that file and emits a warning instead of storing broken redacted code. Move real secrets to `settings.json`/environment variables, or split fake test fixtures so they are assembled at runtime.
+
 ## UI behavior
 
 `/pi-backup` and `/pi-restore` report completion through transient notifications and intentionally do not keep a persistent widget block in the Pi UI. The tools return a concise summary; detailed file lists, warnings, and the redaction count remain in the tool `details` and the generated `.backup-manifest.json`.
