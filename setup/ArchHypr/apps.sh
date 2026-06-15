@@ -3,8 +3,8 @@ set -euo pipefail
 source "${DOTFILES}/setup/lib/arch.sh"
 source "${DOTFILES}/setup/lib/theme_orchestrator.sh"
 
-# Hyprland packages
-yay_packages="
+# Prefer official repositories. Keep AUR packages explicit so they are easier to audit.
+official_packages=(
     tmux
     qt5-wayland
     hyprland
@@ -24,9 +24,7 @@ yay_packages="
     wezterm
     cliphist
     wl-clipboard
-    librewolf-bin
     obsidian
-    proton-pass-bin
     pavucontrol
     git-delta
     vlc
@@ -37,8 +35,6 @@ yay_packages="
     lazygit
     ncurses
     zsh
-    autojump
-    google-chrome
     meld
     discord
     openfortivpn
@@ -50,7 +46,6 @@ yay_packages="
     gvfs
     sushi
     papirus-icon-theme
-    waypaper
     ffmpegthumbnailer
     poppler-glib
     gvfs-mtp
@@ -58,7 +53,7 @@ yay_packages="
     gvfs-smb
     unrar
     zip
-    p7zip
+    7zip
     ntfs-3g
     unzip
     python
@@ -69,23 +64,23 @@ yay_packages="
     docker
     docker-compose
     tree
-    tofi
     hyprpicker
     hyprlock
     hypridle
-    hyprswitch
     hyprpolkitagent
-    wlogout
-    grimblast
     jpegoptim
     optipng
     swappy
     brightnessctl
     pamixer
     wpaperd
-    bibata-cursor-theme-bin
     rofi
-    walker
+    libqalculate
+    jq
+)
+
+aur_packages=(
+    bibata-cursor-theme-bin
     elephant
     elephant-desktopapplications
     elephant-providerlist
@@ -93,12 +88,29 @@ yay_packages="
     elephant-files
     elephant-calc
     elephant-clipboard
-    libqalculate
-    jq
-"
+    google-chrome
+    grimblast-git
+    hyprswitch
+    librewolf-bin
+    otf-geist-mono
+    tofi
+    walker
+    waypaper
+    wlogout
+)
 
-echo "Installing Hyprland packages..."
-install_yay $yay_packages
+# proton-pass-bin is intentionally not installed automatically: it is a sensitive
+# password-manager package and should be reviewed/installed manually if desired.
+
+if ((${#official_packages[@]})); then
+    echo "Installing Hyprland official packages..."
+    install_pacman "${official_packages[@]}"
+fi
+
+if ((${#aur_packages[@]})); then
+    echo "Installing Hyprland AUR packages..."
+    install_yay "${aur_packages[@]}"
+fi
 
 # File copies, chmod and initial theme apply now live in the shared manifest
 # (setup/lib/dotfiles_manifest.sh) and run from setup/copy_dots.sh later in

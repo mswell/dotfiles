@@ -7,7 +7,8 @@ source "${DOTFILES}/setup/lib/common.sh"
 _ARCH_SH_LOADED=1
 
 install_pacman() { sudo pacman -S --noconfirm --needed "$@"; }
-install_yay() { yay -S --noconfirm --needed "$@"; }
+# AUR installs stay interactive so PKGBUILD/diff prompts are not skipped.
+install_yay() { yay -S --needed "$@"; }
 
 ensure_yay() {
     command -v yay &>/dev/null && return 0
@@ -37,14 +38,16 @@ setup_nvim_dir() { mkdir -p "$HOME/.config/nvim"; }
 
 # Shared fonts (Hypr and I3wm use identical lists)
 OFFICIAL_FONTS=(
-    ttf-cascadia-code-nerd ttf-cascadia-mono-nerd ttf-fira-code
-    ttf-fira-mono ttf-fira-sans ttf-firacode-nerd ttf-iosevka-nerd
-    ttf-iosevkaterm-nerd ttf-jetbrains-mono-nerd ttf-jetbrains-mono
+    noto-fonts noto-fonts-emoji otf-font-awesome
+    ttf-cascadia-code-nerd ttf-cascadia-mono-nerd ttf-fantasque-nerd
+    ttf-fira-code ttf-fira-mono ttf-fira-sans ttf-firacode-nerd
+    ttf-hack ttf-inconsolata ttf-iosevka-nerd ttf-iosevkaterm-nerd
+    ttf-jetbrains-mono ttf-jetbrains-mono-nerd
     ttf-nerd-fonts-symbols ttf-nerd-fonts-symbols-mono
+    ttf-ubuntu-font-family
 )
 AUR_FONTS=(
-    noto-fonts-emoji noto-fonts otf-font-awesome ttf-ubuntu-font-family
-    ttf-inconsolata otf-geist-mono ttf-hack ttf-fantasque-nerd
+    otf-geist-mono
 )
 
 install_fonts() {
