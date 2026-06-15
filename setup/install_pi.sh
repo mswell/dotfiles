@@ -171,6 +171,91 @@ restore_pi_config() {
     copy_dir_contents "$PI_CONFIG_SRC/agent/themes" "$PI_AGENT_DIR/themes" "themes"
 }
 
+# Detect distro locally so this script also works when run standalone
+# (without install.sh/preflight setting DETECTED_DISTRO).
+detect_distro_local() {
+    if [[ -n "${DETECTED_DISTRO:-}" ]]; then
+        echo "$DETECTED_DISTRO"
+        return 0
+    fi
+    if [[ -r /etc/os-release ]]; then
+        . /etc/os-release
+        case "${ID:-}" in
+            ubuntu|debian) echo "debian"; return 0 ;;
+            arch|manjaro|cachyos|endeavouros) echo "arch"; return 0 ;;
+        esac
+    fi
+    echo "unknown"
+}
+
+# Provide a no-op `husky` on PATH for the package-install phase.
+# pi installs packages with `npm install --omit=dev`; some packages (e.g.
+# badlogic/pi-diff-review) declare `"prepare": "husky"`, and husky is a
+# devDependency that is NOT installed under --omit=dev. Without a shim the
+# prepare script exits 127 and aborts the whole install.
+make_npm_script_shims() {
+    if [[ -z "${PI_NPM_SHIM_DIR:-}" ]]; then
+        PI_NPM_SHIM_DIR="$(mktemp -d)"
+        printf '#!/bin/sh\nexit 0\n' > "$PI_NPM_SHIM_DIR/husky"
+        chmod +x "$PI_NPM_SHIM_DIR/husky"
+        export PATH="$PI_NPM_SHIM_DIR:$PATH"
+        pi_info "Added no-op husky shim for npm prepare scripts"
+    fi
+}
+
+# Install system dependencies needed to build the Glimpse native host that the
+# diff-review extension uses (GTK4 + WebKit6 + gtk4-layer-shell + Rust/cargo).
+ensure_diff_review_native_deps() {
+    local distro
+    distro="$(detect_distro_local)"
+    case "$distro" in
+        arch)
+            pi_info "Installing Glimpse build deps (Arch): gtk4 webkitgtk-6.0 gtk4-layer-shell rust"
+            sudo pacman -S --noconfirm --needed gtk4 webkitgtk-6.0 gtk4-layer-shell rust \
+                || pi_warn "pacman failed; install gtk4 webkitgtk-6.0 gtk4-layer-shell rust manually."
+            ;;
+        debian)
+            pi_info "Installing Glimpse build deps (Debian/Ubuntu): GTK4/WebKit6/layer-shell + cargo"
+            sudo apt-get update -y || true
+            sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev libgtk4-layer-shell-dev cargo \
+                || pi_warn "apt failed; install libgtk-4-dev libwebkitgtk-6.0-dev libgtk4-layer-shell-dev cargo manually."
+            ;;
+        *)
+            pi_warn "Unknown distro: install GTK4 + WebKit6 + gtk4-layer-shell + Rust/cargo manually for diff-review."
+            ;;
+    esac
+}
+
+# Build the Glimpse native host for the diff-review extension.
+# pi blocks npm postinstall scripts (allow-scripts) for security, so the native
+# Rust binary is never built automatically; we build it explicitly here.
+build_diff_review_host() {
+    pi_step "Building Glimpse native host for diff-review"
+
+    local glimpse="$PI_AGENT_DIR/git/github.com/badlogic/pi-diff-review/node_modules/glimpseui"
+    if [[ ! -d "$glimpse" ]]; then
+        pi_warn "glimpseui not found at $glimpse; diff-review may not have installed. Skipping host build."
+        return 0
+    fi
+    if [[ -x "$glimpse/src/glimpse" ]]; then
+        pi_ok "Glimpse native host already built"
+        return 0
+    fi
+
+    ensure_diff_review_native_deps
+
+    pi_info "Compiling Glimpse host (Rust release build, one-time)..."
+    # A transitive cargo dependency (gtk4-layer-shell) pulls a git submodule over
+    # SSH; force the git CLI so fetch uses existing credentials instead of failing
+    # on ssh-agent auth.
+    if CARGO_NET_GIT_FETCH_WITH_CLI=true npm --prefix "$glimpse" run build:linux; then
+        pi_ok "Glimpse native host built: $glimpse/src/glimpse"
+    else
+        pi_warn "Glimpse build failed. After installing the deps, retry with:"
+        pi_warn "  CARGO_NET_GIT_FETCH_WITH_CLI=true npm --prefix '$glimpse' run build:linux"
+    fi
+}
+
 install_configured_pi_packages() {
     pi_step "Installing/updating Pi packages from restored settings"
 
@@ -178,6 +263,9 @@ install_configured_pi_packages() {
         pi_warn "No settings.json found; skipping package install."
         return 0
     fi
+
+    # Ensure husky shim is active before npm runs any package prepare scripts.
+    make_npm_script_shims
 
     # pi update --extensions reads packages from settings.json and installs/updates them.
     # Keep this non-fatal so provider auth/network issues do not break base restore.
@@ -222,6 +310,7 @@ main() {
     install_pi
     restore_pi_config
     install_configured_pi_packages
+    build_diff_review_host
     validate_pi
     print_next_steps
 }

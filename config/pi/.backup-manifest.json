@@ -71,56 +71,6 @@
       "backedUpAt": "2026-06-13T16:34:24.058Z",
       "size": 39765
     },
-    "agent/extensions/diff-review/README.md": {
-      "hash": "sha256:1168dca6dc5e2653af94fcb76f6cf847eeeb835fd75eff690a01d780957475a8",
-      "backedUpAt": "2026-06-13T16:54:24.216Z",
-      "size": 1973
-    },
-    "agent/extensions/diff-review/git.ts": {
-      "hash": "sha256:847823fbb55b690818f6f3012b92205f0a696d845d5cc269e4b5c5f629ce5a11",
-      "backedUpAt": "2026-06-13T16:34:23.606Z",
-      "size": 12927
-    },
-    "agent/extensions/diff-review/index.ts": {
-      "hash": "sha256:48e28c98886f851c15f741a916122f00d3726fb73a3a4cf0b0f4c249df8875cb",
-      "backedUpAt": "2026-06-13T16:54:24.216Z",
-      "size": 12918
-    },
-    "agent/extensions/diff-review/package-lock.json": {
-      "hash": "sha256:fb0e94ee7409f244a4cb7340ae3e1fac41c0f4cdeea0cd39c1ac8dfb56c81b03",
-      "backedUpAt": "2026-06-13T16:54:24.216Z",
-      "size": 76247
-    },
-    "agent/extensions/diff-review/package.json": {
-      "hash": "sha256:25b00ef992306d50176aa33f5e780219d340abb63fdc59231385e8224d53a854",
-      "backedUpAt": "2026-06-13T16:34:23.633Z",
-      "size": 324
-    },
-    "agent/extensions/diff-review/prompt.ts": {
-      "hash": "sha256:e5b40410806945cb6d7b537f844652b39086c513ad5d7d4cf60de10b5fd882b7",
-      "backedUpAt": "2026-06-13T16:34:23.654Z",
-      "size": 2270
-    },
-    "agent/extensions/diff-review/types/glimpseui.d.ts": {
-      "hash": "sha256:7d51502e768e2599826aaa78e95fcefe9d9a06e1cc2e1d5a2799d478f6e4b012",
-      "backedUpAt": "2026-06-13T16:34:23.677Z",
-      "size": 2647
-    },
-    "agent/extensions/diff-review/types.ts": {
-      "hash": "sha256:7f56c3bd882a064368a985a98fcebaa790f0f713592487c2f123557b720a56d2",
-      "backedUpAt": "2026-06-13T16:34:23.698Z",
-      "size": 2116
-    },
-    "agent/extensions/diff-review/ui.ts": {
-      "hash": "sha256:dee514a9e935d5af3fe7c019f289226e6c32fc6c86fb522b28b9f966b4587af9",
-      "backedUpAt": "2026-06-13T16:34:23.719Z",
-      "size": 794
-    },
-    "agent/extensions/diff-review/web/app.js": {
-      "hash": "sha256:142f23082c904de30ef576d7408e9efd496bced15ad0ed6d7d0f4d5220eec505",
-      "backedUpAt": "2026-06-13T16:34:23.741Z",
-      "size": 44679
-    },
     "agent/extensions/pi-config-backup/index.js": {
       "hash": "sha256:cb3dd1721be22a2bc829d3dde49e89da886818fb8e8089ba83901eb5467a1cad",
       "backedUpAt": "2026-06-14T20:36:15.671Z",

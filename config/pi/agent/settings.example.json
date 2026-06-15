@@ -10,7 +10,8 @@
     "npm:@aliou/pi-guardrails",
     "npm:pi-context",
     "npm:@spences10/pi-skills",
-    "npm:@petechu/pi-answer-studio"
+    "npm:@petechu/pi-answer-studio",
+    "git:https://github.com/badlogic/pi-diff-review"
   ],
   "answer": {
     "systemPrompt": "Extract only explicit questions from the assistant message. Return concise question text, useful context, and choices when present. Ignore rhetorical questions and code/comments unless the assistant is asking the user to decide something.",
