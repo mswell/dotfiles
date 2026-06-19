@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # install_skills.sh — Bug Bounty Skills
-# Instala apenas as skills selecionadas: xp, tmux-pilot, security-audit
+# Instala apenas as skills selecionadas: xp, tmux-pilot, security-audit, web-browser
 # =============================================================================
 
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_SRC="$SCRIPT_DIR/Skills"
 
 # Skills habilitadas para instalação
-ENABLED_SKILLS=(xp tmux-pilot security-audit browser-tools)
+ENABLED_SKILLS=(xp tmux-pilot security-audit web-browser)
 
 # Colors
 green=$(tput setaf 2 2>/dev/null || echo "")
@@ -57,7 +57,7 @@ link_skill_to_pi() {
 echo ""
 echo "${bold}${green}╔══════════════════════════════════════════════════╗${reset}"
 echo "${bold}${green}║         Bug Bounty Skills — Setup                ║${reset}"
-echo "${bold}${green}║  xp + tmux-pilot + security-audit + browser-tools ║${reset}"
+echo "${bold}${green}║  xp + tmux-pilot + security-audit + web-browser ║${reset}"
 echo "${bold}${green}╚══════════════════════════════════════════════════╝${reset}"
 echo ""
 

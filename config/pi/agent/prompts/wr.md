@@ -23,13 +23,15 @@ Unless I explicitly override something in this request, do the following in orde
    ```
 3. If this task is tied to a GitHub issue, update the issue labels by removing `inprogress` and adding `done`.
 4. Commit only files you changed in this session.
-5. If this task is tied to exactly one GitHub issue, include `closes #<issue>` in the commit message. If it is tied to multiple issues, stop and ask which one to use. If it is not tied to any issue, do not include `closes #` or `fixes #` in the commit message.
-6. Check the current git branch. If it is not `main`, stop and ask what to do. Do not push from another branch unless I explicitly say so.
-7. Push the current branch.
+5. Immediately after committing, verify the commit scope: run `git show --stat HEAD` and confirm the changed-files list matches exactly the files you edited in this session. If the commit includes unexpected files, is missing a file you changed, or `git diff --staged` looked off before committing, stop and report the mismatch before continuing. Do not push an unverified commit.
+6. If this task is tied to exactly one GitHub issue, include `closes #<issue>` in the commit message. If it is tied to multiple issues, stop and ask which one to use. If it is not tied to any issue, do not include `closes #` or `fixes #` in the commit message.
+7. Check the current git branch. If it is not `main`, stop and ask what to do. Do not push from another branch unless I explicitly say so.
+8. Push the current branch.
 
 Constraints:
 - Never stage unrelated files.
 - Never use `git add .` or `git add -A`.
+- Before committing, inspect `git status` and `git diff --staged` and confirm the staged set is exactly the files you edited this session — no more, no less.
 - Run required checks before committing if code changed.
 - Do not open a PR unless I explicitly ask.
 - If this is not GitHub issue or PR work, do not post a GitHub comment.

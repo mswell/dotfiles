@@ -1,52 +1,18 @@
 {
-  "lastChangelogVersion": "0.79.3",
+  "lastChangelogVersion": "0.79.7",
   "theme": "wellpunk-dark",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
     "npm:@aliou/pi-guardrails",
     "npm:pi-context",
     "npm:@spences10/pi-skills",
-    "npm:@petechu/pi-answer-studio",
     "git:https://github.com/badlogic/pi-diff-review"
   ],
-  "answer": {
-    "systemPrompt": "Extract only explicit questions from the assistant message. Return concise question text, useful context, and choices when present. Ignore rhetorical questions and code/comments unless the assistant is asking the user to decide something.",
-    "extractionModels": [
-      {
-        "provider": "github-copilot",
-        "id": "gpt-5-mini"
-      },
-      {
-        "provider": "github-copilot",
-        "id": "gpt-5.4-mini"
-      },
-      {
-        "provider": "github-copilot",
-        "id": "gemini-3-flash-preview"
-      }
-    ],
-    "answerTemplates": [
-      {
-        "label": "Direto",
-        "template": "{{answer}}"
-      },
-      {
-        "label": "Com pergunta",
-        "template": "{{question}}\nResposta: {{answer}}"
-      },
-      {
-        "label": "Preciso de detalhes",
-        "template": "Preciso de mais detalhes sobre: "
-      }
-    ],
-    "drafts": {
-      "enabled": true,
-      "autosaveMs": 1000,
-      "promptOnRestore": true
-    }
+  "compaction": {
+    "enabled": false
   }
 }
