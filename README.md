@@ -71,7 +71,7 @@ Minimal Wayland setup inspired by [Omarchy](https://github.com/basecamp/omarchy)
 ## Shell & Editor
 
 - **ZSH** with Powerlevel10k — prompt and autosuggestion colors sync with the active theme
-- **Neovim** with LazyVim — loads `vantablack.nvim`, `white.nvim`, or `tokyonight.nvim` based on the current theme
+- **Neovim** config installed from [`mswell/nvim`](https://github.com/mswell/nvim)
 - **tmux** with theme-synced status bar
 - **fzf** with per-theme color config
 
@@ -171,9 +171,7 @@ config/
 │   └── scripts/
 │       ├── theme-switch.sh  # syncs all components on theme change
 │       └── power-menu.sh    # walker dmenu power menu
-├── nvim/
-│   └── lua/plugins/
-│       └── colorscheme.lua  # reads current-theme → wellpunk-dark, wellpunk-light, or tokyonight
+├── nvim/                    # legacy/local reference; installer clones https://github.com/mswell/nvim
 ├── kitty/themes/
 ├── waybar/themes/
 ├── walker/

@@ -222,7 +222,7 @@ Three themes — **wellpunk-dark**, **wellpunk-light**, **tokyonight** — cycle
 | tmux | `ln -sf themes/$THEME.conf current-theme.conf` + `tmux source-file` |
 | fzf | `ln -sf themes/$THEME.sh current-theme.sh` (sourced by .zshrc) |
 | ZSH / p10k | `ln -sf themes/$THEME.zsh current-theme.zsh` (sourced after p10k) |
-| Neovim | Reads `current-theme` at startup in `colorscheme.lua` |
+| Neovim | Installed/updated from external repo `https://github.com/mswell/nvim` |
 | Mako | `sed -i` config directly + `makoctl reload` |
 | GTK 2/3/4 | `.gtkrc-2.0` + `settings.ini` overwrite + `gsettings` + `hyprctl setcursor` |
 | Kvantum | `ln -sf themes/$THEME.kvconfig kvantum.kvconfig` |
@@ -242,7 +242,7 @@ Three themes — **wellpunk-dark**, **wellpunk-light**, **tokyonight** — cycle
 9. Create `config/bat/themes/<name>.conf` and `config/git/themes/<name>.gitconfig`
 10. Add wallpapers to `config/hypr/backgrounds/<name>/`
 11. Add the theme name to the `THEMES` array in `theme-switch.sh`
-12. Add the name to the `colorscheme` map in `config/nvim/lua/plugins/colorscheme.lua`
+12. If needed, update Neovim theming in the external `mswell/nvim` repo
 
 **Power menu** (`SUPER+ESC`): `config/hypr/scripts/power-menu.sh` pipes options to `walker --dmenu` (Lock / Suspend / Logout / Restart / Shutdown). Walker has no built-in power provider; this is the correct Omarchy pattern.
 
@@ -256,9 +256,7 @@ config/
 │   ├── alias.zsh         # Shell aliases
 │   ├── custom.zsh        # Custom workflows
 │   └── themes/           # p10k + autosuggestion colors per theme
-├── nvim/
-│   └── lua/plugins/
-│       └── colorscheme.lua  # reads current-theme at startup
+├── nvim/                    # legacy/local reference; installer clones https://github.com/mswell/nvim
 ├── hypr/
 │   ├── hyprland.lua      # Hyprland config source of truth
 │   ├── hyprlock.conf     # Omarchy style: blurred screenshot, centered input only
@@ -346,7 +344,7 @@ bypass4xx
 - `config/zsh/functions.zsh` - Bug bounty workflow functions
 - `config/hypr/scripts/theme-switch.sh` - **Theme system orchestrator** (syncs all components)
 - `config/hypr/scripts/power-menu.sh` - Walker dmenu power menu
-- `config/nvim/lua/plugins/colorscheme.lua` - Dynamic Neovim colorscheme (reads current-theme)
+- Neovim config install - `setup/lib/dotfiles_manifest.sh` clones `https://github.com/mswell/nvim` to `~/.config/nvim`
 - `setup/lib/common.sh` - **Shared library** (colors, DOTFILES detection, source_script)
 - `setup/lib/arch.sh` - **Arch shared library** (pacman/yay helpers, base setup, fonts)
 - `setup/install_hacktools.sh` - Security tools installation

@@ -32,7 +32,7 @@ source_script() {
 }
 
 # Generic helpers used by both arch.sh and homebrew.sh
-setup_nvim_dir() { mkdir -p "$HOME/.config/nvim"; }
+setup_nvim_dir() { mkdir -p "$HOME/.config"; }
 
 setup_bat_theme() {
     echo "${yellow}[+] Configuring bat Tokyo Night theme...${reset}"

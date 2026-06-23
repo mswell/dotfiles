@@ -27,6 +27,8 @@ sudo apt install -y \
 	libxslt1-dev \
 	zlib1g-dev \
 	jq \
+	ffmpeg \
+	yt-dlp \
 	apt-transport-https \
 	xvfb \
 	prips ${DEBUG_STD:+$DEBUG_STD}

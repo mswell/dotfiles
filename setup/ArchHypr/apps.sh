@@ -46,7 +46,9 @@ official_packages=(
     gvfs
     sushi
     papirus-icon-theme
+    ffmpeg
     ffmpegthumbnailer
+    yt-dlp
     poppler-glib
     gvfs-mtp
     gvfs-nfs

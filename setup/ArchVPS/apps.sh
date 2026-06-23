@@ -7,7 +7,7 @@ echo "Installing VPS essential packages..."
 # CLI tools - official repositories only for server installs.
 install_pacman zoxide tmux bat lsd git-delta bash-completion jq \
     ctags lazygit ncurses zsh fzf \
-    ripgrep eza tree
+    ripgrep eza tree ffmpeg yt-dlp
 
 # Dev libraries
 install_pacman openssl libffi libxml2 libxslt zlib cmake \

@@ -6,7 +6,7 @@ echo "Installing WSL packages..."
 
 # CLI tools - official repositories only for WSL installs.
 install_pacman zoxide tmux bat lsd git-delta unclutter bash-completion jq \
-    ctags lazygit ncurses zsh xclip fzf
+    ctags lazygit ncurses zsh xclip fzf ffmpeg yt-dlp
 
 # File system tools
 install_pacman unrar zip 7zip ntfs-3g dosfstools \

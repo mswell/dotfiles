@@ -42,8 +42,7 @@ chmod_exec||$config_dir/git/hooks/pre-commit
 dir||$config_dir/bat/themes
 copy_dir|$root/config/bat/themes|$config_dir/bat/themes
 symlink|$config_dir/bat/themes/wellpunk-dark.conf|$config_dir/bat/config
-dir||$config_dir/nvim
-copy_dir|$root/config/nvim|$config_dir/nvim
+git_repo|https://github.com/mswell/nvim.git|$config_dir/nvim
 copy_file|$root/config/Ghostty/config|$config_dir/ghostty/config
 dir||$config_dir/ghostty/themes
 copy_dir|$root/config/Ghostty/themes|$config_dir/ghostty/themes
@@ -139,6 +138,48 @@ _dotfiles_copy_dir() {
     cp -rf "$source/." "$destination/"
 }
 
+_dotfiles_git_repo() {
+    local repo_url="$1" destination="$2"
+
+    if ! command -v git >/dev/null 2>&1; then
+        _dotfiles_log "[WARN] git not found; cannot install repository: $repo_url"
+        return 0
+    fi
+
+    if [[ -d "$destination/.git" ]]; then
+        local current_remote
+        current_remote="$(git -C "$destination" remote get-url origin 2>/dev/null || true)"
+        if [[ "$current_remote" != "$repo_url" && "$current_remote" != "${repo_url%.git}" ]]; then
+            _dotfiles_log "[WARN] Existing git repo at $destination uses origin: $current_remote"
+            _dotfiles_log "[WARN] Skipping clone of $repo_url"
+            return 0
+        fi
+
+        if ! git -C "$destination" diff --quiet || ! git -C "$destination" diff --cached --quiet; then
+            _dotfiles_log "[WARN] Local changes in $destination; skipping update"
+            return 0
+        fi
+
+        _dotfiles_log "[+] Updating repository $repo_url => $destination"
+        git -C "$destination" pull --ff-only
+        return 0
+    fi
+
+    if [[ -d "$destination" ]]; then
+        if [[ -z "$(find "$destination" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+            rmdir "$destination"
+        else
+            local backup="${destination}.backup.$(date +%Y%m%d%H%M%S)"
+            _dotfiles_log "[+] Backing up existing $destination => $backup"
+            mv "$destination" "$backup"
+        fi
+    fi
+
+    mkdir -p "$(dirname "$destination")"
+    _dotfiles_log "[+] Cloning $repo_url => $destination"
+    git clone --depth 1 "$repo_url" "$destination"
+}
+
 # Install a non-destructive shim at $destination that pulls in the curated config
 # from $source. Idempotent: if the directive that references $source is already
 # present, do nothing. If $destination is byte-identical to $source (legacy
@@ -218,6 +259,9 @@ dotfiles_apply_manifest() {
             copy_dir)
                 _dotfiles_log "[+] Copying directory $source => $destination"
                 _dotfiles_copy_dir "$source" "$destination"
+                ;;
+            git_repo)
+                _dotfiles_git_repo "$source" "$destination"
                 ;;
             shim)
                 _dotfiles_ensure_shim "$source" "$destination" shell
