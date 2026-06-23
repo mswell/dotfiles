@@ -18,6 +18,7 @@ dotfiles_manifest_entries() {
     root="$(_dotfiles_root)"
     config_dir="$(_dotfiles_config_dir)"
 
+    # Cross-platform entries (Linux + macOS)
     cat <<EOF
 dir||$config_dir/zsh
 shim|$root/config/zsh/.zshrc|$HOME/.zshrc
@@ -44,11 +45,10 @@ symlink|$config_dir/bat/themes/wellpunk-dark.conf|$config_dir/bat/config
 dir||$config_dir/nvim
 copy_dir|$root/config/nvim|$config_dir/nvim
 copy_file|$root/config/Ghostty/config|$config_dir/ghostty/config
+dir||$config_dir/ghostty/themes
+copy_dir|$root/config/Ghostty/themes|$config_dir/ghostty/themes
 copy_file|$root/config/wezterm/wezterm.lua|$config_dir/wezterm/wezterm.lua
-copy_file|$root/config/waypaper/config.ini|$config_dir/waypaper/config.ini
-copy_file|$root/config/mako/config|$config_dir/mako/config
-copy_file|$root/config/flameshot/flameshot.ini|$config_dir/flameshot/flameshot.ini
-copy_file|$root/config/swappy/config|$config_dir/swappy/config
+copy_dir|$root/config/kitty|$config_dir/kitty
 dir||$HOME/.local/bin
 copy_file|$root/config/tmux/.tmux.conf|$HOME/.tmux.conf
 copy_file|$root/config/tmux/.tmux-cht-command|$HOME/.tmux-cht-command
@@ -59,6 +59,20 @@ chmod_exec||$HOME/.local/bin/tmux-sessionizer
 chmod_exec||$HOME/.local/bin/tmux-cht.sh
 dir||$HOME/.pi/agent/themes
 copy_dir|$root/config/pi/agent/themes|$HOME/.pi/agent/themes
+dir||$config_dir/fzf/themes
+copy_dir|$root/config/fzf/themes|$config_dir/fzf/themes
+dir||$config_dir/tmux/themes
+copy_dir|$root/config/tmux/themes|$config_dir/tmux/themes
+copy_dir|$root/config/backgrounds|$HOME/Pictures/backgrounds
+EOF
+
+    # Linux-only entries (Hyprland/Wayland desktop, X11, notification daemons)
+    if [[ "$(uname -s)" == "Linux" ]]; then
+        cat <<EOF
+copy_file|$root/config/waypaper/config.ini|$config_dir/waypaper/config.ini
+copy_file|$root/config/mako/config|$config_dir/mako/config
+copy_file|$root/config/flameshot/flameshot.ini|$config_dir/flameshot/flameshot.ini
+copy_file|$root/config/swappy/config|$config_dir/swappy/config
 copy_file|$root/config/hypr/hyprland.lua|$config_dir/hypr/hyprland.lua
 copy_file|$root/config/hypr/hyprlock.conf|$config_dir/hypr/hyprlock.conf
 copy_file|$root/config/hypr/hyprpaper.conf|$config_dir/hypr/hyprpaper.conf
@@ -72,7 +86,6 @@ chmod_exec||$config_dir/hypr/scripts/bg-set.sh
 chmod_exec||$config_dir/hypr/scripts/power-menu.sh
 chmod_exec||$config_dir/hypr/scripts/screenshot-area.sh
 chmod_exec||$config_dir/hypr/scripts/kill-confirm.sh
-copy_dir|$root/config/kitty|$config_dir/kitty
 copy_dir|$root/config/walker|$config_dir/walker
 copy_dir|$root/config/waybar|$config_dir/waybar
 copy_dir|$root/config/wpaperd|$config_dir/wpaperd
@@ -80,16 +93,12 @@ copy_dir|$root/config/rofi|$config_dir/rofi
 copy_dir|$root/config/tofi|$config_dir/tofi
 copy_dir|$root/config/Kvantum|$config_dir/Kvantum
 copy_file|$root/config/xdg-desktop-portal/portals.conf|$config_dir/xdg-desktop-portal/portals.conf
-dir||$config_dir/fzf/themes
-copy_dir|$root/config/fzf/themes|$config_dir/fzf/themes
-dir||$config_dir/tmux/themes
-copy_dir|$root/config/tmux/themes|$config_dir/tmux/themes
 dir||$config_dir/backgrounds
 copy_dir|$root/config/hypr/backgrounds/wellpunk-dark|$config_dir/backgrounds/wellpunk-dark
 copy_dir|$root/config/hypr/backgrounds/wellpunk-light|$config_dir/backgrounds/wellpunk-light
 copy_dir|$root/config/hypr/backgrounds/tokyonight|$config_dir/backgrounds/tokyonight
-copy_dir|$root/config/backgrounds|$HOME/Pictures/backgrounds
 EOF
+    fi
 }
 
 dotfiles_plan() {

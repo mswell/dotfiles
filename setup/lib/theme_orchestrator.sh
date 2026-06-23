@@ -142,6 +142,7 @@ symlink|$home/.config/waybar/themes/$theme.css|$home/.config/waybar/themes/curre
 symlink|$home/.config/kitty/themes/$theme.conf|$home/.config/kitty/current-theme.conf
 symlink|$home/.config/rofi/colors/$theme.rasi|$home/.config/rofi/colors/current.rasi
 symlink|$home/.config/tmux/themes/$theme.conf|$home/.config/tmux/current-theme.conf
+symlink|$home/.config/ghostty/themes/$theme.conf|$home/.config/ghostty/themes/current-theme.conf
 symlink|$home/.config/fzf/themes/$theme.sh|$home/.config/fzf/current-theme.sh
 symlink|$home/.config/tofi/themes/$theme.conf|$home/.config/tofi/current-configV
 symlink|$home/.config/zsh/themes/$theme.zsh|$home/.config/zsh/current-theme.zsh
@@ -173,7 +174,7 @@ _theme_ln_sf() {
 
 theme_apply() {
     local requested="${1:-}"
-    local theme home hypr_themes waybar_themes kitty_themes rofi_colors tmux_themes fzf_themes zsh_themes kvantum_themes bat_themes git_themes current_file bg_dir
+    local theme home hypr_themes waybar_themes kitty_themes rofi_colors tmux_themes fzf_themes zsh_themes kvantum_themes bat_themes git_themes ghostty_themes current_file bg_dir
     local walker_cfg current_fzf new_fzf_opts gtk_values gtk_theme_name gtk_dark gtk_color_scheme gtk_icons gtk_cursor mako_values mako_text mako_border mako_bg pi_settings pi_theme tmp
 
     theme="$(theme_resolve "$requested")" || return 1
@@ -194,6 +195,7 @@ theme_apply() {
     kvantum_themes="$home/.config/Kvantum/themes"
     bat_themes="$home/.config/bat/themes"
     git_themes="$home/.config/git/themes"
+    ghostty_themes="$home/.config/ghostty/themes"
     current_file="$home/.config/hypr/current-theme"
     bg_dir="$home/.config/backgrounds"
 
@@ -232,6 +234,10 @@ theme_apply() {
     pkill -SIGUSR1 -x zsh 2>/dev/null || true
 
     _theme_ln_sf "$zsh_themes/$theme.zsh" "$home/.config/zsh/current-theme.zsh"
+
+    if [[ -d "$ghostty_themes" && -f "$ghostty_themes/$theme.conf" ]]; then
+        _theme_ln_sf "$ghostty_themes/$theme.conf" "$ghostty_themes/current-theme.conf"
+    fi
 
     [[ -d "$kvantum_themes" ]] && _theme_ln_sf "$kvantum_themes/$theme.kvconfig" "$home/.config/Kvantum/kvantum.kvconfig"
     [[ -d "$bat_themes" ]] && _theme_ln_sf "$bat_themes/$theme.conf" "$home/.config/bat/config"

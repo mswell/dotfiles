@@ -1,5 +1,5 @@
 shell-integration = zsh
-theme = tokyonight
+config-file = themes/current-theme.conf
 font-family = CaskaydiaMono Nerd Font
 font-size = 14
 window-padding-x = 4,4
