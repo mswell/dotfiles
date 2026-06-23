@@ -26,15 +26,6 @@ arch_base_setup() {
     ensure_yay
 }
 
-setup_bat_theme() {
-    echo "${yellow}[+] Configuring bat Tokyo Night theme...${reset}"
-    mkdir -p "$(bat --config-dir)/themes"
-    wget -P "$(bat --config-dir)/themes" \
-        https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
-    bat cache --build
-}
-
-setup_nvim_dir() { mkdir -p "$HOME/.config/nvim"; }
 
 # Shared fonts (Hypr and I3wm use identical lists)
 OFFICIAL_FONTS=(

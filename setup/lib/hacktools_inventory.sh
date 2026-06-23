@@ -5,6 +5,22 @@
 
 PROJECTDISCOVERY_TOOLS=(naabu shuffledns chaos nuclei notify httpx dnsx subfinder interactsh-client alterx katana)
 
+# Direct go install packages for each PD tool — used instead of pdtm which
+# crashes on macOS Apple Silicon due to go-m1cpu@v0.1.6 SIGSEGV via CGo.
+PROJECTDISCOVERY_PACKAGES=(
+  "naabu|github.com/projectdiscovery/naabu/v2/cmd/naabu"
+  "shuffledns|github.com/projectdiscovery/shuffledns/cmd/shuffledns"
+  "chaos|github.com/projectdiscovery/chaos-client/cmd/chaos"
+  "nuclei|github.com/projectdiscovery/nuclei/v3/cmd/nuclei"
+  "notify|github.com/projectdiscovery/notify/cmd/notify"
+  "httpx|github.com/projectdiscovery/httpx/cmd/httpx"
+  "dnsx|github.com/projectdiscovery/dnsx/cmd/dnsx"
+  "subfinder|github.com/projectdiscovery/subfinder/v2/cmd/subfinder"
+  "interactsh-client|github.com/projectdiscovery/interactsh/cmd/interactsh-client"
+  "alterx|github.com/projectdiscovery/alterx/cmd/alterx"
+  "katana|github.com/projectdiscovery/katana/cmd/katana"
+)
+
 # Format: binary|go install package
 GO_TOOLS=(
   "fff|github.com/tomnomnom/fff"
@@ -87,8 +103,11 @@ hacktools_inventory_plan() {
     printf 'path|TOOLS_PATH|%s\n' "${TOOLS_PATH:-}"
     printf 'path|LISTS_PATH|%s\n' "${LISTS_PATH:-}"
     printf 'path|RECON_PATH|%s\n' "${RECON_PATH:-}"
-    printf 'go|pdtm|github.com/projectdiscovery/pdtm/cmd/pdtm@latest\n'
-    printf 'projectdiscovery|pdtm|%s\n' "$(hacktools_projectdiscovery_csv)"
+    local pd_item pd_tool pd_pkg
+    for pd_item in "${PROJECTDISCOVERY_PACKAGES[@]}"; do
+        IFS='|' read -r pd_tool pd_pkg <<< "$pd_item"
+        printf 'go|%s|%s@latest\n' "$pd_tool" "$pd_pkg"
+    done
     for item in "${GO_TOOLS[@]}"; do
         IFS='|' read -r name value <<< "$item"
         printf 'go|%s|%s@latest\n' "$name" "$value"

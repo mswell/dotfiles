@@ -30,3 +30,14 @@ source_script() {
         exit 1
     fi
 }
+
+# Generic helpers used by both arch.sh and homebrew.sh
+setup_nvim_dir() { mkdir -p "$HOME/.config/nvim"; }
+
+setup_bat_theme() {
+    echo "${yellow}[+] Configuring bat Tokyo Night theme...${reset}"
+    mkdir -p "$(bat --config-dir)/themes"
+    wget -q -P "$(bat --config-dir)/themes" \
+        https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
+    bat cache --build
+}

@@ -20,13 +20,16 @@ export LOG_COLOR_WARN='\033[1;33m'     # Yellow
 export LOG_COLOR_ERROR='\033[0;31m'    # Red
 export LOG_COLOR_RESET='\033[0m'       # Reset
 
-# Log level priorities (for filtering)
-declare -A LOG_PRIORITIES=(
-    [DEBUG]=0
-    [INFO]=1
-    [WARN]=2
-    [ERROR]=3
-)
+# Log level priorities (for filtering) — case-based to support bash 3.2 (macOS default)
+_log_priority() {
+    case "$1" in
+        DEBUG) echo 0 ;;
+        INFO)  echo 1 ;;
+        WARN)  echo 2 ;;
+        ERROR) echo 3 ;;
+        *)     echo 0 ;;
+    esac
+}
 
 # ===================================
 # Logging Functions
@@ -65,9 +68,10 @@ log_init() {
 # Usage: should_log <level>
 should_log() {
     local level="$1"
-    local current_priority=${LOG_PRIORITIES[$LOG_LEVEL]}
-    local message_priority=${LOG_PRIORITIES[$level]}
-
+    local current_priority
+    local message_priority
+    current_priority=$(_log_priority "$LOG_LEVEL")
+    message_priority=$(_log_priority "$level")
     [ "$message_priority" -ge "$current_priority" ]
 }
 

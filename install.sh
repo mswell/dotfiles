@@ -80,13 +80,14 @@ Menu() {
         echo "[6] - Archlinux WSL"
         echo "[7] - Claude for Bug Bounty (Skills + Agents + Caido AI)"
         echo "[8] - Install Pi Coding Agent + Restore Pi Config"
+        echo "[9] - macOS Setup"
         echo "[0] - Exit"
         echo
-        echo -n "Choose your distro: "
+        echo -n "Choose an option: "
         read -r option
         
         case $option in
-            1|2|3|4|5|6|7|8) setup_plan_run "$option" run_setup; break ;;
+            1|2|3|4|5|6|7|8|9) setup_plan_run "$option" run_setup; break ;;
             0) exit 0 ;;
             *) echo "${red}Unknown option. Please try again.${reset}";;
         esac

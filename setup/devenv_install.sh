@@ -76,8 +76,19 @@ remove_from_file() {
     local pattern="$1"
     local file="$2"
     if [[ -f "$file" ]]; then
-        sed -i "/$pattern/d" "$file"
+        sed -i'' "/$pattern/d" "$file"
     fi
+}
+
+# Activate mise while suppressing the inherited ERR trap from install.sh.
+# `mise activate bash` internally runs `declare -f command_not_found_handle`,
+# which exits non-zero when the function doesn't exist, firing false ERR reports.
+mise_activate() {
+    local _saved_trap
+    _saved_trap=$(trap -p ERR 2>/dev/null || true)
+    trap '' ERR
+    mise_activate
+    [[ -n "$_saved_trap" ]] && eval "$_saved_trap"
 }
 
 # =============================================
@@ -218,7 +229,7 @@ activate_mise() {
     export PATH="$HOME/.local/bin:$PATH"
 
     # Activate mise
-    eval "$(mise activate bash)" 2>/dev/null || true
+    mise_activate
 
     log_success "mise activated"
 }
@@ -314,7 +325,7 @@ install_pnpm() {
 install_node_tools() {
     log_info "Installing global npm tools..."
 
-    eval "$(mise activate bash)" 2>/dev/null || true
+    mise_activate
 
     if ! command_exists npm; then
         log_error "npm not found; cannot install global npm tools"
@@ -363,7 +374,7 @@ setup_python_venv() {
         log_warning "Virtual environment $venv_name already exists"
     else
         # Ensure we're using mise's Python
-        eval "$(mise activate bash)" 2>/dev/null || true
+        mise_activate
 
         python -m venv "$venv_path"
         log_success "Virtual environment created at $venv_path"
@@ -435,7 +446,7 @@ check_installation() {
     local warnings=()
 
     # Activate mise
-    eval "$(mise activate bash)" 2>/dev/null || true
+    mise_activate
 
     # Check mise
     if command_exists mise; then

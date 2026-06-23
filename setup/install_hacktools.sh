@@ -62,11 +62,17 @@ fi
 
 go env -w GO111MODULE=auto
 
-printf "${bblue} Installing ProjectDiscovery Tool Manager (pdtm) ${reset}\n"
-go install github.com/projectdiscovery/pdtm/cmd/pdtm@latest
-
-printf "${bblue} Installing ProjectDiscovery tools via pdtm ${reset}\n"
-pdtm -install "$(hacktools_projectdiscovery_csv)"
+printf "${bblue} Installing ProjectDiscovery tools via go install ${reset}\n"
+for _pd_item in "${PROJECTDISCOVERY_PACKAGES[@]}"; do
+    IFS='|' read -r _pd_tool _pd_pkg <<< "$_pd_item"
+    if command -v "$_pd_tool" >/dev/null 2>&1; then
+        printf "${yellow}[*] %s already installed, skipping${reset}\n" "$_pd_tool"
+    else
+        printf "${bblue}[+] Installing %s${reset}\n" "$_pd_tool"
+        go install "${_pd_pkg}@latest"
+    fi
+done
+unset _pd_item _pd_tool _pd_pkg
 
 install_go_tool() {
     local tool="$1"
@@ -128,8 +134,8 @@ for item in "${REPOSITORY_TOOLS[@]}"; do
             python3 -m pip install --user . >/dev/null 2>&1
         fi
         if [[ -s "Makefile" ]]; then
-            $SUDO make >/dev/null 2>&1
-            $SUDO make install >/dev/null 2>&1
+            $SUDO make >/dev/null 2>&1 || printf "${yellow}[*] make failed for %s — skipping build${reset}\n" "$repo"
+            $SUDO make install >/dev/null 2>&1 || true
         fi
         if [[ "gf" == "$repo" ]]; then
             cp -r examples/*.json ~/.gf 2>/dev/null || true

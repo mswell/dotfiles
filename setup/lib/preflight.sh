@@ -52,8 +52,15 @@ check_sudo_access() {
     echo "${green}✓ Sudo access available${reset}"
 }
 
-# Detect Linux distribution
+# Detect OS and distribution
 detect_distro() {
+    # macOS detection (no /etc/os-release on Darwin)
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        echo "${green}✓ Detected: macOS $(sw_vers -productVersion)${reset}"
+        export DETECTED_DISTRO="darwin"
+        return 0
+    fi
+
     if [ ! -f /etc/os-release ]; then
         echo "${red}[ERROR] Cannot detect Linux distribution${reset}"
         return 1
@@ -73,7 +80,7 @@ detect_distro() {
             ;;
         *)
             echo "${yellow}[WARN] Unsupported distribution: $PRETTY_NAME${reset}"
-            echo "${yellow}[INFO] Supported: Ubuntu, Debian, Arch Linux, Manjaro, CachyOS${reset}"
+            echo "${yellow}[INFO] Supported: Ubuntu, Debian, Arch Linux, Manjaro, CachyOS, macOS${reset}"
             # Auto-continue in CI environments
             if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
                 echo "${yellow}⚠ Auto-continuing in CI environment${reset}"
@@ -93,8 +100,13 @@ check_disk_space() {
     local required_gb=10
     local target_path="${1:-$HOME}"
 
-    # Get available space in GB
-    local available_gb=$(df -BG "$target_path" | awk 'NR==2 {print $4}' | sed 's/G//')
+    # Get available space in GB (df syntax differs between Linux/GNU and macOS/BSD)
+    local available_gb
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        available_gb=$(df -g "$target_path" | awk 'NR==2 {print $4}')
+    else
+        available_gb=$(df -BG "$target_path" | awk 'NR==2 {print $4}' | sed 's/G//')
+    fi
 
     echo "${blue}[INFO] Available disk space: ${available_gb}GB (required: ${required_gb}GB)${reset}"
 
