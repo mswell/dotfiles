@@ -66,6 +66,16 @@ copy_dir|$root/config/tmux/themes|$config_dir/tmux/themes
 copy_dir|$root/config/backgrounds|$HOME/Pictures/backgrounds
 EOF
 
+    # macOS-only entries
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        local macos_ghostty="$HOME/Library/Application Support/com.mitchellh.ghostty"
+        cat <<EOF
+copy_file|$root/config/Ghostty/config|$macos_ghostty/config
+dir||$macos_ghostty/themes
+copy_dir|$root/config/Ghostty/themes|$macos_ghostty/themes
+EOF
+    fi
+
     # Linux-only entries (Hyprland/Wayland desktop, X11, notification daemons)
     if [[ "$(uname -s)" == "Linux" ]]; then
         cat <<EOF
