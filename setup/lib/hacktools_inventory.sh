@@ -99,36 +99,43 @@ hacktools_projectdiscovery_csv() {
 }
 
 hacktools_inventory_plan() {
-    local item name value dest url
+    local item
+    local pd_tool pd_package
+    local go_tool go_package
+    local wordlist_dest wordlist_url
+    local repo_name github_repo repo_path
+    local recursive_list_path
+
     printf 'path|directory|TOOLS_PATH|%s\n' "${TOOLS_PATH:-}"
     printf 'path|directory|LISTS_PATH|%s\n' "${LISTS_PATH:-}"
     printf 'path|directory|RECON_PATH|%s\n' "${RECON_PATH:-}"
 
-    local pd_item pd_tool pd_pkg
-    for pd_item in "${PROJECTDISCOVERY_PACKAGES[@]}"; do
-        IFS='|' read -r pd_tool pd_pkg <<< "$pd_item"
-        printf 'go_install|projectdiscovery|%s|%s@latest\n' "$pd_tool" "$pd_pkg"
+    for item in "${PROJECTDISCOVERY_PACKAGES[@]}"; do
+        IFS='|' read -r pd_tool pd_package <<< "$item"
+        printf 'go_install|projectdiscovery|%s|%s@latest\n' "$pd_tool" "$pd_package"
     done
 
     for item in "${GO_TOOLS[@]}"; do
-        IFS='|' read -r name value <<< "$item"
-        printf 'go_install|generic|%s|%s@latest\n' "$name" "$value"
+        IFS='|' read -r go_tool go_package <<< "$item"
+        printf 'go_install|generic|%s|%s@latest\n' "$go_tool" "$go_package"
     done
 
     printf 'python_install|pip_user|uro|uro\n'
 
     for item in "${WORDLISTS[@]}"; do
-        IFS='|' read -r dest url <<< "$item"
-        printf 'wordlist_download|%s|%s\n' "$(hacktools_expand_path "$dest")" "$url"
+        IFS='|' read -r wordlist_dest wordlist_url <<< "$item"
+        printf 'wordlist_download|%s|%s\n' "$(hacktools_expand_path "$wordlist_dest")" "$wordlist_url"
     done
 
     for item in "${REPOSITORY_TOOLS[@]}"; do
-        IFS='|' read -r name value <<< "$item"
-        printf 'repo_sync|%s|%s|https://github.com/%s\n' "$name" "$TOOLS_PATH/$name" "$value"
+        IFS='|' read -r repo_name github_repo <<< "$item"
+        repo_path="$TOOLS_PATH/$repo_name"
+        printf 'repo_sync|%s|%s|https://github.com/%s\n' "$repo_name" "$repo_path" "$github_repo"
     done
 
+    recursive_list_path="${RECURSIVE_LIST:-$LISTS_PATH/recursive.txt}"
     printf 'post_install|gf_templates|copy_gf_templates|%s\n' "$HOME/.gf"
-    printf 'post_install|recursive_wordlist|generate_recursive_wordlist|%s\n' "${RECURSIVE_LIST:-$LISTS_PATH/recursive.txt}"
+    printf 'post_install|recursive_wordlist|generate_recursive_wordlist|%s\n' "$recursive_list_path"
 }
 
 hacktools_download_wordlists() {
