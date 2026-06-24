@@ -123,9 +123,20 @@ source "$ROOT/config/zsh/env.zsh"
 source "$ROOT/setup/lib/hacktools_inventory.sh"
 hacktools_plan=$(hacktools_inventory_plan)
 [[ "$(hacktools_projectdiscovery_csv)" == "naabu,shuffledns,chaos,nuclei,notify,httpx,dnsx,subfinder,interactsh-client,alterx,katana" ]]
-assert_contains "$hacktools_plan" "go|naabu|github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
-assert_contains "$hacktools_plan" "go|katana|github.com/projectdiscovery/katana/cmd/katana@latest"
-assert_contains "$hacktools_plan" "wordlist|$LISTS_PATH/raft-large-directories-lowercase.txt|"
-assert_contains "$hacktools_plan" "wordlist|$LISTS_PATH/dirsearch-dicc.txt|https://raw.githubusercontent.com/maurosoria/dirsearch/master/db/dicc.txt"
+expected_hacktools_lines=(
+  "path|directory|TOOLS_PATH|$TOOLS_PATH"
+  "go_install|projectdiscovery|naabu|github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
+  "go_install|generic|gf|github.com/tomnomnom/gf@latest"
+  "python_install|pip_user|uro|uro"
+  "repo_sync|gf|$TOOLS_PATH/gf|https://github.com/tomnomnom/gf"
+  "wordlist_download|$LISTS_PATH/raft-large-directories-lowercase.txt|https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-directories-lowercase.txt"
+  "wordlist_download|$LISTS_PATH/dirsearch-dicc.txt|https://raw.githubusercontent.com/maurosoria/dirsearch/master/db/dicc.txt"
+  "post_install|gf_templates|copy_gf_templates|$HOME/.gf"
+  "post_install|recursive_wordlist|generate_recursive_wordlist|$LISTS_PATH/recursive.txt"
+)
+for expected_hacktools_line in "${expected_hacktools_lines[@]}"; do
+  assert_contains "$hacktools_plan" "$expected_hacktools_line"
+done
+assert_not_contains "$hacktools_plan" "pdtm"
 
 echo "shell module tests passed"
