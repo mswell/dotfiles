@@ -32,6 +32,10 @@ USER ${AGENT_UID}:${AGENT_GID}
 # Pre-create Pi directories for bind-mounts
 RUN mkdir -p /home/agent/.pi/agent/skills/xp
 
+# Symlink settings so Pi reads it from the standard path
+# (actual file is bind-mounted at /home/agent/.pi-settings.json to avoid docker cp conflicts)
+RUN ln -sf /home/agent/.pi-settings.json /home/agent/.pi/agent/settings.json
+
 WORKDIR /home/agent
 
 # In worktree sandbox mode, Sandcastle bind-mounts the git worktree at /home/agent/workspace

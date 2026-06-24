@@ -38,9 +38,10 @@ const piDocker = () =>
         readonly: true,
       },
       // Minimal settings (no packages — whitelist mode)
+      // Mounted to a separate path to avoid docker cp conflicts with session capture
       {
         hostPath: ".sandcastle/pi-settings.json",
-        sandboxPath: "/home/agent/.pi/agent/settings.json",
+        sandboxPath: "/home/agent/.pi-settings.json",
         readonly: true,
       },
       // Only the xp skill
