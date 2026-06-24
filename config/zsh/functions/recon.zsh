@@ -5,8 +5,10 @@
 # Usage: workspaceRecon <domain>
 # Creates: <domain>/YYYY-MM-DD/ directory structure
 workspaceRecon() {
+  recon_maybe_render_plan "workspaceRecon" "$@" && return 0
+  local target="${1:-}"
   local name
-  name=$(echo "$1" | unfurl -u domains)
+  name=$(echo "$target" | unfurl -u domains)
   local wdir="$name/$(date +%F)/"
   mkdir -p "$wdir"
   cd "$wdir"
@@ -14,6 +16,8 @@ workspaceRecon() {
 }
 
 wellSubRecon() {
+  recon_maybe_render_plan "wellSubRecon" "$@" && return 0
+  recon_require_stage_inputs "wellSubRecon" || return 1
   subdomainenum
   if [ -s "asn" ]; then
     cat asn | metabigor net --asn | anew cidr
@@ -25,8 +29,9 @@ wellSubRecon() {
 }
 
 subdomainenum() {
+  recon_maybe_render_plan "subdomainenum" "$@" && return 0
   echo "${yellow}[+] Starting passive subdomain enumeration...${reset}"
-  require_workspace_file "domains" "subdomainenum" || return 1
+  recon_require_stage_inputs "subdomainenum" || return 1
   local Domain
   Domain=$(cat domains)
   subfinder -up

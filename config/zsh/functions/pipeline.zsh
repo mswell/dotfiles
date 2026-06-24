@@ -3,28 +3,36 @@
 # Kept bash-parseable because local validation uses bash -n for zsh modules.
 #
 
+recon_stage_inputs() {
+  case "$1" in
+    workspaceRecon) echo "-" ;;
+    wellSubRecon|subdomainenum) echo "domains" ;;
+    brutesub|resolving) echo "domains,sorted.all.subdomains" ;;
+    getalive|naabuRecon) echo "clean.subdomains" ;;
+    nuclei|screenshot) echo "ALLHTTP" ;;
+    faviconEnum) echo "200HTTP" ;;
+    *) echo "unknown" ;;
+  esac
+}
+
+recon_stage_outputs() {
+  case "$1" in
+    workspaceRecon) echo "domains" ;;
+    wellSubRecon) echo "all.subdomains,clean.subdomains,cidr" ;;
+    subdomainenum) echo "all.subdomains,clean.subdomains" ;;
+    brutesub|resolving) echo "resolved.subdomains" ;;
+    getalive) echo "HTTPOK,200HTTP,403HTTP,Without404,ALLHTTP" ;;
+    naabuRecon) echo "naabuScan,HTTPOKSCAN,HTTPOK,200HTTP,403HTTP,Without404,ALLHTTP" ;;
+    nuclei) echo "scan-specific" ;;
+    screenshot) echo "aqua_out" ;;
+    faviconEnum) echo "outputFavFreak" ;;
+    *) echo "unknown" ;;
+  esac
+}
+
 recon_stage_contract() {
   local stage="${1:-}"
-  case "$stage" in
-    workspaceRecon)
-      echo "inputs:- outputs:domains" ;;
-    subdomainenum)
-      echo "inputs:domains outputs:all.subdomains,clean.subdomains" ;;
-    brutesub|resolving)
-      echo "inputs:domains,sorted.all.subdomains outputs:resolved.subdomains" ;;
-    getalive)
-      echo "inputs:clean.subdomains outputs:HTTPOK,200HTTP,403HTTP,Without404,ALLHTTP" ;;
-    naabuRecon)
-      echo "inputs:clean.subdomains outputs:naabuScan,HTTPOKSCAN,HTTPOK,200HTTP,403HTTP,Without404,ALLHTTP" ;;
-    nuclei)
-      echo "inputs:ALLHTTP outputs:scan-specific" ;;
-    screenshot)
-      echo "inputs:ALLHTTP outputs:aqua_out" ;;
-    faviconEnum)
-      echo "inputs:200HTTP outputs:outputFavFreak" ;;
-    *)
-      echo "inputs:unknown outputs:unknown" ;;
-  esac
+  echo "inputs:$(recon_stage_inputs "$stage") outputs:$(recon_stage_outputs "$stage")"
 }
 
 recon_previous_stage_for_file() {
@@ -46,6 +54,70 @@ require_workspace_file() {
     echo "${red}[-] $stage requires $file, but it is missing or empty. Run: $(recon_previous_stage_for_file "$file")${reset}"
     return 1
   fi
+}
+
+recon_require_stage_inputs() {
+  local stage="$1"
+  local inputs
+  local input
+  inputs=$(recon_stage_inputs "$stage")
+  [ "$inputs" = "-" ] && return 0
+  IFS=',' read -r -a _recon_stage_inputs <<< "$inputs"
+  for input in "${_recon_stage_inputs[@]}"; do
+    require_workspace_file "$input" "$stage" || return 1
+  done
+}
+
+recon_stage_plan() {
+  local stage="$1"
+  shift || true
+  local inputs outputs target wdir
+  inputs=$(recon_stage_inputs "$stage")
+  outputs=$(recon_stage_outputs "$stage")
+
+  echo "stage:$stage"
+  echo "requires:$inputs"
+  echo "outputs:$outputs"
+
+  case "$stage" in
+    workspaceRecon)
+      target="${1:-<domain>}"
+      wdir="$target/$(date +%F)/"
+      echo "would-run:mkdir -p $wdir"
+      echo "would-run:cd $wdir"
+      echo "would-run:echo $target | anew domains"
+      ;;
+    wellSubRecon)
+      echo "would-run:subdomainenum"
+      echo "would-run:if [ -s asn ]; then cat asn | metabigor net --asn | anew cidr; fi"
+      echo "would-run:if [ -s cidr ]; then cat cidr | anew clean.subdomains; fi"
+      echo "would-run:brutesub"
+      ;;
+    subdomainenum)
+      echo "would-run:subfinder -up"
+      echo "would-run:subfinder -nW -t 100 -all -o all.subdomains -dL domains"
+      echo "would-run:dnsx -l all.subdomains -silent | anew clean.subdomains"
+      ;;
+  esac
+}
+
+recon_maybe_render_plan() {
+  local stage="$1"
+  shift || true
+  case "${1:-}" in
+    --plan|--dry-run)
+      shift || true
+      recon_stage_plan "$stage" "$@"
+      return 0
+      ;;
+  esac
+
+  if [ "${RECON_PIPELINE_MODE:-}" = "plan" ] || [ "${RECON_PIPELINE_MODE:-}" = "dry-run" ]; then
+    recon_stage_plan "$stage" "$@"
+    return 0
+  fi
+
+  return 1
 }
 
 # Pure transformation: categorize httpx -status-code output into the existing files.
