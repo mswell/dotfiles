@@ -1,0 +1,8 @@
+{
+  "name": "dotfiles",
+  "private": true,
+  "scripts": {
+    "typecheck": "bash tests/typecheck.sh",
+    "test": "bash tests/run.sh"
+  }
+}

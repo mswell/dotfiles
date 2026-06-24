@@ -130,7 +130,7 @@ dotfiles_manifest_visit() {
 
     while IFS=$'\037' read -r action source destination; do
         [[ -z "$action" ]] && continue
-        "$callback" "$action" "$source" "$destination"
+        "$callback" "$action" "$source" "$destination" || true
     done < <(_dotfiles_manifest_rules)
 }
 
