@@ -23,6 +23,25 @@ assert_not_contains() {
   fi
 }
 
+manifest_rule_callback() {
+  local action="$1" source="$2" destination="$3"
+  if [[ "$action" == "$MANIFEST_EXPECT_ACTION" && "$source" == "$MANIFEST_EXPECT_SOURCE" && "$destination" == "$MANIFEST_EXPECT_DESTINATION" ]]; then
+    MANIFEST_RULE_FOUND=1
+  fi
+}
+
+assert_manifest_has_rule() {
+  MANIFEST_EXPECT_ACTION="$1"
+  MANIFEST_EXPECT_SOURCE="$2"
+  MANIFEST_EXPECT_DESTINATION="$3"
+  MANIFEST_RULE_FOUND=0
+  DOTFILES="$ROOT" HOME=/tmp/dotfiles-home dotfiles_manifest_visit manifest_rule_callback
+  if [[ "$MANIFEST_RULE_FOUND" != "1" ]]; then
+    echo "Expected manifest rule not found: $MANIFEST_EXPECT_ACTION $MANIFEST_EXPECT_SOURCE => $MANIFEST_EXPECT_DESTINATION" >&2
+    exit 1
+  fi
+}
+
 source "$ROOT/setup/lib/theme_orchestrator.sh"
 [[ "$(theme_resolve wellpunk-dark)" == "wellpunk-dark" ]]
 if theme_resolve invalid >/tmp/theme-invalid.out 2>&1; then
@@ -63,9 +82,10 @@ fi
 
 source "$ROOT/setup/lib/dotfiles_manifest.sh"
 manifest=$(DOTFILES="$ROOT" HOME=/tmp/dotfiles-home dotfiles_plan)
+assert_manifest_has_rule "copy_file" "$ROOT/config/zsh/runtime.zsh" "/tmp/dotfiles-home/.config/zsh/runtime.zsh"
+assert_manifest_has_rule "symlink" "/tmp/dotfiles-home/.config/git/themes/wellpunk-dark.gitconfig" "/tmp/dotfiles-home/.config/git/current-theme.gitconfig"
+assert_manifest_has_rule "copy_file" "$ROOT/setup/lib/theme_orchestrator.sh" "/tmp/dotfiles-home/.config/hypr/scripts/lib/theme_orchestrator.sh"
 assert_contains "$manifest" "copy_file|$ROOT/config/zsh/runtime.zsh|/tmp/dotfiles-home/.config/zsh/runtime.zsh"
-assert_contains "$manifest" "symlink|/tmp/dotfiles-home/.config/git/themes/wellpunk-dark.gitconfig|/tmp/dotfiles-home/.config/git/current-theme.gitconfig"
-assert_contains "$manifest" "copy_file|$ROOT/setup/lib/theme_orchestrator.sh|/tmp/dotfiles-home/.config/hypr/scripts/lib/theme_orchestrator.sh"
 waybar_config=$(cat "$ROOT/config/waybar/config.jsonc")
 assert_not_contains "$waybar_config" "~/.local/scripts/stream_status"
 
