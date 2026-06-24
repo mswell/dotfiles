@@ -16,16 +16,13 @@ _dotfiles_manifest_platform() {
 }
 
 _dotfiles_manifest_rule() {
-    printf '%s\t%s\t%s\n' "$1" "$2" "$3"
+    # Use a non-whitespace delimiter so `read` preserves empty middle fields.
+    printf '%s\037%s\037%s\n' "$1" "$2" "$3"
 }
 
-_dotfiles_manifest_rules() {
-    local root config_dir platform
-    root="$(_dotfiles_root)"
-    config_dir="$(_dotfiles_config_dir)"
-    platform="$(_dotfiles_manifest_platform)"
+_dotfiles_manifest_common_rules() {
+    local root="$1" config_dir="$2"
 
-    # Cross-platform entries (Linux + macOS)
     _dotfiles_manifest_rule dir "" "$config_dir/zsh"
     _dotfiles_manifest_rule shim "$root/config/zsh/.zshrc" "$HOME/.zshrc"
     _dotfiles_manifest_rule copy_file "$root/config/zsh/env.zsh" "$config_dir/zsh/env.zsh"
@@ -69,51 +66,69 @@ _dotfiles_manifest_rules() {
     _dotfiles_manifest_rule dir "" "$config_dir/tmux/themes"
     _dotfiles_manifest_rule copy_dir "$root/config/tmux/themes" "$config_dir/tmux/themes"
     _dotfiles_manifest_rule copy_dir "$root/config/backgrounds" "$HOME/Pictures/backgrounds"
+}
 
-    if [[ "$platform" == "Darwin" ]]; then
-        local macos_ghostty="$HOME/Library/Application Support/com.mitchellh.ghostty"
-        _dotfiles_manifest_rule copy_file "$root/config/Ghostty/config" "$macos_ghostty/config"
-        _dotfiles_manifest_rule dir "" "$macos_ghostty/themes"
-        _dotfiles_manifest_rule copy_dir "$root/config/Ghostty/themes" "$macos_ghostty/themes"
-    fi
+_dotfiles_manifest_macos_rules() {
+    local root="$1"
+    local macos_ghostty_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
 
-    if [[ "$platform" == "Linux" ]]; then
-        _dotfiles_manifest_rule copy_file "$root/config/waypaper/config.ini" "$config_dir/waypaper/config.ini"
-        _dotfiles_manifest_rule copy_file "$root/config/mako/config" "$config_dir/mako/config"
-        _dotfiles_manifest_rule copy_file "$root/config/flameshot/flameshot.ini" "$config_dir/flameshot/flameshot.ini"
-        _dotfiles_manifest_rule copy_file "$root/config/swappy/config" "$config_dir/swappy/config"
-        _dotfiles_manifest_rule copy_file "$root/config/hypr/hyprland.lua" "$config_dir/hypr/hyprland.lua"
-        _dotfiles_manifest_rule copy_file "$root/config/hypr/hyprlock.conf" "$config_dir/hypr/hyprlock.conf"
-        _dotfiles_manifest_rule copy_file "$root/config/hypr/hyprpaper.conf" "$config_dir/hypr/hyprpaper.conf"
-        _dotfiles_manifest_rule copy_file "$root/config/hypr/hypridle.conf" "$config_dir/hypr/hypridle.conf"
-        _dotfiles_manifest_rule copy_dir "$root/config/hypr/themes" "$config_dir/hypr/themes"
-        _dotfiles_manifest_rule copy_dir "$root/config/hypr/scripts" "$config_dir/hypr/scripts"
-        _dotfiles_manifest_rule copy_file "$root/setup/lib/theme_orchestrator.sh" "$config_dir/hypr/scripts/lib/theme_orchestrator.sh"
-        _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/theme-switch.sh"
-        _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/wpaperd-set.sh"
-        _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/bg-set.sh"
-        _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/power-menu.sh"
-        _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/screenshot-area.sh"
-        _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/kill-confirm.sh"
-        _dotfiles_manifest_rule copy_dir "$root/config/walker" "$config_dir/walker"
-        _dotfiles_manifest_rule copy_dir "$root/config/waybar" "$config_dir/waybar"
-        _dotfiles_manifest_rule copy_dir "$root/config/wpaperd" "$config_dir/wpaperd"
-        _dotfiles_manifest_rule copy_dir "$root/config/rofi" "$config_dir/rofi"
-        _dotfiles_manifest_rule copy_dir "$root/config/tofi" "$config_dir/tofi"
-        _dotfiles_manifest_rule copy_dir "$root/config/Kvantum" "$config_dir/Kvantum"
-        _dotfiles_manifest_rule copy_file "$root/config/xdg-desktop-portal/portals.conf" "$config_dir/xdg-desktop-portal/portals.conf"
-        _dotfiles_manifest_rule dir "" "$config_dir/backgrounds"
-        _dotfiles_manifest_rule copy_dir "$root/config/hypr/backgrounds/wellpunk-dark" "$config_dir/backgrounds/wellpunk-dark"
-        _dotfiles_manifest_rule copy_dir "$root/config/hypr/backgrounds/wellpunk-light" "$config_dir/backgrounds/wellpunk-light"
-        _dotfiles_manifest_rule copy_dir "$root/config/hypr/backgrounds/tokyonight" "$config_dir/backgrounds/tokyonight"
-    fi
+    _dotfiles_manifest_rule copy_file "$root/config/Ghostty/config" "$macos_ghostty_dir/config"
+    _dotfiles_manifest_rule dir "" "$macos_ghostty_dir/themes"
+    _dotfiles_manifest_rule copy_dir "$root/config/Ghostty/themes" "$macos_ghostty_dir/themes"
+}
+
+_dotfiles_manifest_linux_rules() {
+    local root="$1" config_dir="$2"
+
+    _dotfiles_manifest_rule copy_file "$root/config/waypaper/config.ini" "$config_dir/waypaper/config.ini"
+    _dotfiles_manifest_rule copy_file "$root/config/mako/config" "$config_dir/mako/config"
+    _dotfiles_manifest_rule copy_file "$root/config/flameshot/flameshot.ini" "$config_dir/flameshot/flameshot.ini"
+    _dotfiles_manifest_rule copy_file "$root/config/swappy/config" "$config_dir/swappy/config"
+    _dotfiles_manifest_rule copy_file "$root/config/hypr/hyprland.lua" "$config_dir/hypr/hyprland.lua"
+    _dotfiles_manifest_rule copy_file "$root/config/hypr/hyprlock.conf" "$config_dir/hypr/hyprlock.conf"
+    _dotfiles_manifest_rule copy_file "$root/config/hypr/hyprpaper.conf" "$config_dir/hypr/hyprpaper.conf"
+    _dotfiles_manifest_rule copy_file "$root/config/hypr/hypridle.conf" "$config_dir/hypr/hypridle.conf"
+    _dotfiles_manifest_rule copy_dir "$root/config/hypr/themes" "$config_dir/hypr/themes"
+    _dotfiles_manifest_rule copy_dir "$root/config/hypr/scripts" "$config_dir/hypr/scripts"
+    _dotfiles_manifest_rule copy_file "$root/setup/lib/theme_orchestrator.sh" "$config_dir/hypr/scripts/lib/theme_orchestrator.sh"
+    _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/theme-switch.sh"
+    _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/wpaperd-set.sh"
+    _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/bg-set.sh"
+    _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/power-menu.sh"
+    _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/screenshot-area.sh"
+    _dotfiles_manifest_rule chmod_exec "" "$config_dir/hypr/scripts/kill-confirm.sh"
+    _dotfiles_manifest_rule copy_dir "$root/config/walker" "$config_dir/walker"
+    _dotfiles_manifest_rule copy_dir "$root/config/waybar" "$config_dir/waybar"
+    _dotfiles_manifest_rule copy_dir "$root/config/wpaperd" "$config_dir/wpaperd"
+    _dotfiles_manifest_rule copy_dir "$root/config/rofi" "$config_dir/rofi"
+    _dotfiles_manifest_rule copy_dir "$root/config/tofi" "$config_dir/tofi"
+    _dotfiles_manifest_rule copy_dir "$root/config/Kvantum" "$config_dir/Kvantum"
+    _dotfiles_manifest_rule copy_file "$root/config/xdg-desktop-portal/portals.conf" "$config_dir/xdg-desktop-portal/portals.conf"
+    _dotfiles_manifest_rule dir "" "$config_dir/backgrounds"
+    _dotfiles_manifest_rule copy_dir "$root/config/hypr/backgrounds/wellpunk-dark" "$config_dir/backgrounds/wellpunk-dark"
+    _dotfiles_manifest_rule copy_dir "$root/config/hypr/backgrounds/wellpunk-light" "$config_dir/backgrounds/wellpunk-light"
+    _dotfiles_manifest_rule copy_dir "$root/config/hypr/backgrounds/tokyonight" "$config_dir/backgrounds/tokyonight"
+}
+
+_dotfiles_manifest_rules() {
+    local root config_dir platform
+    root="$(_dotfiles_root)"
+    config_dir="$(_dotfiles_config_dir)"
+    platform="$(_dotfiles_manifest_platform)"
+
+    _dotfiles_manifest_common_rules "$root" "$config_dir"
+
+    case "$platform" in
+        Darwin) _dotfiles_manifest_macos_rules "$root" ;;
+        Linux) _dotfiles_manifest_linux_rules "$root" "$config_dir" ;;
+    esac
 }
 
 dotfiles_manifest_visit() {
     local callback="$1"
     local action source destination
 
-    while IFS=$'\t' read -r action source destination; do
+    while IFS=$'\037' read -r action source destination; do
         [[ -z "$action" ]] && continue
         "$callback" "$action" "$source" "$destination"
     done < <(_dotfiles_manifest_rules)
@@ -214,7 +229,9 @@ _dotfiles_ensure_shim() {
     local directive=""
 
     case "$syntax" in
-        shell) directive='source '"'"$source"'"'' ;;
+        shell)
+            printf -v directive 'source "%s"' "$source"
+            ;;
         git)   directive="$(printf '[include]\n    path = %s' "$source")" ;;
         *)
             _dotfiles_log "[WARN] Unknown shim syntax: $syntax"

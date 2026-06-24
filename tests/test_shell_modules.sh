@@ -23,11 +23,15 @@ assert_not_contains() {
   fi
 }
 
-manifest_rule_callback() {
+manifest_rule_matches_expected() {
   local action="$1" source="$2" destination="$3"
-  if [[ "$action" == "$MANIFEST_EXPECT_ACTION" && "$source" == "$MANIFEST_EXPECT_SOURCE" && "$destination" == "$MANIFEST_EXPECT_DESTINATION" ]]; then
-    MANIFEST_RULE_FOUND=1
-  fi
+  [[ "$action" == "$MANIFEST_EXPECT_ACTION" ]] &&
+    [[ "$source" == "$MANIFEST_EXPECT_SOURCE" ]] &&
+    [[ "$destination" == "$MANIFEST_EXPECT_DESTINATION" ]]
+}
+
+manifest_rule_callback() {
+  manifest_rule_matches_expected "$@" && MANIFEST_RULE_FOUND=1
 }
 
 assert_manifest_has_rule() {
@@ -82,9 +86,11 @@ fi
 
 source "$ROOT/setup/lib/dotfiles_manifest.sh"
 manifest=$(DOTFILES="$ROOT" HOME=/tmp/dotfiles-home dotfiles_plan)
+assert_manifest_has_rule "dir" "" "/tmp/dotfiles-home/.config/zsh"
 assert_manifest_has_rule "copy_file" "$ROOT/config/zsh/runtime.zsh" "/tmp/dotfiles-home/.config/zsh/runtime.zsh"
 assert_manifest_has_rule "symlink" "/tmp/dotfiles-home/.config/git/themes/wellpunk-dark.gitconfig" "/tmp/dotfiles-home/.config/git/current-theme.gitconfig"
 assert_manifest_has_rule "copy_file" "$ROOT/setup/lib/theme_orchestrator.sh" "/tmp/dotfiles-home/.config/hypr/scripts/lib/theme_orchestrator.sh"
+assert_contains "$manifest" "dir||/tmp/dotfiles-home/.config/zsh"
 assert_contains "$manifest" "copy_file|$ROOT/config/zsh/runtime.zsh|/tmp/dotfiles-home/.config/zsh/runtime.zsh"
 waybar_config=$(cat "$ROOT/config/waybar/config.jsonc")
 assert_not_contains "$waybar_config" "~/.local/scripts/stream_status"
