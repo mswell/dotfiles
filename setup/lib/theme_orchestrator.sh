@@ -51,6 +51,14 @@ _theme_apply_catalog_action() {
     esac
 }
 
+_theme_apply_catalog_entry() {
+    local entry="$1"
+    local action target value
+
+    IFS='|' read -r action target value <<< "$entry"
+    _theme_apply_catalog_action "$action" "$target" "$value"
+}
+
 theme_current() {
     local current_file
     current_file="$(theme_current_file)"
@@ -390,8 +398,7 @@ EOF
         fi
     fi
 
-    IFS='|' read -r _ current_file _persisted_theme <<< "$(_theme_catalog_persist_current_theme "$theme")"
-    _theme_apply_catalog_action persist "$current_file" "$_persisted_theme"
+    _theme_apply_catalog_entry "$(_theme_catalog_persist_current_theme "$theme")"
 
     command -v notify-send >/dev/null 2>&1 && notify-send "Theme" "Switched to: $theme" --icon=preferences-desktop-theme -t 2000 || true
 }
