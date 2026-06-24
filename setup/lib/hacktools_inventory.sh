@@ -100,29 +100,35 @@ hacktools_projectdiscovery_csv() {
 
 hacktools_inventory_plan() {
     local item name value dest url
-    printf 'path|TOOLS_PATH|%s\n' "${TOOLS_PATH:-}"
-    printf 'path|LISTS_PATH|%s\n' "${LISTS_PATH:-}"
-    printf 'path|RECON_PATH|%s\n' "${RECON_PATH:-}"
+    printf 'path|directory|TOOLS_PATH|%s\n' "${TOOLS_PATH:-}"
+    printf 'path|directory|LISTS_PATH|%s\n' "${LISTS_PATH:-}"
+    printf 'path|directory|RECON_PATH|%s\n' "${RECON_PATH:-}"
+
     local pd_item pd_tool pd_pkg
     for pd_item in "${PROJECTDISCOVERY_PACKAGES[@]}"; do
         IFS='|' read -r pd_tool pd_pkg <<< "$pd_item"
-        printf 'go|%s|%s@latest\n' "$pd_tool" "$pd_pkg"
+        printf 'go_install|projectdiscovery|%s|%s@latest\n' "$pd_tool" "$pd_pkg"
     done
+
     for item in "${GO_TOOLS[@]}"; do
         IFS='|' read -r name value <<< "$item"
-        printf 'go|%s|%s@latest\n' "$name" "$value"
+        printf 'go_install|generic|%s|%s@latest\n' "$name" "$value"
     done
-    printf 'python|uro|python3 -m pip install --user uro\n'
+
+    printf 'python_install|pip_user|uro|uro\n'
+
     for item in "${WORDLISTS[@]}"; do
         IFS='|' read -r dest url <<< "$item"
-        printf 'wordlist|%s|%s\n' "$(hacktools_expand_path "$dest")" "$url"
+        printf 'wordlist_download|%s|%s\n' "$(hacktools_expand_path "$dest")" "$url"
     done
+
     for item in "${REPOSITORY_TOOLS[@]}"; do
         IFS='|' read -r name value <<< "$item"
-        printf 'repo|%s|https://github.com/%s\n' "$name" "$value"
+        printf 'repo_sync|%s|%s|https://github.com/%s\n' "$name" "$TOOLS_PATH/$name" "$value"
     done
-    printf 'post_install|gf_templates|copy gf examples and custom templates\n'
-    printf 'post_install|recursive_wordlist|generate recursive.txt from dirsearch wordlist and raft list\n'
+
+    printf 'post_install|gf_templates|copy_gf_templates|%s\n' "$HOME/.gf"
+    printf 'post_install|recursive_wordlist|generate_recursive_wordlist|%s\n' "${RECURSIVE_LIST:-$LISTS_PATH/recursive.txt}"
 }
 
 hacktools_download_wordlists() {
