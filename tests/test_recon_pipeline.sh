@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)
 source "$ROOT/config/zsh/functions/pipeline.zsh"
 source "$ROOT/config/zsh/functions/recon.zsh"
+source "$ROOT/config/zsh/functions/scanning.zsh"
 red=''
 reset=''
 yellow=''
@@ -48,6 +49,21 @@ if (cd "$tmp" && subdomainenum) >/tmp/subdomainenum-missing.out 2>&1; then
 fi
 grep -q 'subdomainenum requires domains' /tmp/subdomainenum-missing.out
 grep -q 'Run: workspaceRecon <domain>' /tmp/subdomainenum-missing.out
+
+printf 'example.com\n' > "$tmp/domains"
+if (cd "$tmp" && resolving) >/tmp/resolving-missing.out 2>&1; then
+  echo "resolving without sorted.all.subdomains unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'resolving requires sorted.all.subdomains' /tmp/resolving-missing.out
+
+echo 'sub.example.com' > "$tmp/clean.subdomains"
+rm -f "$tmp/ALLHTTP"
+if (cd "$tmp" && screenshot) >/tmp/screenshot-missing.out 2>&1; then
+  echo "screenshot without ALLHTTP unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'screenshot requires ALLHTTP' /tmp/screenshot-missing.out
 
 if ! (cd "$tmp" && RECON_PIPELINE_MODE=plan subdomainenum) >/tmp/recon-plan.out 2>&1; then
   echo "subdomainenum plan unexpectedly failed" >&2

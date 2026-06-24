@@ -32,8 +32,6 @@ subdomainenum() {
   recon_maybe_render_plan "subdomainenum" "$@" && return 0
   echo "${yellow}[+] Starting passive subdomain enumeration...${reset}"
   recon_require_stage_inputs "subdomainenum" || return 1
-  local Domain
-  Domain=$(cat domains)
   subfinder -up
   subfinder -nW -t 100 -all -o all.subdomains -dL domains
   dnsx -l all.subdomains -silent | anew clean.subdomains
@@ -41,8 +39,7 @@ subdomainenum() {
 }
 
 resolving() {
-  require_workspace_file "domains" "resolving" || return 1
-  require_workspace_file "sorted.all.subdomains" "resolving" || return 1
+  recon_require_stage_inputs "resolving" || return 1
   shuffledns -d domains -list sorted.all.subdomains -r "$RESOLVERS_LIST" -o resolved.subdomains
 }
 

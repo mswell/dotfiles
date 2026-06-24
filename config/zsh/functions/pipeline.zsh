@@ -58,19 +58,25 @@ require_workspace_file() {
 
 recon_require_stage_inputs() {
   local stage="$1"
-  local inputs
+  local required_inputs
   local input
-  inputs=$(recon_stage_inputs "$stage")
-  [ "$inputs" = "-" ] && return 0
-  IFS=',' read -r -a _recon_stage_inputs <<< "$inputs"
-  for input in "${_recon_stage_inputs[@]}"; do
+  local input_lines
+
+  required_inputs=$(recon_stage_inputs "$stage")
+  [ "$required_inputs" = "-" ] && return 0
+
+  input_lines=$(printf '%s' "$required_inputs" | tr ',' '\n')
+  while IFS= read -r input; do
+    [ -n "$input" ] || continue
     require_workspace_file "$input" "$stage" || return 1
-  done
+  done <<EOF
+$input_lines
+EOF
 }
 
 recon_stage_plan() {
   local stage="$1"
-  shift || true
+  [ "$#" -gt 0 ] && shift
   local inputs outputs target wdir
   inputs=$(recon_stage_inputs "$stage")
   outputs=$(recon_stage_outputs "$stage")
@@ -103,10 +109,10 @@ recon_stage_plan() {
 
 recon_maybe_render_plan() {
   local stage="$1"
-  shift || true
+  [ "$#" -gt 0 ] && shift
   case "${1:-}" in
     --plan|--dry-run)
-      shift || true
+      [ "$#" -gt 0 ] && shift
       recon_stage_plan "$stage" "$@"
       return 0
       ;;
