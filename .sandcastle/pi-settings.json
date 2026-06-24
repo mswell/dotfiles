@@ -1,0 +1,9 @@
+{
+  "defaultProvider": "openai-codex",
+  "defaultModel": "openai-codex/gpt-5.4",
+  "defaultThinkingLevel": "high",
+  "packages": [],
+  "compaction": {
+    "enabled": false
+  }
+}
