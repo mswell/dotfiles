@@ -9,7 +9,7 @@ filterLive() {
 
 getalive() {
   echo "${yellow}[+] Checking for live hosts...${reset}"
-  require_workspace_file "clean.subdomains" "getalive" || return 1
+  recon_require_stage_inputs "getalive" || return 1
   httpx -l clean.subdomains -silent -status-code -tech-detect -title -ip -cname -location -cl -timeout 10 -threads 10 -o HTTPOK
 
   filterLive
@@ -17,7 +17,7 @@ getalive() {
 
 naabuRecon() {
   echo "${yellow}[+] Running port scan with Naabu...${reset}"
-  require_workspace_file "clean.subdomains" "naabuRecon" || return 1
+  recon_require_stage_inputs "naabuRecon" || return 1
   naabu -l clean.subdomains -ec -tp 100 -sa -o naabuScan
   httpx -l naabuScan -silent -status-code -tech-detect -title -ip -cname -location -cl -timeout 10 -threads 10 -o HTTPOKSCAN
   cat HTTPOKSCAN | anew HTTPOK
@@ -61,7 +61,7 @@ massHakip2host() {
 # Outputs: outputFavFreak directory
 faviconEnum() {
   echo '${yellow}[+] Enumerating infrastructure with FavFreak...${reset}'
-  require_workspace_file "200HTTP" "faviconEnum" || return 1
+  recon_require_stage_inputs "faviconEnum" || return 1
   python3 "$FAVFREAK_PATH" --shodan -o outputFavFreak -i 200HTTP
 }
 
@@ -71,7 +71,7 @@ faviconEnum() {
 # Outputs: aqua_out directory with screenshots
 screenshot() {
   echo "${yellow}[+] Taking screenshots...${reset}"
-  require_workspace_file "ALLHTTP" "screenshot" || return 1
+  recon_require_stage_inputs "screenshot" || return 1
   cat ALLHTTP | aquatone -chrome-path /snap/bin/chromium -scan-timeout 900 -http-timeout 6000 -out aqua_out -ports xlarge
 }
 
