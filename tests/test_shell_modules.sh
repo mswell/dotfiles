@@ -41,6 +41,29 @@ fi
 
 mockbin=$(mktemp -d)
 trap 'rm -rf "$mockbin"' EXIT
+cat > "$mockbin/pkill" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+cat > "$mockbin/gsettings" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+cat > "$mockbin/hyprctl" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "$mockbin/pkill" "$mockbin/gsettings" "$mockbin/hyprctl"
+
+tmp_home=$(mktemp -d)
+tmp_plan=$(THEME_HOME="$tmp_home" theme_plan wellpunk-light)
+tmp_persist_plan_entry=$(printf '%s\n' "$tmp_plan" | grep '^persist|')
+catalog_persist_entry=$(THEME_HOME="$tmp_home" _theme_catalog_persist_current_theme wellpunk-light)
+[[ "$catalog_persist_entry" == "$tmp_persist_plan_entry" ]]
+THEME_HOME="$tmp_home" PATH="$mockbin:/usr/bin:/bin" theme_apply wellpunk-light >/dev/null
+persist_apply_entry="persist|$tmp_home/.config/hypr/current-theme|$(cat "$tmp_home/.config/hypr/current-theme")"
+[[ "$persist_apply_entry" == "$catalog_persist_entry" ]]
+rm -rf "$tmp_home"
 cat > "$mockbin/dbus-send" <<'EOF'
 #!/usr/bin/env bash
 printf 'method return\n   variant       variant          uint32 1\n'
