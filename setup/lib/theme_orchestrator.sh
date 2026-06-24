@@ -32,6 +32,33 @@ theme_current_file() {
     printf '%s/.config/hypr/current-theme\n' "$(_theme_home)"
 }
 
+_theme_catalog_persist_current_theme() {
+    local theme="$1"
+    printf 'persist|%s|%s\n' "$(theme_current_file)" "$theme"
+}
+
+_theme_apply_catalog_action() {
+    local action="$1" target="$2" value="$3"
+
+    case "$action" in
+        persist)
+            mkdir -p "$(dirname "$target")"
+            printf '%s\n' "$value" > "$target"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+_theme_apply_catalog_entry() {
+    local entry="$1"
+    local action target value
+
+    IFS='|' read -r action target value <<< "$entry"
+    _theme_apply_catalog_action "$action" "$target" "$value"
+}
+
 theme_current() {
     local current_file
     current_file="$(theme_current_file)"
@@ -135,7 +162,7 @@ theme_plan() {
     theme_is_supported "$theme" || return 1
 
     cat <<PLAN
-persist|$home/.config/hypr/current-theme|$theme
+$(_theme_catalog_persist_current_theme "$theme")
 symlink|$home/.config/hypr/themes/$theme.conf|$home/.config/hypr/colors.conf
 symlink|$home/.config/hypr/themes/$theme.lua|$home/.config/hypr/colors.lua
 symlink|$home/.config/waybar/themes/$theme.css|$home/.config/waybar/themes/current.css
@@ -196,7 +223,6 @@ theme_apply() {
     bat_themes="$home/.config/bat/themes"
     git_themes="$home/.config/git/themes"
     ghostty_themes="$home/.config/ghostty/themes"
-    current_file="$home/.config/hypr/current-theme"
     bg_dir="$home/.config/backgrounds"
 
     _theme_ln_sf "$hypr_themes/$theme.conf" "$home/.config/hypr/colors.conf"
@@ -372,8 +398,7 @@ EOF
         fi
     fi
 
-    mkdir -p "$(dirname "$current_file")"
-    printf '%s\n' "$theme" > "$current_file"
+    _theme_apply_catalog_entry "$(_theme_catalog_persist_current_theme "$theme")"
 
     command -v notify-send >/dev/null 2>&1 && notify-send "Theme" "Switched to: $theme" --icon=preferences-desktop-theme -t 2000 || true
 }
