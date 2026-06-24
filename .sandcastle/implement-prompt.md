@@ -25,4 +25,6 @@ feat: short description (#{{TASK_ID}})
 
 - Do NOT close the issue — that happens during the merge phase.
 - Do NOT merge into main/master — just commit to your branch.
+- Do NOT use RALPH, PRD, or any other prefix/loop system in commit messages.
+- Use plain conventional commits only (feat/fix/refactor/test/chore).
 - If the issue is unclear, implement the most reasonable interpretation.
