@@ -1,30 +1,61 @@
 # TASK
 
-You are implementing issue **{{TASK_ID}}**: {{ISSUE_TITLE}}
+Fix issue {{TASK_ID}}: {{ISSUE_TITLE}}
 
-You are working on branch `{{BRANCH}}`.
+Pull in the issue using `gh issue view {{TASK_ID}}`. If it has a parent PRD, pull that in too.
 
-# INSTRUCTIONS
+Only work on the issue specified.
 
-1. Read the full issue body and any comments for context.
-2. Understand the existing codebase before making changes.
-3. Implement the changes described in the issue.
-4. Follow existing code style and patterns in the project.
-5. Write tests if the project has a test suite.
-6. Make sure your changes don't break existing functionality.
-7. Commit your changes with a clear, descriptive commit message referencing the issue number.
+Work on branch {{BRANCH}}. Make commits and run tests.
 
-# COMMIT MESSAGE FORMAT
+# CONTEXT
 
-Use conventional commits:
+Here are the last 10 commits:
+
+<recent-commits>
+
+!`git log -n 10 --format="%H%n%ad%n%B---" --date=short`
+
+</recent-commits>
+
+# EXPLORATION
+
+Explore the repo and fill your context window with relevant information that will allow you to complete the task.
+
+Pay extra attention to test files that touch the relevant parts of the code.
+
+# EXECUTION
+
+If applicable, use RGR to complete the task.
+
+1. RED: write one test
+2. GREEN: write the implementation to pass that test
+3. REPEAT until done
+4. REFACTOR the code
+
+# FEEDBACK LOOPS
+
+Before committing, run the project's test suite to ensure tests pass.
+If available: `bash tests/run.sh`
+
+# COMMIT
+
+Make a git commit. The commit message must use conventional commits format:
+
 ```
-feat: short description (#{{TASK_ID}})
+feat|fix|refactor|test|chore: concise description (#{{TASK_ID}})
 ```
 
-# IMPORTANT
+Do NOT use RALPH, PRD, or any other custom prefix system.
 
-- Do NOT close the issue — that happens during the merge phase.
-- Do NOT merge into main/master — just commit to your branch.
-- Do NOT use RALPH, PRD, or any other prefix/loop system in commit messages.
-- Use plain conventional commits only (feat/fix/refactor/test/chore).
-- If the issue is unclear, implement the most reasonable interpretation.
+# THE ISSUE
+
+If the task is not complete, leave a comment on the issue with what was done.
+
+Do not close the issue - this will be done later.
+
+Once complete, output <promise>COMPLETE</promise>.
+
+# FINAL RULES
+
+ONLY WORK ON A SINGLE TASK.

@@ -1,21 +1,26 @@
 # TASK
 
-Merge the following completed branches into the current branch:
+Merge the following branches into the current branch:
 
 {{BRANCHES}}
 
-These branches implement the following issues:
+For each branch:
+
+1. Run `git merge <branch> --no-edit`
+2. If there are merge conflicts, resolve them intelligently by reading both sides and choosing the correct resolution
+3. After resolving conflicts, run `bash tests/run.sh` to verify everything works
+4. If tests fail, fix the issues before proceeding to the next branch
+
+After all branches are merged, make a single commit summarizing the merge.
+
+# CLOSE ISSUES
+
+For each branch that was merged, close its issue using:
+
+`gh issue close <number> --comment "Closed via Sandcastle merge"`
+
+Here are all the issues:
 
 {{ISSUES}}
 
-# INSTRUCTIONS
-
-1. For each branch, run `git merge <branch>`.
-2. If there are merge conflicts, resolve them intelligently by understanding both sides.
-3. After all merges, run any available tests to verify nothing is broken.
-4. If tests fail, fix the issues and commit the fixes.
-
-# IMPORTANT
-
-- Merge all listed branches, not just some of them.
-- If a merge conflict is too complex to resolve confidently, skip that branch and note it.
+Once you've merged everything you can, output <promise>COMPLETE</promise>.
