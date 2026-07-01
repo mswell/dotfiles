@@ -17,6 +17,8 @@ if [ -d "$FUNCTIONS_DIR" ]; then
     source "$FUNCTIONS_DIR/vulns.zsh"     # Vulnerability scanning
     source "$FUNCTIONS_DIR/nuclei.zsh"    # Nuclei scanning workflows
     source "$FUNCTIONS_DIR/infra.zsh"     # Infrastructure and DNS
+    source "$FUNCTIONS_DIR/shadowclone.zsh" # ShadowClone distributed recon normalized to 3-Recon/shadowclone-*/
+    source "$FUNCTIONS_DIR/engagement.zsh" # Engagement recon bridge (bbrecon, bbrecon-cloud)
 else
     echo "[WARN] Functions directory not found at: $FUNCTIONS_DIR"
     echo "[WARN] Bug bounty functions will not be available"
