@@ -29,6 +29,7 @@ Usage:
   shadowflow nuclei [-i ALIVE_URLS] [-o RUN_DIR] [-s SPLIT]
   shadowflow normalize [-o RUN_DIR]
   shadowflow summary [-o RUN_DIR]
+  shadowflow doctor
   shadowflow last
 
 Raiju-compatible output:
@@ -57,6 +58,7 @@ Examples:
   shadowflow all -i 6-Lists/in-scope-domains.txt -s 50 --katana
   shadowflow subfinder -i roots.txt -s 5
   shadowflow httpx -i 3-Recon/shadowclone-*/normalized/resolved.txt -s 50
+  shadowflow doctor
   shadowflow summary
 EOF
 }
@@ -132,6 +134,12 @@ _shadowflow_script() {
   echo "$base/shadowclone.py"
 }
 
+_shadowflow_output_has_error() {
+  local file="$1"
+  [ -s "$file" ] || return 1
+  grep -Eq 'Encountered a bad command exit code|Exit code: 12[0-9]|command not found|No such file or directory' "$file"
+}
+
 _shadowflow_run_shadowclone() {
   local input="$1"
   local split="$2"
@@ -150,7 +158,14 @@ _shadowflow_run_shadowclone() {
   mkdir -p "$(dirname "$abs_output")"
 
   echo "${yellow}[+] ShadowClone: input=$input split=$split output=$output${reset}"
-  "$py" "$sc" -i "$abs_input" -s "$split" -o "$abs_output" -c "$command_template"
+  "$py" "$sc" -i "$abs_input" -s "$split" -o "$abs_output" -c "$command_template" || return 1
+
+  if _shadowflow_output_has_error "$abs_output"; then
+    echo "${red}[-] shadowflow: ShadowClone command failed; see $output${reset}"
+    grep -E 'Command:|Exit code:|Encountered a bad command exit code|command not found|No such file or directory' "$abs_output" | head -20
+    echo "${yellow}[!] If Exit code is 127, the ShadowClone runtime image does not contain the tool. Run: shadowflow doctor${reset}"
+    return 1
+  fi
 }
 
 _shadowflow_default_input() {
@@ -170,7 +185,12 @@ _shadowflow_default_input() {
 _shadowflow_normalize_subfinder() {
   local run_dir="$1"
   if [ -s "$run_dir/raw/subfinder-all.txt" ]; then
-    sort -u "$run_dir/raw/subfinder-all.txt" > "$run_dir/normalized/subdomains-all.txt"
+    if _shadowflow_output_has_error "$run_dir/raw/subfinder-all.txt"; then
+      : > "$run_dir/normalized/subdomains-all.txt"
+      : > "$run_dir/normalized/subdomains-new.txt"
+      return 1
+    fi
+    grep -Eo '([A-Za-z0-9_-]+\.)+[A-Za-z]{2,}' "$run_dir/raw/subfinder-all.txt" | sort -u > "$run_dir/normalized/subdomains-all.txt"
     if [ -s "ccSurface.md" ]; then
       # Best-effort: avoid re-import noise by treating domains already mentioned in ccSurface as old.
       grep -Eo '([A-Za-z0-9_-]+\.)+[A-Za-z]{2,}' ccSurface.md | sort -u > "$run_dir/normalized/.known-subdomains.tmp" 2>/dev/null || true
@@ -184,18 +204,30 @@ _shadowflow_normalize_subfinder() {
 
 _shadowflow_normalize_dnsx() {
   local run_dir="$1"
-  [ -s "$run_dir/raw/dnsx-resolved.txt" ] && sort -u "$run_dir/raw/dnsx-resolved.txt" > "$run_dir/normalized/resolved.txt"
+  if [ -s "$run_dir/raw/dnsx-resolved.txt" ]; then
+    if _shadowflow_output_has_error "$run_dir/raw/dnsx-resolved.txt"; then
+      : > "$run_dir/normalized/resolved.txt"
+      return 1
+    fi
+    grep -Eo '([A-Za-z0-9_-]+\.)+[A-Za-z]{2,}' "$run_dir/raw/dnsx-resolved.txt" | sort -u > "$run_dir/normalized/resolved.txt"
+  fi
 }
 
 _shadowflow_normalize_httpx() {
   local run_dir="$1"
   if [ -s "$run_dir/raw/httpx-all.jsonl" ]; then
+    if _shadowflow_output_has_error "$run_dir/raw/httpx-all.jsonl"; then
+      : > "$run_dir/normalized/alive-httpx.jsonl"
+      : > "$run_dir/normalized/alive-urls.txt"
+      : > "$run_dir/normalized/interesting-hosts.tsv"
+      return 1
+    fi
     if command -v jq >/dev/null 2>&1; then
-      jq -c 'select(.url != null)' "$run_dir/raw/httpx-all.jsonl" > "$run_dir/normalized/alive-httpx.jsonl" 2>/dev/null || cp "$run_dir/raw/httpx-all.jsonl" "$run_dir/normalized/alive-httpx.jsonl"
+      jq -c 'select(.url != null)' "$run_dir/raw/httpx-all.jsonl" > "$run_dir/normalized/alive-httpx.jsonl" 2>/dev/null || : > "$run_dir/normalized/alive-httpx.jsonl"
       jq -r '.url // empty' "$run_dir/normalized/alive-httpx.jsonl" 2>/dev/null | sort -u > "$run_dir/normalized/alive-urls.txt"
       jq -r '[.url, (.status_code // .status // ""), (.title // ""), ((.tech // []) | join("|"))] | @tsv' "$run_dir/normalized/alive-httpx.jsonl" 2>/dev/null > "$run_dir/normalized/interesting-hosts.tsv" || true
     else
-      cp "$run_dir/raw/httpx-all.jsonl" "$run_dir/normalized/alive-httpx.jsonl"
+      grep -E '^\{' "$run_dir/raw/httpx-all.jsonl" > "$run_dir/normalized/alive-httpx.jsonl"
       grep -Eo 'https?://[^" ]+' "$run_dir/raw/httpx-all.jsonl" | sort -u > "$run_dir/normalized/alive-urls.txt"
     fi
   fi
@@ -305,6 +337,39 @@ EOF
   echo "${green}[+] summary: $summary${reset}"
 }
 
+_shadowflow_doctor() {
+  local tmp out py sc
+  tmp=$(mktemp -d 2>/dev/null || mktemp -d -t shadowflow)
+  printf 'example.com\n' > "$tmp/input.txt"
+  out="$tmp/doctor.txt"
+  py=$(_shadowflow_python)
+  sc=$(_shadowflow_script)
+
+  echo "${yellow}[+] shadowflow doctor: checking ShadowClone runtime tools...${reset}"
+  echo "    script: $sc"
+  echo "    python: $py"
+
+  [ -n "$py" ] || { echo "${red}[-] python3 not found${reset}"; rm -rf "$tmp"; return 1; }
+  [ -f "$sc" ] || { echo "${red}[-] ShadowClone script not found: $sc${reset}"; rm -rf "$tmp"; return 1; }
+
+  "$py" "$sc" -i "$tmp/input.txt" -s 1 -o "$out" -c 'for t in subfinder dnsx httpx nuclei katana; do p=$(command -v "$t" || true); if [ -n "$p" ]; then echo "OK:$t:$p"; else echo "MISSING:$t"; fi; done; exit 0' || {
+    echo "${red}[-] ShadowClone invocation failed${reset}"
+    rm -rf "$tmp"
+    return 1
+  }
+
+  cat "$out"
+  if grep -Eq 'MISSING:(subfinder|dnsx|httpx)' "$out"; then
+    echo "${red}[-] Runtime is missing required tools (subfinder/dnsx/httpx). Rebuild/deploy the ShadowClone runtime image with ProjectDiscovery tools.${reset}"
+    echo "${yellow}[!] From ~/Projects/ShadowClone, rebuild your Lithops runtime, then rerun: shadowflow doctor${reset}"
+    rm -rf "$tmp"
+    return 1
+  fi
+
+  echo "${green}[+] ShadowClone runtime has the required base tools.${reset}"
+  rm -rf "$tmp"
+}
+
 shadowflow() {
   local cmd="$1"
   [ -n "$cmd" ] || { _shadowflow_usage; return 2; }
@@ -334,6 +399,10 @@ shadowflow() {
       if [ -z "$run_dir" ]; then run_dir=$(_shadowflow_new_run_dir); else run_dir=$(_shadowflow_prepare_run_dir "$run_dir") || return 1; fi
       echo "${green}[+] shadowflow run dir: $run_dir${reset}"
       return 0
+      ;;
+    doctor)
+      _shadowflow_doctor
+      return $?
       ;;
     last)
       _shadowflow_latest_run_dir
