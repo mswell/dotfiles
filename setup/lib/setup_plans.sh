@@ -12,8 +12,7 @@ setup_plan_title() {
         5) echo "Install Dev Environment (mise: Python + Node.js + pnpm)" ;;
         6) echo "Archlinux WSL" ;;
         7) echo "Claude for Bug Bounty (Skills + Agents + Caido AI)" ;;
-        8) echo "Install Pi Coding Agent + Restore Pi Config" ;;
-        9) echo "macOS Setup" ;;
+        8) echo "macOS Setup" ;;
         *) return 1 ;;
     esac
 }
@@ -27,8 +26,7 @@ setup_plan_steps() {
         5) echo "setup/devenv_install.sh" ;;
         6) echo "setup/ArchWSL/setup.sh" ;;
         7) echo "setup/install_skills.sh" ;;
-        8) echo "setup/install_pi.sh" ;;
-        9) echo "setup/macOS/setup.sh" ;;
+        8) echo "setup/macOS/setup.sh" ;;
         *) return 1 ;;
     esac
 }

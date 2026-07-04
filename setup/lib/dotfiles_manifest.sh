@@ -59,8 +59,6 @@ _dotfiles_manifest_common_rules() {
     _dotfiles_manifest_rule copy_file "$root/config/tmux/tmux-cht.sh" "$HOME/.local/bin/tmux-cht.sh"
     _dotfiles_manifest_rule chmod_exec "" "$HOME/.local/bin/tmux-sessionizer"
     _dotfiles_manifest_rule chmod_exec "" "$HOME/.local/bin/tmux-cht.sh"
-    _dotfiles_manifest_rule dir "" "$HOME/.pi/agent/themes"
-    _dotfiles_manifest_rule copy_dir "$root/config/pi/agent/themes" "$HOME/.pi/agent/themes"
     _dotfiles_manifest_rule dir "" "$config_dir/fzf/themes"
     _dotfiles_manifest_rule copy_dir "$root/config/fzf/themes" "$config_dir/fzf/themes"
     _dotfiles_manifest_rule dir "" "$config_dir/tmux/themes"
@@ -75,6 +73,16 @@ _dotfiles_manifest_macos_rules() {
     _dotfiles_manifest_rule copy_file "$root/config/Ghostty/config" "$macos_ghostty_dir/config"
     _dotfiles_manifest_rule dir "" "$macos_ghostty_dir/themes"
     _dotfiles_manifest_rule copy_dir "$root/config/Ghostty/themes" "$macos_ghostty_dir/themes"
+    _dotfiles_manifest_rule copy_file "$root/config/bin/pi-sync-tokyonight-theme" "$HOME/.local/bin/pi-sync-tokyonight-theme"
+    _dotfiles_manifest_rule copy_file "$root/config/bin/tmux-sync-tokyonight-theme" "$HOME/.local/bin/tmux-sync-tokyonight-theme"
+    _dotfiles_manifest_rule copy_file "$root/config/bin/fzf-sync-tokyonight-theme" "$HOME/.local/bin/fzf-sync-tokyonight-theme"
+    _dotfiles_manifest_rule chmod_exec "" "$HOME/.local/bin/pi-sync-tokyonight-theme"
+    _dotfiles_manifest_rule chmod_exec "" "$HOME/.local/bin/tmux-sync-tokyonight-theme"
+    _dotfiles_manifest_rule chmod_exec "" "$HOME/.local/bin/fzf-sync-tokyonight-theme"
+    _dotfiles_manifest_rule dir "" "$HOME/Library/LaunchAgents"
+    _dotfiles_manifest_rule copy_file "$root/config/launchagents/dev.pi.sync-tokyonight-theme.plist" "$HOME/Library/LaunchAgents/dev.pi.sync-tokyonight-theme.plist"
+    _dotfiles_manifest_rule copy_file "$root/config/launchagents/dev.tmux.sync-tokyonight-theme.plist" "$HOME/Library/LaunchAgents/dev.tmux.sync-tokyonight-theme.plist"
+    _dotfiles_manifest_rule copy_file "$root/config/launchagents/dev.fzf.sync-tokyonight-theme.plist" "$HOME/Library/LaunchAgents/dev.fzf.sync-tokyonight-theme.plist"
 }
 
 _dotfiles_manifest_linux_rules() {
