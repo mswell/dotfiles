@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+THEME_DIR="$HOME/.config/tmux/themes"
+CURRENT_THEME="$HOME/.config/tmux/current-theme.conf"
+STATE_FILE="$HOME/.config/tmux/.tokyonight-system-mode"
+
+mkdir -p "$THEME_DIR"
+
+if defaults read -g AppleInterfaceStyle 2>/dev/null | grep -qi '^Dark$'; then
+  mode="dark"
+  target="$THEME_DIR/tokyonight-dark.conf"
+else
+  mode="light"
+  target="$THEME_DIR/tokyonight-light.conf"
+fi
+
+current_target="$(readlink "$CURRENT_THEME" 2>/dev/null || true)"
+previous_mode="$(cat "$STATE_FILE" 2>/dev/null || true)"
+
+if [[ "$current_target" != "$target" ]]; then
+  ln -sf "$target" "$CURRENT_THEME"
+fi
+
+# Avoid re-sourcing tmux unless the macOS appearance or symlink changed.
+if [[ "$previous_mode" == "$mode" && "$current_target" == "$target" ]]; then
+  exit 0
+fi
+
+printf '%s' "$mode" > "$STATE_FILE"
+
+if command -v tmux >/dev/null 2>&1 && tmux has-session >/dev/null 2>&1; then
+  tmux source-file "$CURRENT_THEME" \; display-message "TokyoNight ${mode} theme"
+fi

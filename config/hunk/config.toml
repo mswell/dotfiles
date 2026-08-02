@@ -1,0 +1,5 @@
+# Exibe notas e comentários de agentes ao abrir uma revisão.
+agent_notes = true
+
+# Escolhe automaticamente o tema claro ou escuro conforme o fundo do terminal.
+theme = "auto"

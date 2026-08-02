@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+THEME_DIR="$HOME/.config/fzf/themes"
+CURRENT_THEME="$HOME/.config/fzf/current-theme.sh"
+STATE_FILE="$HOME/.config/fzf/.tokyonight-system-mode"
+
+mkdir -p "$THEME_DIR"
+
+if defaults read -g AppleInterfaceStyle 2>/dev/null | grep -qi '^Dark$'; then
+  mode="dark"
+  target="$THEME_DIR/tokyonight-dark.sh"
+else
+  mode="light"
+  target="$THEME_DIR/tokyonight-light.sh"
+fi
+
+current_target="$(readlink "$CURRENT_THEME" 2>/dev/null || true)"
+previous_mode="$(cat "$STATE_FILE" 2>/dev/null || true)"
+
+if [[ "$current_target" != "$target" ]]; then
+  ln -sf "$target" "$CURRENT_THEME"
+fi
+
+# New shells source ~/.config/fzf/current-theme.sh. For new tmux panes/windows,
+# also update tmux's global environment without accumulating duplicate --color flags.
+if command -v tmux >/dev/null 2>&1 && tmux has-session >/dev/null 2>&1; then
+  new_fzf_opts="$(env -i HOME="$HOME" bash -c 'FZF_DEFAULT_OPTS=""; source "$1"; printf "%s" "$FZF_DEFAULT_OPTS"' bash "$target")"
+  tmux set-environment -g FZF_DEFAULT_OPTS "$new_fzf_opts"
+fi
+
+# Avoid touching state after tmux env has been refreshed for the current target.
+if [[ "$previous_mode" == "$mode" && "$current_target" == "$target" ]]; then
+  exit 0
+fi
+
+printf '%s' "$mode" > "$STATE_FILE"
+
+if command -v tmux >/dev/null 2>&1 && tmux has-session >/dev/null 2>&1; then
+  tmux display-message "fzf TokyoNight ${mode} theme"
+fi

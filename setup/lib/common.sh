@@ -41,3 +41,13 @@ setup_bat_theme() {
         https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme
     bat cache --build
 }
+
+install_herdr() {
+    if command -v herdr &>/dev/null; then
+        echo "${green}✓ Herdr already installed${reset}"
+        return 0
+    fi
+
+    echo "${yellow}[+] Installing Herdr...${reset}"
+    curl -fsSL https://herdr.dev/install.sh | sh
+}

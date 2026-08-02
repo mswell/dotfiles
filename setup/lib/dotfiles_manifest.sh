@@ -49,6 +49,8 @@ _dotfiles_manifest_common_rules() {
     _dotfiles_manifest_rule copy_file "$root/config/Ghostty/config" "$config_dir/ghostty/config"
     _dotfiles_manifest_rule dir "" "$config_dir/ghostty/themes"
     _dotfiles_manifest_rule copy_dir "$root/config/Ghostty/themes" "$config_dir/ghostty/themes"
+    _dotfiles_manifest_rule copy_file "$root/config/herdr/config.toml" "$config_dir/herdr/config.toml"
+    _dotfiles_manifest_rule copy_file "$root/config/hunk/config.toml" "$config_dir/hunk/config.toml"
     _dotfiles_manifest_rule copy_file "$root/config/wezterm/wezterm.lua" "$config_dir/wezterm/wezterm.lua"
     _dotfiles_manifest_rule copy_dir "$root/config/kitty" "$config_dir/kitty"
     _dotfiles_manifest_rule dir "" "$HOME/.local/bin"

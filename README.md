@@ -131,6 +131,9 @@ config/
 │       ├── theme-switch.sh  # syncs all components on theme change
 │       └── power-menu.sh    # walker dmenu power menu
 ├── nvim/                    # legacy/local reference; installer clones https://github.com/mswell/nvim
+├── Ghostty/                 # shared Ghostty config and themes for macOS/Linux
+├── herdr/                   # Herdr agent multiplexer configuration
+├── hunk/                    # Hunk diff viewer configuration
 ├── kitty/themes/
 ├── waybar/themes/
 ├── walker/

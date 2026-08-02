@@ -114,6 +114,8 @@ if ((${#aur_packages[@]})); then
     install_yay "${aur_packages[@]}"
 fi
 
+install_herdr
+
 # File copies, chmod and initial theme apply now live in the shared manifest
 # (setup/lib/dotfiles_manifest.sh) and run from setup/copy_dots.sh later in
 # this same install flow. Re-running copy_dots.sh is the canonical "sync".

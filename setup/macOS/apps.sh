@@ -3,7 +3,7 @@ set -euo pipefail
 source "${DOTFILES}/setup/lib/homebrew.sh"
 
 echo "${yellow}[+] Installing CLI tools...${reset}"
-install_brew zoxide tmux bat lsd git-delta fzf ripgrep eza tree lazygit ctags htop neovim ffmpeg yt-dlp
+install_brew zoxide tmux bat lsd git-delta fzf ripgrep eza tree lazygit ctags htop neovim ffmpeg yt-dlp herdr
 
 echo "${yellow}[+] Installing shell tools...${reset}"
 install_brew zsh

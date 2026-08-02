@@ -15,6 +15,7 @@ install_pacman unrar zip 7zip ntfs-3g dosfstools \
 # Development
 install_pacman python python-setuptools ripgrep neovim docker docker-compose \
     eza tree
+install_herdr
 
 setup_nvim_dir
 setup_bat_theme

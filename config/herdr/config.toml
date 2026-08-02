@@ -1,0 +1,27 @@
+onboarding = false
+
+[ui.toast]
+delivery = "system"
+
+[ui]
+show_agent_labels_on_pane_borders = true
+
+# Mantem a barra lateral estreita para dar mais espaco aos paineis.
+sidebar_width = 18
+sidebar_min_width = 14
+sidebar_max_width = 22
+
+agent_panel_sort = "spaces"
+
+[theme]
+name = "tokyo-night-day"
+auto_switch = true
+dark_name = "tokyo-night"
+light_name = "tokyo-night-day"
+
+[ui.sound]
+enabled = true
+
+[experimental]
+pane_history = true
+switch_ascii_input_source_in_prefix = false

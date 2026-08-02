@@ -11,14 +11,15 @@ Static analysis of decompiled Android APKs for bug bounty programs.
 **Rule #2: No impact = not reported.** Ignore theoretical issues without an attack vector.
 **Rule #3: BRAIN DUMP MANDATE.** Before listing vulnerabilities, output a Brain Dump documenting your reasoning, what you searched and failed to find, and why you discarded false positives.
 **Rule #4: DUAL DECOMPILATION.** ALWAYS run BOTH Jadx AND Apktool on every APK. Never skip one. Each tool reveals data the other misses.
+**Rule #5: CONFIGURATION-TO-CAPABILITY TRACE.** A string is not a finding merely because it looks secret. For every production configuration holder with opaque/high-entropy values, map `constant → accessor/interface → consumer → SDK/API operation` and classify its capability before closing the secrets phase. Obfuscation is not an exemption: use Kotlin metadata, implemented interfaces, call sites, smali, and SDK builders to recover semantics.
 
 ## Tool Usage
 
-Subagents MUST use Claude Code's dedicated tools for code analysis:
-- **Grep tool** for all text/pattern searches (NOT `grep` or `rg` via Bash)
-- **Glob tool** for file discovery (NOT `find` or `ls` via Bash)
-- **Read tool** for file reading (NOT `cat`/`head`/`tail` via Bash)
-- **Bash tool** ONLY for: `jadx`, `apktool`, `strings`, `openssl`, `curl`, `adb`, `mkdir`, `unzip`, `bundletool`
+Use the harness's available file-search, file-read, and shell tools. Prefer structured search/read tools when available; use shell commands when needed to run analysis tools or inspect their output.
+
+Resolve every `references/...` path relative to the directory containing this `SKILL.md`, not the target APK workspace. Parallelize independent phases only when the harness supports it; otherwise run the same phases sequentially.
+
+**Authorization gate:** before any network request, device interaction, credential test, or attempt to access a cloud/vendor resource, confirm the target and action are explicitly authorized and in scope. Without that authorization, do offline static analysis only and record the untested branch. Never bulk-collect records or invoke a state-changing endpoint merely to establish a credential's capability.
 
 ---
 
@@ -114,6 +115,7 @@ Wave 2 (SEQUENTIAL — after Wave 1 completes):
 ```
 Phase 1: Manifest & Attack Surface  → exports, deep links, permissions, Task Hijacking, tapjacking
 Phase 2: Secrets & Certificates     → keys, tokens, certs across ALL dirs (Jadx + Apktool)
+Phase 2B: Configuration Capability  → constant → accessor → consumer → SDK/API capability matrix
 Phase 3: Network Security           → cleartext, cert pinning, MITM, WebSocket, TrustManager
 Phase 4: WebView & Taint Analysis   → JS bridges, file access, mandatory source-to-sink tracing
 Phase 5: Data Storage               → SharedPrefs, SQLite, logs, external storage, clipboard
@@ -180,6 +182,54 @@ done
 - Is it a live production key or test/example value?
 - What access does it grant externally?
 - Can it be exploited without device access?
+
+---
+
+## Phase 2B: Mandatory Configuration-to-Capability Trace
+
+**Goal:** Prevent false negatives where an obfuscated production configuration value looks generic in a decompiler but is later passed to a privileged SDK/API builder.
+
+### Step 1 — Enumerate configuration holders
+
+Inventory app-owned production configuration sources before closing Phase 2:
+
+- `FlavorBuildConfiguration`, `BuildConfig`, build-flavor classes, config managers/providers, and their implemented interfaces/superclasses
+- `strings.xml`, `res/raw`, `assets`, `.properties`, `.json`, `.xml`, and remote-config bootstrap values
+- opaque/high-entropy strings, UUIDs, long hex/base64-like values, consumer secrets, signing material, and vendor passkeys
+
+Do not rely only on original method names: R8/Jadx may reduce `bazaarVoiceApiKey()` to `d()`. Recover meaning from `.source` metadata, Kotlin metadata, interface declarations, callers, nearby constants, and smali.
+
+### Step 2 — Trace every candidate to a consumer
+
+For each value, document this chain:
+
+```text
+constant location → accessor/interface method → caller → SDK/client builder or request construction → named operation/endpoint
+```
+
+Search for direct and inherited calls. Pay special attention to values passed to `apiKey`, `passkey`, `clientSecret`, `Authorization`, `Bearer`, `consumerSecret`, `setToken`, SDK builder methods, OAuth/token exchange code, signing/HMAC functions, payment/fraud SDK initialization, and vendor API clients.
+
+### Step 3 — Classify, do not guess
+
+Every candidate gets exactly one status in `.apk-audit/credential-capability-matrix.md`:
+
+| Status | Meaning | Required evidence |
+|---|---|---|
+| `public-client-config` | Expected mobile identifier or client-side config with no demonstrated privileged capability | constant + consumer trace |
+| `candidate-privileged-credential` | Reaches an operation that could exceed normal public-client access | complete trace + named operation/endpoint |
+| `needs-authorized-minimal-validation` | Static trace supports a concrete, safe read-only validation hypothesis | trace + proposed positive/negative control; no request yet |
+| `dead-or-unreachable` | No live consumer or only dead/error path found | call-site search evidence |
+| `validated-capability` | Authorized minimal validation proved a capability | positive and same-handler negative control, sanitized log |
+
+A generic secret regex hit without a consumer trace is **not** a finding. A production value that reaches a privileged SDK/API operation must not be silently dismissed as a public key.
+
+### Step 4 — Minimal validation only after authorization
+
+If and only if the authorization gate passes, validate one candidate at a time with the smallest read-only request possible and a same-handler invalid/negative control. Retain only status, counts, schema/field names, and error codes; do not retain PII, raw bulk responses, or secrets in reports. State-changing endpoints require separate explicit approval and a controlled/reversible test context.
+
+### Completion condition for Phase 2/2B
+
+Phase 2 is incomplete until the credential-capability matrix lists every app-owned production configuration holder found, including candidates that were ruled out. A “no actionable secrets” conclusion requires the matrix and at least five focused negative/hunt attempts.
 
 ---
 
@@ -383,10 +433,27 @@ curl -s "https://maps.googleapis.com/maps/api/staticmap?center=0,0&zoom=1&size=1
 3. **Taint Analysis Proof** for all data-flow vulnerabilities
 4. Real-world impact & CVSS 3.1 score
 5. Specific remediation with code example
+6. For credential findings: the configuration-to-capability trace, plus authorized minimal positive and negative controls. Static-only credential candidates remain leads, never findings.
 
 **Frida PoC Requirement:** For vulnerabilities involving client-side controls, MUST include a Frida script. See `references/frida-templates.md`.
 
 **CWE Reference:** Use `references/android-cwe-checklist.md` for accurate CWE mapping and CVSS scoring.
+
+### Required credential coverage artifact
+
+Every audit writes `.apk-audit/credential-capability-matrix.md`, even when no credential finding is confirmed. The final report links it under Analysis Log and explicitly says whether each `needs-authorized-minimal-validation` branch was tested, blocked by scope, or deferred.
+
+### Completion Gate
+
+Do not declare an APK audit complete until all applicable items are true:
+
+- Jadx and Apktool outcomes are recorded independently as success, partial, or failed, with limitations.
+- The manifest/attack surface is mapped from Apktool output, or the missing branch is recorded.
+- Each applicable phase is analyzed or explicitly marked not applicable, blocked, or out of authorized scope.
+- Phase 2/2B produced the credential-capability matrix; no production configuration holder is omitted merely because its accessor name is obfuscated.
+- Every reported finding has exact evidence, an attacker-controlled path, and demonstrated impact. Unverified hypotheses stay in leads/dead ends.
+- Any network/device/credential validation is documented as authorized with positive and negative controls, or explicitly marked untested.
+- `.apk-audit/report.md` contains the Brain Dump, dead ends, decompilation status, final finding count, and an explicit “no confirmed findings” result when appropriate.
 
 ### Report Template
 

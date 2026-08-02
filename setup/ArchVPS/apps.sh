@@ -16,6 +16,7 @@ install_pacman openssl libffi libxml2 libxslt zlib cmake \
 
 # Compression
 install_pacman unzip zip 7zip unrar
+install_herdr
 
 # Docker
 install_pacman docker docker-compose

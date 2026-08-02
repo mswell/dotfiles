@@ -32,7 +32,7 @@ RESOLVED_PNPM_VERSION=""
 PYTHON_TOOLS_ARRAY=("poetry" "ipython" "pytest" "black" "ruff" "mypy" "requests" "colorama" "pipx")
 
 # npm CLIs to install globally after Node.js is available through mise
-NPM_GLOBAL_TOOLS_ARRAY=("esbuild")
+NPM_GLOBAL_TOOLS_ARRAY=("esbuild" "hunkdiff")
 
 # Directories
 VENVS="$HOME/.ve"

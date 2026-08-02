@@ -28,6 +28,7 @@ echo \
 echo "${yellow}[+] Installing Docker packages${reset}"
 sudo apt update
 sudo apt install -y docker-ce zsh ripgrep npm docker-ce-cli containerd.io docker-compose-plugin zoxide
+install_herdr
 
 echo "${yellow}[+] Exporting PATH for Rust packages${reset}"
 export PATH="$HOME/.cargo/bin:$PATH"
