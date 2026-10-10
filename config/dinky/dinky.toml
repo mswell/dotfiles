@@ -12,9 +12,14 @@ default-tiling = true
 follow-app-activation = true
 float-windows-without-fullscreen = true
 
+# top = 32 da SketchyBar + 5 de gap (a barra de menus do macOS fica oculta)
 [gaps]
 inner = 5
-outer = 5
+outer = { top = 37, bottom = 5, left = 5, right = 5 }
+
+# Na tela do notebook (com notch) o macOS já reserva a faixa do topo
+[display.built-in]
+gaps.outer.top = 5
 
 # tokyonight — mesmas cores de config/hypr/themes/tokyonight.conf
 # (dinky não suporta gradiente: usa $active_border_1 / $inactive_border)
@@ -27,6 +32,14 @@ inactive-color = '#3b4261'
 [animations]
 enabled = true
 duration-ms = 150
+
+# SketchyBar (config/sketchybar): workspace em foco e modo atual
+[hooks]
+startup = ['exec-and-forget sketchybar --reload']
+workspace-changed = [
+  'exec-and-forget sketchybar --trigger dinky_workspace_change FOCUSED_WORKSPACE=$DINKY_WORKSPACE',
+]
+mode-changed = ['exec-and-forget sketchybar --trigger dinky_mode_change MODE=$DINKY_MODE']
 
 # Equivalente aos windowrules float-* do Hyprland
 [[rules]]
@@ -121,7 +134,20 @@ alt-shift-s = 'exec-and-forget screencapture -ic'
 # Option+A e Option+V nas preferências do Raycast (não vincular aqui,
 # senão o dinky consome a tecla).
 
+alt-r = 'mode resize'
 alt-shift-r = 'mode service'
+
+# Modo resize (alt-r): - diminui, + aumenta, = iguala, h/j/k/l por eixo; esc/enter sai
+[mode.resize]
+minus = 'resize smart -50'
+shift-equal = 'resize smart +50'
+equal = 'balance-sizes'
+h = 'resize width -50'
+l = 'resize width +50'
+j = 'resize height +50'
+k = 'resize height -50'
+esc = 'mode main'
+enter = 'mode main'
 
 # Modo de manutenção: alt-shift-r entra, esc sai
 [mode.service]

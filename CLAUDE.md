@@ -42,7 +42,7 @@ This is a comprehensive dotfiles management system for automated Linux developme
 - `[6]` - Arch Linux WSL (Windows Subsystem for Linux)
 - `[7]` - Claude for Bug Bounty (Skills + Agents + Caido AI)
 - `[8]` - macOS Setup (Homebrew, Ghostty, herdr, CLI tools)
-- `[9]` - macOS Setup + dinky tiling (Raycast + `config/dinky/dinky.toml`, Hyprland-style keys, tokyonight). Toggle/rollback with `setup/macOS/tiling.sh {disable|enable|uninstall|status}`
+- `[9]` - macOS Setup + dinky tiling (SketchyBar `config/sketchybar/` + Raycast + `config/dinky/dinky.toml`, `alt-r` resize mode, Hyprland-style keys, tokyonight). Toggle/rollback with `setup/macOS/tiling.sh {disable|enable|uninstall|status}`
 
 ### Dependency Chain
 

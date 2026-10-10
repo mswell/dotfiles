@@ -43,6 +43,9 @@ assert cfg["borders"]["inactive-color"] == "#3b4261"
 assert cfg["mode"]["main"]["alt-1"] == "workspace 1"
 assert cfg["mode"]["main"]["alt-0"] == "workspace 10"
 assert cfg["workspaces"] == 10
+assert cfg["mode"]["main"]["alt-r"] == "mode resize"
+assert cfg["mode"]["resize"]["esc"] == "mode main"
+assert "sketchybar --trigger dinky_workspace_change" in cfg["hooks"]["workspace-changed"][0]
 PY
 
 # Estado original: mru-spaces = true, workspaces-auto-swoosh ausente
@@ -63,6 +66,9 @@ if defaults read com.apple.dock workspaces-auto-swoosh >/dev/null 2>&1; then
   fail "auto-swoosh deveria voltar a ausente (padrão do macOS)"
 fi
 [[ ! -f "$DEFAULTS_BACKUP" ]] || fail "backup deveria ser removido após restaurar"
+if defaults read NSGlobalDomain _HIHideMenuBar >/dev/null 2>&1; then
+  fail "_HIHideMenuBar deveria voltar a ausente"
+fi
 
 # start-at-login: substitui a chave existente e não mexe nas tabelas
 cfg="$WORK/dinky.toml"
@@ -114,5 +120,29 @@ HOME="$fake_home" CONFIG_DIR="$fake_home/.config" DOTFILES="$fake_repo" HERDR_CO
 [[ "$(cat "$fake_repo/config/Ghostty/config")" == "font-size = 16" ]] || fail "Ghostty não capturado do Application Support"
 [[ -f "$fake_repo/config/Ghostty/themes/mine.conf" ]] || fail "temas do Ghostty não capturados"
 [[ "$(cat "$fake_repo/config/herdr/config.toml")" == "[keys]" ]] || fail "herdr não capturado"
+
+# SketchyBar: plugins chamam um sketchybar falso que registra os argumentos
+bin="$WORK/bin"; mkdir -p "$bin"
+printf '#!/bin/bash\necho "$*" >> "%s"\n' "$WORK/sb.log" > "$bin/sketchybar"; chmod +x "$bin/sketchybar"
+sb() { : > "$WORK/sb.log"; PATH="$bin:$PATH" CONFIG_DIR="$ROOT/config/sketchybar" "$@"; cat "$WORK/sb.log"; }
+out=$(sb env NAME=space.3 FOCUSED_WORKSPACE=3 bash "$ROOT/config/sketchybar/plugins/dinky_space.sh" 3)
+[[ "$out" == *"background.color=0xff7aa2f7"* ]] || fail "workspace em foco sem destaque: $out"
+out=$(sb env NAME=space.2 FOCUSED_WORKSPACE=3 bash "$ROOT/config/sketchybar/plugins/dinky_space.sh" 2)
+[[ "$out" == *"background.color=0x00000000"* ]] || fail "workspace sem foco destacado: $out"
+out=$(sb env NAME=dinky_mode MODE=resize bash "$ROOT/config/sketchybar/plugins/dinky_mode.sh")
+[[ "$out" == *"drawing=on label=RESIZE"* ]] || fail "modo resize não exibido: $out"
+out=$(sb env NAME=dinky_mode MODE=main bash "$ROOT/config/sketchybar/plugins/dinky_mode.sh")
+[[ "$out" == *"drawing=off"* ]] || fail "modo main deveria ocultar: $out"
+out=$(sb env CONFIG_DIR="$ROOT/config/sketchybar" bash "$ROOT/config/sketchybar/sketchybarrc")
+[[ "$out" == *"--add item space.10 left"* && "$out" == *"--add event dinky_mode_change"* ]] || fail "sketchybarrc incompleto"
+
+# install_sketchybar_config faz backup de config local diferente
+SKETCHYBAR_CONFIG_DIR="$WORK/sbcfg"
+mkdir -p "$SKETCHYBAR_CONFIG_DIR"; echo "local" > "$SKETCHYBAR_CONFIG_DIR/sketchybarrc"
+install_sketchybar_config >/dev/null
+cmp -s "$ROOT/config/sketchybar/sketchybarrc" "$SKETCHYBAR_CONFIG_DIR/sketchybarrc" || fail "config da barra não copiada"
+[[ "$(cat "$WORK"/sbcfg.bak.*/sketchybarrc)" == "local" ]] || fail "config local da barra sem backup"
+install_sketchybar_config >/dev/null
+[[ "$(ls -d "$WORK"/sbcfg.bak.* | wc -l)" -eq 1 ]] || fail "backup da barra criado sem diferença"
 
 echo "macos tiling tests passed"

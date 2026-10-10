@@ -1,0 +1,71 @@
+#!/bin/bash
+# SketchyBar no estilo da Waybar (tokyonight), integrado ao dinky via [hooks].
+# Esquerda: workspaces + modo do dinky + app em foco | centro: relógio
+# Direita: volume, bateria, rede, cpu, memória
+
+CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+source "$CONFIG_DIR/colors.sh"
+
+FONT="JetBrainsMono Nerd Font"
+BAR_HEIGHT=32
+
+sketchybar --bar position=top height=$BAR_HEIGHT color=$BG border_width=0 \
+  margin=0 y_offset=0 padding_left=8 padding_right=8 topmost=off sticky=on shadow=off
+
+sketchybar --default \
+  icon.font="$FONT:Bold:14.0" label.font="$FONT:Bold:13.0" \
+  icon.color=$FG label.color=$FG \
+  padding_left=4 padding_right=4 \
+  icon.padding_left=4 icon.padding_right=4 label.padding_left=4 label.padding_right=4
+
+# Eventos disparados pelos hooks do dinky (config/dinky/dinky.toml)
+sketchybar --add event dinky_workspace_change \
+           --add event dinky_mode_change
+
+# --- Esquerda: workspaces 1..10 -------------------------------------------
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  sketchybar --add item space.$i left \
+    --set space.$i label="$i" icon.drawing=off \
+      label.color=$MUTED label.padding_left=8 label.padding_right=8 \
+      background.color=$TRANSPARENT background.corner_radius=6 background.height=22 \
+      click_script="dinky workspace $i" \
+      script="$PLUGIN_DIR/dinky_space.sh $i" \
+    --subscribe space.$i dinky_workspace_change
+done
+
+# Modo do dinky (RESIZE / SERVICE); some no modo main
+sketchybar --add item dinky_mode left \
+  --set dinky_mode drawing=off icon.drawing=off \
+    label.color=$BG background.color=$WARNING background.corner_radius=6 background.height=22 \
+    script="$PLUGIN_DIR/dinky_mode.sh" \
+  --subscribe dinky_mode dinky_mode_change
+
+sketchybar --add item front_app left \
+  --set front_app icon.drawing=off label.color=$ACCENT script="$PLUGIN_DIR/front_app.sh" \
+  --subscribe front_app front_app_switched
+
+# --- Centro: relógio --------------------------------------------------------
+sketchybar --add item clock center \
+  --set clock icon="󰥔" icon.color=$ACCENT update_freq=10 script="$PLUGIN_DIR/clock.sh"
+
+# --- Direita (ordem invertida: o primeiro fica mais à direita) -------------
+sketchybar --add item memory right \
+  --set memory icon="󰍛" icon.color=$HOVER update_freq=15 script="$PLUGIN_DIR/memory.sh"
+
+sketchybar --add item cpu right \
+  --set cpu icon="" icon.color=$SPECIAL update_freq=5 script="$PLUGIN_DIR/cpu.sh"
+
+sketchybar --add item network right \
+  --set network icon.color=$SUCCESS update_freq=30 script="$PLUGIN_DIR/network.sh" \
+  --subscribe network wifi_change system_woke
+
+sketchybar --add item battery right \
+  --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
+  --subscribe battery power_source_change system_woke
+
+sketchybar --add item volume right \
+  --set volume icon.color=$ACCENT script="$PLUGIN_DIR/volume.sh" \
+  --subscribe volume volume_change
+
+sketchybar --update
