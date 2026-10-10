@@ -1,7 +1,7 @@
 #!/bin/bash
 # SketchyBar no estilo da Waybar (tokyonight), integrado ao dinky via [hooks].
-# Esquerda: workspaces + modo do dinky + app em foco | centro: relógio
-# Direita: volume, bateria, rede, cpu, memória
+# Esquerda: workspaces + modo do dinky + app em foco | direita: status + relógio (centro livre por causa do notch)
+# Direita: volume, bateria, rede, cpu, memória, relógio
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
 PLUGIN_DIR="$CONFIG_DIR/plugins"
@@ -45,11 +45,11 @@ sketchybar --add item front_app left \
   --set front_app icon.drawing=off label.color=$ACCENT script="$PLUGIN_DIR/front_app.sh" \
   --subscribe front_app front_app_switched
 
-# --- Centro: relógio --------------------------------------------------------
-sketchybar --add item clock center \
+# --- Direita (ordem invertida: o primeiro fica mais à direita) -------------
+# Relógio na ponta direita: no centro ele fica escondido atrás do notch
+sketchybar --add item clock right \
   --set clock icon="󰥔" icon.color=$ACCENT update_freq=10 script="$PLUGIN_DIR/clock.sh"
 
-# --- Direita (ordem invertida: o primeiro fica mais à direita) -------------
 sketchybar --add item memory right \
   --set memory icon="󰍛" icon.color=$HOVER update_freq=15 script="$PLUGIN_DIR/memory.sh"
 
