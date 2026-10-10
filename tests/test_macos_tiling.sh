@@ -82,4 +82,37 @@ assert cfg["start-at-login"] is True, cfg
 assert cfg["gaps"]["inner"] == 1
 PY
 
+# Instalador: copy_file faz backup de config local diferente antes de sobrescrever
+source "$ROOT/setup/lib/dotfiles_manifest.sh"
+src="$WORK/src.conf"; dst="$WORK/home/.config/ghostty/config"
+mkdir -p "$(dirname "$dst")"
+echo "repo" > "$src"; echo "local" > "$dst"
+_dotfiles_copy_file "$src" "$dst" >/dev/null
+[[ "$(cat "$dst")" == "repo" ]] || fail "copy_file não copiou"
+[[ "$(cat "$dst".bak.*)" == "local" ]] || fail "config local não foi salva em backup"
+_dotfiles_copy_file "$src" "$dst" >/dev/null
+[[ "$(ls "$dst".bak.* | wc -l)" -eq 1 ]] || fail "backup criado sem diferença"
+
+# Manifest leva a config do herdr
+plan=$(DOTFILES="$ROOT" CONFIG_DIR="$WORK/cfg" dotfiles_plan)
+[[ "$plan" == *"copy_file|$ROOT/config/herdr/config.toml|$WORK/cfg/herdr/config.toml"* ]] \
+  || fail "regra do herdr ausente no manifest"
+
+# capture_configs.sh: puxa Ghostty (Application Support vence) e herdr para o repo
+fake_repo="$WORK/repo"
+mkdir -p "$fake_repo/setup"
+cp -R "$ROOT/setup/lib" "$fake_repo/setup/lib"
+git -C "$fake_repo" init -q
+fake_home="$WORK/machome"
+mkdir -p "$fake_home/Library/Application Support/com.mitchellh.ghostty/themes" "$fake_home/.config/ghostty" "$fake_home/.config/herdr"
+echo "font-size = 16" > "$fake_home/Library/Application Support/com.mitchellh.ghostty/config"
+echo "theme" > "$fake_home/Library/Application Support/com.mitchellh.ghostty/themes/mine.conf"
+echo "font-size = 12" > "$fake_home/.config/ghostty/config"
+echo '[keys]' > "$fake_home/.config/herdr/config.toml"
+HOME="$fake_home" CONFIG_DIR="$fake_home/.config" DOTFILES="$fake_repo" HERDR_CONFIG_PATH="" \
+  bash "$ROOT/setup/macOS/capture_configs.sh" >/dev/null
+[[ "$(cat "$fake_repo/config/Ghostty/config")" == "font-size = 16" ]] || fail "Ghostty não capturado do Application Support"
+[[ -f "$fake_repo/config/Ghostty/themes/mine.conf" ]] || fail "temas do Ghostty não capturados"
+[[ "$(cat "$fake_repo/config/herdr/config.toml")" == "[keys]" ]] || fail "herdr não capturado"
+
 echo "macos tiling tests passed"

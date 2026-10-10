@@ -40,6 +40,8 @@ cd dotfiles
 
 **macOS tiling:** `setup/macOS/tiling.sh {install|disable|enable|uninstall|status}`. `disable` stops dinky and restores the original macOS settings (backed up on install). Keybindings live in `config/dinky/dinky.toml` (`alt` = Hyprland's `SUPER`).
 
+**Keep your current Ghostty/herdr config:** run `setup/macOS/capture_configs.sh` on the machine that has them, then commit `config/Ghostty` and `config/herdr`. The installer backs up any local file that differs before overwriting it (`<file>.bak.<timestamp>`).
+
 **Order matters:** run system setup (1/2/3/6) before dev env (5) or hacktools (4).
 
 Dev env versions default to `mise latest` at install time. Pin when needed:
