@@ -1,0 +1,131 @@
+# dinky — tiling window manager para macOS (https://dinky.rodeo)
+# Espelha config/hypr/hyprland.lua: SUPER vira alt (Option) para não colidir
+# com os atalhos cmd-* do macOS. Tema fixo: tokyonight.
+#
+# Instalar / desativar: setup/macOS/tiling.sh {install|disable|enable|uninstall|status}
+# Validar este arquivo: dinky doctor
+
+start-at-login = true
+workspaces = 10
+default-layout = 'dwindle'
+default-tiling = true
+follow-app-activation = true
+float-windows-without-fullscreen = true
+
+[gaps]
+inner = 5
+outer = 5
+
+# tokyonight — mesmas cores de config/hypr/themes/tokyonight.conf
+# (dinky não suporta gradiente: usa $active_border_1 / $inactive_border)
+[borders]
+enabled = true
+width = 2
+active-color = '#7aa2f7'
+inactive-color = '#3b4261'
+
+[animations]
+enabled = true
+duration-ms = 150
+
+# Equivalente aos windowrules float-* do Hyprland
+[[rules]]
+app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+
+[[rules]]
+app-id = 'com.apple.calculator'
+run = 'layout floating'
+
+[[rules]]
+app-id = 'com.apple.archiveutility'
+run = 'layout floating'
+
+[[rules]]
+app-id = 'com.apple.ActivityMonitor'
+run = 'layout floating'
+
+[mode.main]
+# Apps (SUPER+RETURN, B, N, O, C, SHIFT+RETURN, SHIFT+P)
+alt-enter = 'exec-and-forget open -na Ghostty'
+alt-b = 'exec-and-forget open -na "Google Chrome" --args --new-window'
+alt-n = 'exec-and-forget open -na Ghostty --args -e nvim'
+alt-o = 'exec-and-forget open -a Obsidian'
+alt-c = 'exec-and-forget open -a "Visual Studio Code"'
+alt-shift-enter = 'exec-and-forget open ~'
+alt-shift-p = 'exec-and-forget open -a "Proton Pass"'
+
+# Webapps (Chrome --app, como no Hyprland)
+alt-m = 'exec-and-forget open -na "Google Chrome" --args --app=https://music.youtube.com'
+alt-y = 'exec-and-forget open -na "Google Chrome" --args --app=https://youtube.com'
+alt-shift-a = 'exec-and-forget open -na "Google Chrome" --args --app=https://chatgpt.com'
+alt-shift-c = 'exec-and-forget open -na "Google Chrome" --args --app=https://claude.ai'
+alt-shift-h = 'exec-and-forget open -na "Google Chrome" --args --app=https://gemini.google.com'
+alt-shift-y = 'exec-and-forget open -na "Google Chrome" --args --app=https://web.whatsapp.com'
+alt-shift-n = 'exec-and-forget open -na "Google Chrome" --args --app=https://keep.google.com/'
+alt-shift-d = 'exec-and-forget open -na "Google Chrome" --args --app=https://discord.com/channels/@me'
+alt-shift-w = 'exec-and-forget open -na "Google Chrome" --args --app=https://teams.microsoft.com/v2/'
+alt-shift-o = 'exec-and-forget open -na "Google Chrome" --args --app=https://outlook.office.com/'
+
+# Janela (SUPER+SHIFT+Q fecha, SUPER+W float, SUPER+F fullscreen)
+alt-shift-q = '''exec-and-forget osascript -e 'tell application "System Events" to keystroke "w" using command down' '''
+alt-w = 'layout floating tiling'
+alt-f = 'fullscreen'
+
+# Foco (SUPER+h/j/k/l)
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+
+# Mover janela no tiling (no Hyprland era drag com o mouse; SUPER+SHIFT+h/l já são webapp/lock)
+alt-ctrl-h = 'move left'
+alt-ctrl-j = 'move down'
+alt-ctrl-k = 'move up'
+alt-ctrl-l = 'move right'
+
+# Resize (SUPER+SHIFT+setas, passo de 30)
+alt-shift-right = 'resize width +30'
+alt-shift-left = 'resize width -30'
+alt-shift-up = 'resize height -30'
+alt-shift-down = 'resize height +30'
+
+# Workspaces (SUPER+1..0, SUPER+SHIFT+1..0, SUPER+Tab)
+alt-tab = 'workspace-back-and-forth'
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
+alt-0 = 'workspace 10'
+alt-shift-1 = 'move-window-to-workspace 1'
+alt-shift-2 = 'move-window-to-workspace 2'
+alt-shift-3 = 'move-window-to-workspace 3'
+alt-shift-4 = 'move-window-to-workspace 4'
+alt-shift-5 = 'move-window-to-workspace 5'
+alt-shift-6 = 'move-window-to-workspace 6'
+alt-shift-7 = 'move-window-to-workspace 7'
+alt-shift-8 = 'move-window-to-workspace 8'
+alt-shift-9 = 'move-window-to-workspace 9'
+alt-shift-0 = 'move-window-to-workspace 10'
+
+# Lock (SUPER+SHIFT+L) e screenshot de área (SUPER+SHIFT+S) com o nativo do macOS
+alt-shift-l = '''exec-and-forget osascript -e 'tell application "System Events" to keystroke "q" using {control down, command down}' '''
+alt-shift-s = 'exec-and-forget screencapture -ic'
+
+# Launcher (SUPER+A) e clipboard (SUPER+V) ficam no Raycast: configure
+# Option+A e Option+V nas preferências do Raycast (não vincular aqui,
+# senão o dinky consome a tecla).
+
+alt-shift-r = 'mode service'
+
+# Modo de manutenção: alt-shift-r entra, esc sai
+[mode.service]
+esc = ['reload-config', 'mode main']
+r = ['retile', 'mode main']
+b = ['balance-sizes', 'mode main']
+backspace = ['flatten-workspace-tree', 'mode main']

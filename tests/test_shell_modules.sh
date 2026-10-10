@@ -121,6 +121,9 @@ source "$ROOT/setup/lib/setup_plans.sh"
 ubuntu_plan=$(setup_plan_print 1)
 assert_contains "$ubuntu_plan" "setup/ubuntu/setup.sh"
 assert_contains "$ubuntu_plan" "Dependency chain"
+macos_tiling_plan=$(setup_plan_print 9)
+assert_contains "$macos_tiling_plan" "1. setup/macOS/setup.sh"
+assert_contains "$macos_tiling_plan" "2. setup/macOS/tiling_install.sh"
 
 source "$ROOT/config/zsh/env.zsh"
 source "$ROOT/setup/lib/hacktools_inventory.sh"

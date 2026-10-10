@@ -8,6 +8,9 @@ install_brew zoxide tmux bat lsd git-delta fzf ripgrep eza tree lazygit ctags ht
 echo "${yellow}[+] Installing shell tools...${reset}"
 install_brew zsh
 
+echo "${yellow}[+] Installing herdr (agent multiplexer)...${reset}"
+install_brew herdr
+
 echo "${yellow}[+] Installing compression utilities...${reset}"
 install_brew unzip
 

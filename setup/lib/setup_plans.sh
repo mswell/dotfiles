@@ -13,6 +13,7 @@ setup_plan_title() {
         6) echo "Archlinux WSL" ;;
         7) echo "Claude for Bug Bounty (Skills + Agents + Caido AI)" ;;
         8) echo "macOS Setup" ;;
+        9) echo "macOS Setup + dinky tiling (Hyprland-style)" ;;
         *) return 1 ;;
     esac
 }
@@ -27,6 +28,7 @@ setup_plan_steps() {
         6) echo "setup/ArchWSL/setup.sh" ;;
         7) echo "setup/install_skills.sh" ;;
         8) echo "setup/macOS/setup.sh" ;;
+        9) printf '%s\n' setup/macOS/setup.sh setup/macOS/tiling_install.sh ;;
         *) return 1 ;;
     esac
 }

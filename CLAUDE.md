@@ -30,7 +30,7 @@ This is a comprehensive dotfiles management system for automated Linux developme
 
 ### Initial Setup
 ```bash
-./install.sh  # Interactive menu with 8 setup options
+./install.sh  # Interactive menu with 9 setup options
 ```
 
 **Menu Options:**
@@ -41,7 +41,8 @@ This is a comprehensive dotfiles management system for automated Linux developme
 - `[5]` - Install Dev Environment (mise: Python + Node.js + pnpm)
 - `[6]` - Arch Linux WSL (Windows Subsystem for Linux)
 - `[7]` - Claude for Bug Bounty (Skills + Agents + Caido AI)
-- `[8]` - Install Pi Coding Agent + Restore Pi Config
+- `[8]` - macOS Setup (Homebrew, Ghostty, herdr, CLI tools)
+- `[9]` - macOS Setup + dinky tiling (Raycast + `config/dinky/dinky.toml`, Hyprland-style keys, tokyonight). Toggle/rollback with `setup/macOS/tiling.sh {disable|enable|uninstall|status}`
 
 ### Dependency Chain
 
