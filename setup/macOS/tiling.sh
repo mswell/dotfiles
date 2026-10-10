@@ -1,11 +1,11 @@
 #!/bin/bash
-# Tiling no macOS com dinky (https://dinky.rodeo) + SketchyBar + Raycast, no estilo do Hyprland.
+# Tiling no macOS com dinky (https://dinky.rodeo) + SketchyBar, no estilo do Hyprland.
 #
 # Uso: setup/macOS/tiling.sh <comando>
-#   install    instala dinky + SketchyBar + Raycast, copia as configs e ajusta o macOS
+#   install    instala dinky + SketchyBar, copia as configs e ajusta o macOS
 #   disable    desliga dinky e SketchyBar e restaura os ajustes originais do macOS (apps continuam instalados)
 #   enable     religa dinky e SketchyBar depois de um disable
-#   uninstall  disable + remove dinky, SketchyBar e as configs (Raycast só com --with-raycast)
+#   uninstall  disable + remove dinky, SketchyBar e as configs
 #   status     mostra o estado atual
 #
 # Os valores originais do macOS são salvos antes da primeira alteração e
@@ -226,8 +226,8 @@ cmd_install() {
     source "$DOTFILES/setup/lib/homebrew.sh"
     ensure_homebrew
 
-    echo "${yellow}[+] Instalando dinky, SketchyBar e Raycast...${reset}"
-    install_cask "$DINKY_CASK" raycast "$BAR_FONT_CASK"
+    echo "${yellow}[+] Instalando dinky e SketchyBar...${reset}"
+    install_cask "$DINKY_CASK" "$BAR_FONT_CASK"
     brew tap "$SKETCHYBAR_TAP"
     install_brew sketchybar
 
@@ -241,7 +241,6 @@ cmd_install() {
 
     sketchybar_start
     dinky_start
-    open -a Raycast || true
 
     dinky_cli doctor || echo "${yellow}[!] Rode 'dinky doctor' e ajuste o que ele apontar.${reset}"
 
@@ -249,9 +248,8 @@ cmd_install() {
 
 ${green}Pronto!${reset} Passos manuais:
   1. Ajustes do Sistema > Privacidade e Segurança > Acessibilidade: libere o dinky.
-  2. Raycast > Settings: hotkey do Raycast = Option+A (como SUPER+A/walker).
-  3. Raycast > Extensions > Clipboard History: hotkey = Option+V (como SUPER+V).
-  4. Atalhos: veja config/dinky/dinky.toml (alt-r = modo resize). Para voltar ao padrão do Mac:
+  2. Launcher e clipboard: Spotlight nativo (Cmd+Espaço).
+  3. Atalhos: veja config/dinky/dinky.toml (alt-r = modo resize). Para voltar ao padrão do Mac:
      setup/macOS/tiling.sh disable
 EOF
 }
@@ -286,9 +284,6 @@ cmd_enable() {
 
 cmd_uninstall() {
     require_macos
-    local with_raycast=0
-    [[ "${1:-}" == "--with-raycast" ]] && with_raycast=1
-
     cmd_disable
 
     if brew list --cask "$DINKY_CASK" &>/dev/null; then
@@ -304,10 +299,6 @@ cmd_uninstall() {
         mv "$dir" "$backup"
         echo "${yellow}[*] Config movida para $backup${reset}"
     done
-    if [[ "$with_raycast" == "1" ]] && brew list --cask raycast &>/dev/null; then
-        osascript -e 'quit app "Raycast"' || true
-        brew uninstall --cask raycast
-    fi
     echo "${green}✓ dinky e SketchyBar removidos${reset}"
 }
 

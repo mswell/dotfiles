@@ -130,9 +130,7 @@ alt-shift-0 = 'move-window-to-workspace 10'
 alt-shift-l = '''exec-and-forget osascript -e 'tell application "System Events" to keystroke "q" using {control down, command down}' '''
 alt-shift-s = 'exec-and-forget screencapture -ic'
 
-# Launcher (SUPER+A) e clipboard (SUPER+V) ficam no Raycast: configure
-# Option+A e Option+V nas preferências do Raycast (não vincular aqui,
-# senão o dinky consome a tecla).
+# Launcher e clipboard: Spotlight nativo do macOS (Cmd+Espaço).
 
 alt-r = 'mode resize'
 alt-shift-r = 'mode service'

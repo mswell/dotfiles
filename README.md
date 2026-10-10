@@ -36,7 +36,7 @@ cd dotfiles
 | [6] Arch WSL | Windows Subsystem for Linux |
 | [7] Claude for Bug Bounty | AI skills + Caido integration |
 | [8] macOS Setup | macOS environment setup (Ghostty, herdr, CLI tools) |
-| [9] macOS + dinky | [8] + dinky tiling WM + SketchyBar + Raycast, Hyprland-style keys (tokyonight) |
+| [9] macOS + dinky | [8] + dinky tiling WM + SketchyBar, Hyprland-style keys (tokyonight) |
 
 **macOS tiling:** `setup/macOS/tiling.sh {install|disable|enable|uninstall|status}`. `disable` stops dinky and restores the original macOS settings (backed up on install). Keybindings live in `config/dinky/dinky.toml` (`alt` = Hyprland's `SUPER`).
 
