@@ -85,38 +85,84 @@ EXCLUSIONS = {
 # Universal exclusions
 UNIVERSAL_EXCLUSIONS = ['.git/', '.svn/', '.hg/', '.idea/', '.vscode/', '*.min.js', '*.min.css']
 
+SKIP_DIRS = {'.git', 'node_modules', 'vendor', 'venv', '.venv', '__pycache__', 'dist', 'build', 'target', '.next'}
+ENTRY_FILES = {
+    'main.py', 'app.py', 'index.js', 'index.ts', 'main.go', 'main.rs',
+    'server.js', 'server.ts', 'app.js', 'app.ts', 'manage.py', 'artisan'
+}
+CONFIG_FILES = {
+    '.env', '.env.example', 'config.json', 'config.yaml', 'config.yml',
+    'settings.py', 'application.properties', 'appsettings.json'
+}
+DEPENDENCY_FILES = {'package.json', 'requirements.txt', 'Gemfile', 'go.mod', 'composer.json', 'pom.xml'}
 
-def count_files_by_extension(project_path: Path) -> dict:
+
+def record_error(errors: list, project_path: Path, file_path: Path, error: Exception) -> None:
+    try:
+        relative = str(file_path.relative_to(project_path))
+    except ValueError:
+        relative = str(file_path)
+    errors.append({'file': relative, 'reason': type(error).__name__})
+
+
+def record_symlink(errors: list, project_path: Path, file_path: Path) -> None:
+    errors.append({'file': str(file_path.relative_to(project_path)), 'reason': 'symlink'})
+
+
+def count_files_by_extension(project_path: Path, errors: list, skipped_directories: list) -> dict:
     """Count files by extension."""
     counts = defaultdict(int)
-    for root, dirs, files in os.walk(project_path):
+    def onerror(error: OSError) -> None:
+        record_error(errors, project_path, Path(error.filename or project_path), error)
+
+    for root, dirs, files in os.walk(project_path, onerror=onerror):
         # Skip common excluded directories
-        dirs[:] = [d for d in dirs if d not in ['.git', 'node_modules', 'vendor', 'venv', '__pycache__']]
+        kept_dirs = []
+        for dirname in dirs:
+            if dirname in SKIP_DIRS:
+                continue
+            directory = Path(root) / dirname
+            if directory.is_symlink():
+                skipped_directories.append(str(directory.relative_to(project_path)))
+            else:
+                kept_dirs.append(dirname)
+        dirs[:] = kept_dirs
         for f in files:
             ext = Path(f).suffix.lower()
-            if ext in LANGUAGE_EXTENSIONS:
-                counts[LANGUAGE_EXTENSIONS[ext]] += 1
+            if ext not in LANGUAGE_EXTENSIONS:
+                continue
+            file_path = Path(root) / f
+            if file_path.is_symlink():
+                record_symlink(errors, project_path, file_path)
+                continue
+            counts[LANGUAGE_EXTENSIONS[ext]] += 1
     return dict(counts)
 
 
-def detect_frameworks(project_path: Path) -> list:
+def detect_frameworks(project_path: Path, errors: list, target_path: Path) -> list:
     """Detect frameworks based on config files."""
     frameworks = []
     for filename, config in FRAMEWORK_INDICATORS.items():
         filepath = project_path / filename
+        if filepath.is_symlink():
+            record_symlink(errors, target_path, filepath)
+            continue
         if filepath.exists():
             try:
-                content = filepath.read_text(errors='ignore').lower()
+                content = filepath.read_text(encoding='utf-8').lower()
                 if config['check'](content):
                     frameworks.append(config['framework'])
-            except Exception:
-                pass
+            except (OSError, UnicodeError, ValueError) as error:
+                record_error(errors, target_path, filepath, error)
     
     # Check package.json for more frameworks
     pkg_json = project_path / 'package.json'
-    if pkg_json.exists():
+    if pkg_json.is_symlink():
+        record_symlink(errors, target_path, pkg_json)
+        pkg_json = None
+    if pkg_json and pkg_json.exists():
         try:
-            content = pkg_json.read_text()
+            content = pkg_json.read_text(encoding='utf-8')
             pkg = json.loads(content)
             deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
             
@@ -134,13 +180,13 @@ def detect_frameworks(project_path: Path) -> list:
                 frameworks.append('Koa')
             if 'hapi' in deps or '@hapi/hapi' in deps:
                 frameworks.append('Hapi')
-        except Exception:
-            pass
+        except (OSError, UnicodeError, ValueError, TypeError) as error:
+            record_error(errors, target_path, pkg_json, error)
     
-    return list(set(frameworks))
+    return sorted(set(frameworks))
 
 
-def detect_databases(project_path: Path) -> list:
+def detect_databases(project_path: Path, errors: list, target_path: Path) -> list:
     """Detect databases based on dependencies."""
     databases = []
     
@@ -150,11 +196,14 @@ def detect_databases(project_path: Path) -> list:
     all_content = ""
     for dep_file in dep_files:
         filepath = project_path / dep_file
+        if filepath.is_symlink():
+            record_symlink(errors, target_path, filepath)
+            continue
         if filepath.exists():
             try:
-                all_content += filepath.read_text(errors='ignore').lower()
-            except Exception:
-                pass
+                all_content += filepath.read_text(encoding='utf-8').lower()
+            except (OSError, UnicodeError) as error:
+                record_error(errors, target_path, filepath, error)
     
     for db, indicators in DATABASE_INDICATORS.items():
         if any(ind in all_content for ind in indicators):
@@ -172,45 +221,72 @@ def get_exclusions(languages: list) -> list:
     return sorted(list(exclusions))
 
 
+def project_roots(project_path: Path, errors: list, skipped_directories: list) -> list[Path]:
+    """Find directories with application markers, including monorepo packages."""
+    markers = set(FRAMEWORK_INDICATORS) | ENTRY_FILES | CONFIG_FILES | DEPENDENCY_FILES
+    roots = []
+    def onerror(error: OSError) -> None:
+        record_error(errors, project_path, Path(error.filename or project_path), error)
+
+    for current, dirs, files in os.walk(project_path, onerror=onerror):
+        kept_dirs = []
+        for dirname in dirs:
+            if dirname in SKIP_DIRS:
+                continue
+            directory = Path(current) / dirname
+            if directory.is_symlink():
+                skipped_directories.append(str(directory.relative_to(project_path)))
+            else:
+                kept_dirs.append(dirname)
+        dirs[:] = kept_dirs
+        if markers.intersection(files):
+            roots.append(Path(current))
+    return roots or [project_path]
+
+
 def analyze_project(project_path: str) -> dict:
     """Analyze project and return detection results."""
     path = Path(project_path).resolve()
     
-    if not path.exists():
-        return {'error': f'Path does not exist: {project_path}'}
+    if not path.is_dir():
+        return {'error': f'Project directory does not exist: {project_path}'}
     
     # Detect languages
-    lang_counts = count_files_by_extension(path)
+    detection_errors = []
+    skipped_directories = []
+    lang_counts = count_files_by_extension(path, detection_errors, skipped_directories)
     languages = sorted(lang_counts.keys(), key=lambda x: lang_counts[x], reverse=True)
     
-    # Detect frameworks
-    frameworks = detect_frameworks(path)
-    
-    # Detect databases
-    databases = detect_databases(path)
+    roots = project_roots(path, detection_errors, skipped_directories)
+
+    # Detect frameworks and databases in each application root.
+    frameworks = sorted({name for root in roots for name in detect_frameworks(root, detection_errors, path)})
+    databases = sorted({name for root in roots for name in detect_databases(root, detection_errors, path)})
     
     # Get exclusions
     exclusions = get_exclusions(languages)
     
     # Find entry points
     entry_points = []
-    common_entry_files = [
-        'main.py', 'app.py', 'index.js', 'index.ts', 'main.go', 'main.rs',
-        'server.js', 'server.ts', 'app.js', 'app.ts', 'manage.py', 'artisan'
-    ]
-    for entry in common_entry_files:
-        if (path / entry).exists():
-            entry_points.append(entry)
+    for root in roots:
+        for entry in ENTRY_FILES:
+            entry_path = root / entry
+            if entry_path.is_symlink():
+                record_symlink(detection_errors, path, entry_path)
+            elif entry_path.is_file():
+                entry_points.append(str(entry_path.relative_to(path)))
+    entry_points.sort()
     
     # Find config files
     config_files = []
-    common_configs = [
-        '.env', '.env.example', 'config.json', 'config.yaml', 'config.yml',
-        'settings.py', 'application.properties', 'appsettings.json'
-    ]
-    for cfg in common_configs:
-        if (path / cfg).exists():
-            config_files.append(cfg)
+    for root in roots:
+        for cfg in CONFIG_FILES:
+            config_path = root / cfg
+            if config_path.is_symlink():
+                record_symlink(detection_errors, path, config_path)
+            elif config_path.is_file():
+                config_files.append(str(config_path.relative_to(path)))
+    config_files.sort()
     
     return {
         'project_path': str(path),
@@ -219,10 +295,17 @@ def analyze_project(project_path: str) -> dict:
         'primary_language': languages[0] if languages else 'Unknown',
         'frameworks': frameworks,
         'databases': databases,
+        'detected_roots': [str(root.relative_to(path)) or '.' for root in roots],
         'entry_points': entry_points,
         'config_files': config_files,
+        'detection_errors': [
+            {'file': file_name, 'reason': reason}
+            for file_name, reason in sorted({
+                (item['file'], item['reason']) for item in detection_errors
+            })
+        ],
+        'skipped_directories': sorted(set(skipped_directories)),
         'recommended_exclusions': exclusions,
-        'scan_command': f"# Recommended grep exclusions:\n--exclude-dir={{{','.join(e.rstrip('/') for e in exclusions if e.endswith('/'))}}}",
     }
 
 

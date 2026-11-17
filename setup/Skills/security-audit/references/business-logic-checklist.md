@@ -1,5 +1,8 @@
 # Business Logic Vulnerability Checklist
 
+Use these questions as review leads, not as automatic findings.
+Run bypass attempts only on targets and actions covered by the audit's testing authorization.
+
 ## Overview
 
 Business logic vulnerabilities are flaws in the design and implementation of an application that allow attackers to manipulate legitimate functionality to achieve a malicious goal. They're often missed by automated scanners and require manual review.
@@ -164,17 +167,10 @@ User.update(
 ```
 
 **Test methodology:**
-1. Identify state-changing operations
-2. Send parallel requests (10-100x)
-3. Check for inconsistent state
-
-**Tools:**
-```bash
-# Turbo Intruder (Burp)
-# Race-the-web
-# GNU Parallel
-seq 100 | parallel -j50 curl -X POST http://target/api/action
-```
+1. Identify the state-changing operation and the invariant it must preserve.
+2. Use an authorized test target and disposable records.
+3. Choose a small request count, concurrency limit, and stop condition within the agreed test scope.
+4. Compare the resulting state with a sequential baseline and record any inconsistent outcome.
 
 ### Common Targets
 - Account balance updates
@@ -237,16 +233,12 @@ Test:
 | Can I reset the counter? | Counter reset | Unlimited requests |
 | Is limit checked client-side? | Client bypass | No limiting |
 
-**Bypass techniques:**
-```
-- Rotate IP (proxies, cloud functions)
-- Create multiple accounts
-- Change user agent
-- Use different auth tokens
-- Add X-Forwarded-For header
-- Change case of endpoint
-- Add trailing slash or query params
-```
+**Factors to review within the authorized scope:**
+
+- Limits tied only to an IP address
+- Limits tied only to one account or authentication token
+- Trust in client-supplied User-Agent or X-Forwarded-For headers
+- Different treatment of endpoint case, trailing slash, or query parameters
 
 ### CAPTCHA
 | Check | Vulnerability | Impact |

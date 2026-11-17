@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 from collections import Counter
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 # High-priority secret patterns with descriptions
 SECRET_PATTERNS = {
@@ -59,7 +59,7 @@ INCLUDE_EXTENSIONS = {
 EXCLUDE_DIRS = {
     '.git', 'node_modules', 'vendor', 'venv', 'env', '.venv',
     '__pycache__', 'dist', 'build', 'target', '.next', '.nuxt',
-    'coverage', '.pytest_cache', '.tox', 'eggs', '.eggs'
+    'coverage', '.pytest_cache', '.tox', 'eggs', '.eggs', '.security-audit'
 }
 
 # False positive patterns to ignore
@@ -83,6 +83,20 @@ FALSE_POSITIVE_PATTERNS = [
     r'ENV\[',
 ]
 
+# A known token format is worth reviewing even if its value resembles a fixture.
+# Placeholder suppression applies only to generic assignment and entropy matches.
+SPECIFIC_SECRET_TYPES = {
+    'AWS Access Key', 'AWS Secret Key', 'GitHub Token',
+    'GitHub PAT (fine-grained)', 'GitLab Token', 'Google API Key',
+    'Stripe Secret Key', 'Stripe Restricted Key', 'Slack Token',
+    'Slack Webhook', 'SendGrid API Key', 'Twilio Account SID',
+    'OpenAI API Key', 'Anthropic API Key', 'JWT Token',
+    'Private Key Header', 'Azure Storage Key', 'Heroku API Key',
+    'Mailchimp API Key', 'NPM Token', 'PyPI Token',
+}
+
+HIGH_ENTROPY_STRING = re.compile(r'["\']([A-Za-z0-9+/=_-]{20,})["\']')
+
 
 @dataclass
 class SecretFinding:
@@ -90,8 +104,8 @@ class SecretFinding:
     file_path: str
     line_number: int
     secret_type: str
-    matched_value: str
-    line_content: str
+    start: int
+    end: int
     entropy: float
     confidence: str  # high, medium, low
 
@@ -105,25 +119,17 @@ def calculate_entropy(s: str) -> float:
     return -sum((count/length) * math.log2(count/length) for count in freq.values())
 
 
-def is_false_positive(value: str, line: str) -> bool:
-    """Check if the match is likely a false positive."""
-    combined = f"{value} {line}".lower()
-    for pattern in FALSE_POSITIVE_PATTERNS:
-        if re.search(pattern, combined, re.IGNORECASE):
-            return True
-    return False
+def is_false_positive(value: str, secret_type: str) -> bool:
+    """Suppress obvious placeholders without using unrelated line content."""
+    if secret_type in SPECIFIC_SECRET_TYPES:
+        return False
+    return any(re.search(pattern, value, re.IGNORECASE) for pattern in FALSE_POSITIVE_PATTERNS)
 
 
 def get_confidence(secret_type: str, value: str, entropy: float) -> str:
     """Determine confidence level of the finding."""
     # High confidence for well-defined patterns
-    high_confidence_types = [
-        'AWS Access Key', 'GitHub Token', 'GitHub PAT', 'GitLab Token',
-        'Google API Key', 'Stripe Secret Key', 'Slack Token', 'SendGrid API Key',
-        'OpenAI API Key', 'Anthropic API Key', 'Private Key Header', 'JWT Token'
-    ]
-    
-    if secret_type in high_confidence_types:
+    if secret_type in SPECIFIC_SECRET_TYPES:
         return 'high'
     
     # Medium confidence for generic patterns with high entropy
@@ -134,91 +140,60 @@ def get_confidence(secret_type: str, value: str, entropy: float) -> str:
     return 'low'
 
 
-def scan_file(file_path: Path) -> List[SecretFinding]:
-    """Scan a single file for secrets."""
+def scan_text(file_path: Path, content: str, min_entropy: float = 4.5) -> List[SecretFinding]:
+    """Scan text once, retaining only locations and classifications."""
     findings = []
-    
-    try:
-        content = file_path.read_text(errors='ignore')
-        lines = content.split('\n')
-        
-        for line_num, line in enumerate(lines, 1):
-            # Skip comments (basic detection)
-            stripped = line.strip()
-            if stripped.startswith(('#', '//', '/*', '*', '<!--')):
-                continue
-            
-            for secret_type, pattern in SECRET_PATTERNS.items():
-                matches = re.finditer(pattern, line)
-                for match in matches:
-                    value = match.group(0)
-                    
-                    # Skip false positives
-                    if is_false_positive(value, line):
-                        continue
-                    
-                    # Calculate entropy for the matched value
-                    entropy = calculate_entropy(value)
-                    
-                    # Determine confidence
-                    confidence = get_confidence(secret_type, value, entropy)
-                    
-                    # Only report medium+ confidence or high entropy
-                    if confidence in ['high', 'medium'] or entropy > 4.0:
-                        findings.append(SecretFinding(
-                            file_path=str(file_path),
-                            line_number=line_num,
-                            secret_type=secret_type,
-                            matched_value=value[:50] + '...' if len(value) > 50 else value,
-                            line_content=line.strip()[:100],
-                            entropy=round(entropy, 2),
-                            confidence=confidence
-                        ))
-    except Exception as e:
-        pass  # Skip files that can't be read
-    
-    return findings
 
-
-def scan_high_entropy_strings(file_path: Path, min_length: int = 20, min_entropy: float = 4.5) -> List[SecretFinding]:
-    """Scan for high-entropy strings that might be secrets."""
-    findings = []
-    
-    # Pattern for potential secrets (alphanumeric + common secret chars)
-    potential_secret = re.compile(r'["\']([A-Za-z0-9+/=_-]{20,})["\']')
-    
-    try:
-        content = file_path.read_text(errors='ignore')
-        lines = content.split('\n')
-        
-        for line_num, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith(('#', '//', '/*', '*', '<!--')):
-                continue
-            
-            matches = potential_secret.finditer(line)
-            for match in matches:
-                value = match.group(1)
-                
-                if is_false_positive(value, line):
+    for line_num, line in enumerate(content.splitlines(), 1):
+        line_findings = []
+        for secret_type, pattern in SECRET_PATTERNS.items():
+            for match in re.finditer(pattern, line):
+                value = match.group(0)
+                if is_false_positive(value, secret_type):
                     continue
-                
+                if secret_type not in SPECIFIC_SECRET_TYPES and any(
+                    finding.secret_type in SPECIFIC_SECRET_TYPES
+                    and finding.start < match.end()
+                    and match.start() < finding.end
+                    for finding in line_findings
+                ):
+                    continue
+
                 entropy = calculate_entropy(value)
-                
-                if entropy >= min_entropy and len(value) >= min_length:
-                    # Check it wasn't already found by pattern matching
-                    findings.append(SecretFinding(
+                confidence = get_confidence(secret_type, value, entropy)
+                if confidence in ('high', 'medium') or entropy > 4.0:
+                    line_findings.append(SecretFinding(
                         file_path=str(file_path),
                         line_number=line_num,
-                        secret_type='High-Entropy String',
-                        matched_value=value[:50] + '...' if len(value) > 50 else value,
-                        line_content=line.strip()[:100],
+                        secret_type=secret_type,
+                        start=match.start(),
+                        end=match.end(),
                         entropy=round(entropy, 2),
-                        confidence='medium'
+                        confidence=confidence,
                     ))
-    except Exception:
-        pass
-    
+
+        for match in HIGH_ENTROPY_STRING.finditer(line):
+            value = match.group(1)
+            if is_false_positive(value, 'High-Entropy String'):
+                continue
+            entropy = calculate_entropy(value)
+            if entropy < min_entropy:
+                continue
+            # A known secret pattern takes precedence over a generic entropy hit.
+            if any(f.start < match.end(1) and match.start(1) < f.end for f in line_findings):
+                continue
+            line_findings.append(SecretFinding(
+                file_path=str(file_path),
+                line_number=line_num,
+                secret_type='High-Entropy String',
+                start=match.start(1),
+                end=match.end(1),
+                entropy=round(entropy, 2),
+                confidence='medium',
+            ))
+
+        findings.extend(line_findings)
+
     return findings
 
 
@@ -226,15 +201,35 @@ def scan_project(project_path: str) -> dict:
     """Scan entire project for secrets."""
     path = Path(project_path).resolve()
     
-    if not path.exists():
-        return {'error': f'Path does not exist: {project_path}'}
+    if not path.is_dir():
+        return {'error': f'Project directory does not exist: {project_path}'}
     
     all_findings = []
     files_scanned = 0
+    files_skipped = 0
+    skipped_directories = []
+    scan_errors = []
+
+    def record_walk_error(error: OSError) -> None:
+        filename = Path(error.filename) if error.filename else path
+        try:
+            relative_name = str(filename.relative_to(path))
+        except ValueError:
+            relative_name = str(filename)
+        scan_errors.append({'file': relative_name, 'reason': type(error).__name__})
     
-    for root, dirs, files in os.walk(path):
-        # Skip excluded directories
-        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+    for root, dirs, files in os.walk(path, onerror=record_walk_error):
+        # Skip configured exclusions and record linked directories as coverage gaps.
+        kept_dirs = []
+        for dirname in dirs:
+            if dirname in EXCLUDE_DIRS:
+                continue
+            directory = Path(root) / dirname
+            if directory.is_symlink():
+                skipped_directories.append(str(directory.relative_to(path)))
+            else:
+                kept_dirs.append(dirname)
+        dirs[:] = kept_dirs
         
         for filename in files:
             file_path = Path(root) / filename
@@ -245,19 +240,21 @@ def scan_project(project_path: str) -> dict:
                 if not filename.startswith('.env') and filename not in ['Dockerfile', 'Makefile']:
                     continue
             
+            relative_name = str(file_path.relative_to(path))
+            if file_path.is_symlink():
+                files_skipped += 1
+                scan_errors.append({'file': relative_name, 'reason': 'symlink'})
+                continue
+
+            try:
+                content = file_path.read_text(encoding='utf-8')
+            except (OSError, UnicodeError) as error:
+                files_skipped += 1
+                scan_errors.append({'file': relative_name, 'reason': type(error).__name__})
+                continue
+
             files_scanned += 1
-            
-            # Pattern-based scanning
-            findings = scan_file(file_path)
-            all_findings.extend(findings)
-            
-            # Entropy-based scanning
-            entropy_findings = scan_high_entropy_strings(file_path)
-            # Deduplicate
-            existing_values = {f.matched_value for f in findings}
-            for ef in entropy_findings:
-                if ef.matched_value not in existing_values:
-                    all_findings.append(ef)
+            all_findings.extend(scan_text(file_path, content))
     
     # Sort by confidence and severity
     confidence_order = {'high': 0, 'medium': 1, 'low': 2}
@@ -269,8 +266,6 @@ def scan_project(project_path: str) -> dict:
             'file': f.file_path.replace(str(path) + '/', ''),
             'line': f.line_number,
             'type': f.secret_type,
-            'value': f.matched_value,
-            'context': f.line_content,
             'entropy': f.entropy,
             'confidence': f.confidence
         }
@@ -280,6 +275,9 @@ def scan_project(project_path: str) -> dict:
     return {
         'project_path': str(path),
         'files_scanned': files_scanned,
+        'files_skipped': files_skipped,
+        'skipped_directories': sorted(skipped_directories),
+        'scan_errors': scan_errors,
         'secrets_found': len(findings_dict),
         'by_confidence': {
             'high': len([f for f in findings_dict if f['confidence'] == 'high']),
