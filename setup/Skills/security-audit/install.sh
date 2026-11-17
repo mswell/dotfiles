@@ -1,181 +1,80 @@
-#!/bin/bash
-#
-# Security Audit Skill Installer
-# Installs the skill globally for Claude Code
-#
-# Usage: ./install.sh [--path /custom/path]
-#
+#!/usr/bin/env bash
+# Install this skill into a caller-selected skills directory.
 
-set -e
+set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+usage() {
+    printf 'Usage: %s --path SKILLS_DIR\n' "$0"
+}
 
-# Skill name
-SKILL_NAME="security-audit"
-
-# Default installation paths (in order of preference)
-DEFAULT_PATHS=(
-    "$HOME/.claude/skills"
-    "$HOME/.config/claude/skills"
-    "$HOME/.local/share/claude/skills"
-)
-
-# Parse arguments
-CUSTOM_PATH=""
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --path)
-            CUSTOM_PATH="$2"
-            shift 2
-            ;;
-        --help|-h)
-            echo "Security Audit Skill Installer"
-            echo ""
-            echo "Usage: $0 [OPTIONS]"
-            echo ""
-            echo "Options:"
-            echo "  --path PATH    Install to custom path"
-            echo "  --help, -h     Show this help message"
-            echo ""
-            echo "Default paths (checked in order):"
-            for p in "${DEFAULT_PATHS[@]}"; do
-                echo "  - $p"
-            done
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}Unknown option: $1${NC}"
-            exit 1
-            ;;
-    esac
-done
-
-echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     Security Audit Skill Installer             ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════╝${NC}"
-echo ""
-
-# Determine installation path
-INSTALL_PATH=""
-
-if [[ -n "$CUSTOM_PATH" ]]; then
-    INSTALL_PATH="$CUSTOM_PATH"
-    echo -e "${YELLOW}Using custom path: $INSTALL_PATH${NC}"
-else
-    # Check existing paths
-    for path in "${DEFAULT_PATHS[@]}"; do
-        if [[ -d "$path" ]]; then
-            INSTALL_PATH="$path"
-            echo -e "${GREEN}Found existing skills directory: $INSTALL_PATH${NC}"
-            break
-        fi
-    done
-    
-    # If no existing path, use first default
-    if [[ -z "$INSTALL_PATH" ]]; then
-        INSTALL_PATH="${DEFAULT_PATHS[0]}"
-        echo -e "${YELLOW}Creating new skills directory: $INSTALL_PATH${NC}"
-    fi
-fi
-
-# Get script directory (where the skill files are)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILL_SOURCE="$SCRIPT_DIR"
-
-# Check if we're running from the skill directory or from a parent
-if [[ ! -f "$SKILL_SOURCE/SKILL.md" ]]; then
-    # Maybe we're in a dist or parent directory
-    if [[ -f "$SCRIPT_DIR/$SKILL_NAME/SKILL.md" ]]; then
-        SKILL_SOURCE="$SCRIPT_DIR/$SKILL_NAME"
-    else
-        echo -e "${RED}Error: Cannot find SKILL.md${NC}"
-        echo "Make sure you're running this script from the skill directory"
-        exit 1
-    fi
-fi
-
-echo ""
-echo -e "${BLUE}Source:${NC} $SKILL_SOURCE"
-echo -e "${BLUE}Target:${NC} $INSTALL_PATH/$SKILL_NAME"
-echo ""
-
-# Create installation directory
-mkdir -p "$INSTALL_PATH"
-
-# Check if skill already exists
-if [[ -d "$INSTALL_PATH/$SKILL_NAME" ]]; then
-    echo -e "${YELLOW}Skill already exists. Updating...${NC}"
-    rm -rf "$INSTALL_PATH/$SKILL_NAME"
-fi
-
-# Copy skill files
-echo -e "${BLUE}Installing skill files...${NC}"
-
-cp -r "$SKILL_SOURCE" "$INSTALL_PATH/$SKILL_NAME"
-
-# Remove install script from installed location (not needed there)
-rm -f "$INSTALL_PATH/$SKILL_NAME/install.sh"
-
-# Make scripts executable
-if [[ -d "$INSTALL_PATH/$SKILL_NAME/scripts" ]]; then
-    chmod +x "$INSTALL_PATH/$SKILL_NAME/scripts/"*.py 2>/dev/null || true
-fi
-
-echo ""
-echo -e "${GREEN}✓ Skill installed successfully!${NC}"
-echo ""
-
-# Verify installation
-echo -e "${BLUE}Verifying installation...${NC}"
-
-REQUIRED_FILES=(
-    "SKILL.md"
-    "references/stride-methodology.md"
-    "references/vulnerability-patterns.md"
-    "references/cwe-mapping.md"
-    "scripts/detect_project.py"
-    "scripts/scan_secrets.py"
-)
-
-ALL_OK=true
-for file in "${REQUIRED_FILES[@]}"; do
-    if [[ -f "$INSTALL_PATH/$SKILL_NAME/$file" ]]; then
-        echo -e "  ${GREEN}✓${NC} $file"
-    else
-        echo -e "  ${RED}✗${NC} $file (missing)"
-        ALL_OK=false
-    fi
-done
-
-echo ""
-
-if $ALL_OK; then
-    echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║     Installation Complete!                     ║${NC}"
-    echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "Skill installed to: ${BLUE}$INSTALL_PATH/$SKILL_NAME${NC}"
-    echo ""
-    echo -e "${YELLOW}Usage in Claude Code:${NC}"
-    echo "  Ask Claude to perform a security audit on your project"
-    echo "  Example: 'Run a security audit on this codebase'"
-    echo ""
-    echo -e "${YELLOW}Manual script usage:${NC}"
-    echo "  python3 $INSTALL_PATH/$SKILL_NAME/scripts/detect_project.py /path/to/project"
-    echo "  python3 $INSTALL_PATH/$SKILL_NAME/scripts/scan_secrets.py /path/to/project"
-    echo "  python3 $INSTALL_PATH/$SKILL_NAME/scripts/analyze_dependencies.py /path/to/project"
-    echo ""
-else
-    echo -e "${RED}Installation may be incomplete. Please check the errors above.${NC}"
+fail() {
+    printf 'Error: %s\n' "$1" >&2
     exit 1
+}
+
+if [[ "${1:-}" == '--help' || "${1:-}" == '-h' ]]; then
+    usage
+    exit 0
 fi
 
-# Optional: Add to PATH hint
-echo -e "${BLUE}Tip:${NC} You can add the scripts to your PATH for easier access:"
-echo "  export PATH=\"\$PATH:$INSTALL_PATH/$SKILL_NAME/scripts\""
-echo ""
+if [[ $# -ne 2 || "$1" != '--path' || -z "$2" ]]; then
+    usage >&2
+    exit 2
+fi
+
+source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+[[ -f "$source_dir/SKILL.md" ]] || fail "SKILL.md is missing from $source_dir"
+
+mkdir -p "$2"
+install_parent="$(cd "$2" && pwd -P)"
+target="$install_parent/security-audit"
+
+case "$target/" in
+    "$source_dir/"|"$source_dir/"*)
+        fail 'Destination must be outside the source skill directory'
+        ;;
+esac
+
+if [[ -e "$target" && ! -d "$target" || -L "$target" ]]; then
+    fail "Destination is not a regular directory: $target"
+fi
+
+staging_dir="$(mktemp -d "$install_parent/.security-audit.stage.XXXXXX")"
+cleanup() {
+    if [[ -n "$staging_dir" && -d "$staging_dir" ]]; then
+        rm -rf -- "$staging_dir"
+    fi
+}
+trap cleanup EXIT
+
+cp -R "$source_dir/." "$staging_dir/"
+rm -rf -- "$staging_dir/tests"
+find "$staging_dir" -type d -name '__pycache__' -prune -exec rm -rf -- {} +
+for required in SKILL.md scripts/detect_project.py scripts/scan_secrets.py scripts/analyze_dependencies.py scripts/generate_report.py; do
+    [[ -f "$staging_dir/$required" ]] || fail "Incomplete staged skill: $required"
+done
+
+if [[ -d "$target" ]] && diff -qr "$staging_dir" "$target" >/dev/null 2>&1; then
+    printf 'Already installed: %s\n' "$target"
+    exit 0
+fi
+
+backup=''
+if [[ -d "$target" ]]; then
+    backup="$install_parent/security-audit.backup.$(date +%Y%m%d%H%M%S).$$"
+    [[ ! -e "$backup" ]] || fail "Backup path already exists: $backup"
+    mv "$target" "$backup"
+fi
+
+if ! mv "$staging_dir" "$target"; then
+    if [[ -n "$backup" ]]; then
+        mv "$backup" "$target" || fail "Install failed; restore the prior skill from $backup"
+    fi
+    fail 'Could not activate staged skill'
+fi
+staging_dir=''
+
+printf 'Installed: %s\n' "$target"
+if [[ -n "$backup" ]]; then
+    printf 'Previous installation preserved: %s\n' "$backup"
+fi

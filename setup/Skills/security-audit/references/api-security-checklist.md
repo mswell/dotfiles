@@ -1,5 +1,8 @@
 # API Security Checklist (OWASP API Top 10 2023)
 
+These examples are investigation leads.
+Confirm route reachability, effective authorization, and impact before reporting a vulnerability.
+
 ## API1:2023 - Broken Object Level Authorization (BOLA/IDOR)
 
 **Description:** APIs expose endpoints that handle object identifiers, creating a wide attack surface for Object Level Access Control issues.
@@ -31,11 +34,7 @@ app.get('/api/orders/:id', async (req, res) => {
 });
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "params\.\|params\[" --include="*.{js,ts,py,go}"
-grep -rn "findById\|findOne\|find_by_id" --include="*.{js,ts,py,rb}"
-```
+**Search leads:** Request parameters such as `params.` or `params[`, and resource lookups such as `findById`, `findOne`, or `find_by_id`.
 
 **Test cases:**
 1. Access another user's resource by changing ID
@@ -74,12 +73,7 @@ GET /api/login?username=admin&password=secret
 res.json({ user: { id: 1, email: 'x', password: hash } });
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "jwt\.decode\|algorithms.*\[" --include="*.{js,ts,py}"
-grep -rn "password.*response\|res.*password" --include="*.{js,ts,py}"
-grep -rn "rate.limit\|rateLimit\|throttle" --include="*.{js,ts,py,go}"
-```
+**Search leads:** `jwt.decode`, accepted signing algorithms, passwords in responses, and rate-limiting controls.
 
 ---
 
@@ -114,12 +108,7 @@ const updates = _.pick(req.body, allowedFields);
 User.update(id, updates);
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "\.create\(req\.body\)\|\.update.*req\.body" --include="*.{js,ts}"
-grep -rn "Object\.assign\|spread.*req" --include="*.{js,ts}"
-grep -rn "\*\*request\." --include="*.py"  # Python mass assignment
-```
+**Search leads:** `create(req.body)`, updates from `req.body`, `Object.assign` with request data, and Python `**request` expansion.
 
 ---
 
@@ -152,12 +141,7 @@ app.post('/upload', upload.single('file'));  // No limit
 const schema = new GraphQLSchema({ query });  // No complexity analysis
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "\.find\(\)\|\.find\({}\)" --include="*.{js,ts}"  # No filters
-grep -rn "limit\|pagination\|page" --include="*.{js,ts,py}"
-grep -rn "rate.limit\|throttle" --include="*.{js,ts,py,go}"
-```
+**Search leads:** Unbounded `find` queries, `limit`, `pagination`, `page`, and request throttling.
 
 ---
 
@@ -191,11 +175,7 @@ app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) =
 });
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "admin\|debug\|internal\|private" --include="*.{js,ts,py,go}"
-grep -rn "router\.\|app\.(get|post|put|delete)" --include="*.{js,ts}"
-```
+**Search leads:** `admin`, `debug`, `internal`, `private`, and route declarations such as `router.` or `app.get`.
 
 ---
 
@@ -273,11 +253,7 @@ file:///etc/passwd
 gopher://localhost:6379/_INFO
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "fetch\|axios\|request\|urllib\|http\.get" --include="*.{js,ts,py,go}"
-grep -rn "url.*req\|req.*url" --include="*.{js,ts,py}"
-```
+**Search leads:** `fetch`, `axios`, `request`, `urllib`, and `http.get` calls using a URL derived from request data.
 
 ---
 
@@ -313,12 +289,7 @@ app.use((err, req, res, next) => {
 });
 ```
 
-**Grep patterns:**
-```bash
-grep -rn "debug.*true\|DEBUG.*True" --include="*.{js,ts,py,yaml,yml}"
-grep -rn "cors\|origin.*\*" --include="*.{js,ts}"
-grep -rn "stack\|trace\|err\." --include="*.{js,ts,py}"
-```
+**Search leads:** Debug flags, CORS origin settings, and error responses containing `stack`, `trace`, or exception details.
 
 ---
 
@@ -335,8 +306,8 @@ grep -rn "stack\|trace\|err\." --include="*.{js,ts,py}"
 - Beta features enabled
 ```
 
-**Discovery techniques:**
-```bash
+**Endpoint leads:**
+```text
 # Common hidden endpoints
 /api/v1/
 /api/v2/

@@ -1,342 +1,361 @@
 #!/usr/bin/env python3
-"""
-Generate security audit reports from VULNERABILITIES.json.
-Usage: python3 generate_report.py /path/to/project [--format markdown|json|sarif]
+"""Render a validated security audit record as Markdown, JSON, or SARIF.
+
+Usage: python3 generate_report.py PROJECT [--input PATH] [--output-dir PATH]
+                                  [--format markdown|json|sarif]
 """
 
-import sys
+import argparse
 import json
+import os
+import posixpath
+import re
+import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
-from datetime import datetime
-from typing import Optional
+from urllib.parse import quote
 
 
-def load_vulnerabilities(project_path: Path) -> Optional[dict]:
-    """Load vulnerabilities from JSON file."""
-    vuln_file = project_path / '.security-audit' / 'VULNERABILITIES.json'
-    
-    if not vuln_file.exists():
-        return None
-    
-    try:
-        return json.loads(vuln_file.read_text())
-    except Exception as e:
-        print(f"Error loading vulnerabilities: {e}")
-        return None
+SEVERITIES = ("critical", "high", "medium", "low")
+VALIDATION_STATUSES = ("confirmed_by_code", "confirmed_by_test")
+FINDING_TYPES = ("code", "project")
+OUTPUT_NAMES = {
+    "markdown": "scan_report.md",
+    "json": "scan_results.json",
+    "sarif": "scan_results.sarif",
+}
 
 
-def severity_emoji(severity: str) -> str:
-    """Get emoji for severity level."""
+class InvalidAudit(ValueError):
+    """The input does not meet the report contract."""
+
+
+def require_object(value, field):
+    if not isinstance(value, dict):
+        raise InvalidAudit(f"{field} must be an object")
+    return value
+
+
+def require_text(value, field):
+    if not isinstance(value, str) or not value.strip():
+        raise InvalidAudit(f"{field} must be a nonempty string")
+    return value
+
+
+def require_strings(value, field):
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise InvalidAudit(f"{field} must be an array of strings")
+    return value
+
+
+def normalize_file_path(value, field):
+    """Keep report locations relative to the audited project on every host OS."""
+    path = require_text(value, field).replace("\\", "/")
+    if (
+        path.startswith("/")
+        or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", path)
+        or path.endswith("/")
+        or any(part == ".." for part in path.split("/"))
+        or any(ord(char) < 32 or ord(char) == 127 for char in path)
+    ):
+        raise InvalidAudit(f"{field} must be a project-relative file path")
+    normalized = posixpath.normpath(path)
+    if normalized == ".":
+        raise InvalidAudit(f"{field} must be a project-relative file path")
+    return normalized
+
+
+def validate_audit(data):
+    """Validate fields needed for accurate reporting without echoing their values."""
+    require_object(data, "audit")
+    scope = require_object(data.get("scope"), "scope")
+    require_text(scope.get("target"), "scope.target")
+    for field in ("included", "excluded"):
+        require_strings(scope.get(field), f"scope.{field}")
+    if "revision" in scope:
+        require_text(scope["revision"], "scope.revision")
+
+    coverage = require_object(data.get("coverage"), "coverage")
+    reviewed = coverage.get("files_reviewed")
+    if isinstance(reviewed, bool) or not isinstance(reviewed, int) or reviewed < 0:
+        raise InvalidAudit("coverage.files_reviewed must be a nonnegative integer")
+    for field in ("checks_completed", "skipped", "errors"):
+        require_strings(coverage.get(field), f"coverage.{field}")
+
+    require_strings(data.get("limitations"), "limitations")
+    vulnerabilities = data.get("vulnerabilities")
+    if not isinstance(vulnerabilities, list):
+        raise InvalidAudit("vulnerabilities must be an array")
+    ids = set()
+    for index, finding in enumerate(vulnerabilities):
+        prefix = f"vulnerabilities[{index}]"
+        require_object(finding, prefix)
+        for field in ("id", "title", "description", "evidence", "impact", "recommendation"):
+            require_text(finding.get(field), f"{prefix}.{field}")
+        if finding["id"] in ids:
+            raise InvalidAudit(f"{prefix}.id must be unique")
+        ids.add(finding["id"])
+        if finding.get("severity") not in SEVERITIES:
+            raise InvalidAudit(f"{prefix}.severity must be critical, high, medium, or low")
+        if finding.get("validation_status") not in VALIDATION_STATUSES:
+            raise InvalidAudit(f"{prefix}.validation_status must be confirmed_by_code or confirmed_by_test")
+        if finding.get("finding_type") not in FINDING_TYPES:
+            raise InvalidAudit(f"{prefix}.finding_type must be code or project")
+        has_file = "file_path" in finding
+        has_line = "line_number" in finding
+        if finding["finding_type"] == "code" and (not has_file or not has_line):
+            raise InvalidAudit(f"{prefix}.file_path and line_number are required for code findings")
+        if has_file != has_line:
+            raise InvalidAudit(f"{prefix}.file_path and line_number must appear together")
+        if has_file:
+            finding["file_path"] = normalize_file_path(finding["file_path"], f"{prefix}.file_path")
+            line = finding["line_number"]
+            if isinstance(line, bool) or not isinstance(line, int) or line < 1:
+                raise InvalidAudit(f"{prefix}.line_number must be a positive integer")
+        if "cwe_id" in finding:
+            require_text(finding["cwe_id"], f"{prefix}.cwe_id")
+        cvss_fields = ("cvss_score", "cvss_vector", "cvss_version")
+        if any(field in finding for field in cvss_fields) and not all(field in finding for field in cvss_fields):
+            raise InvalidAudit(f"{prefix}.cvss_score, cvss_vector, and cvss_version must appear together")
+        for field in ("cvss_vector", "cvss_version"):
+            if field in finding:
+                require_text(finding[field], f"{prefix}.{field}")
+        if "cvss_score" in finding:
+            score = finding["cvss_score"]
+            if isinstance(score, bool) or not isinstance(score, (int, float)) or not 0 <= score <= 10:
+                raise InvalidAudit(f"{prefix}.cvss_score must be between 0 and 10")
+        if "references" in finding:
+            require_strings(finding["references"], f"{prefix}.references")
+
+    hypotheses = data.get("hypotheses", [])
+    if not isinstance(hypotheses, list):
+        raise InvalidAudit("hypotheses must be an array")
+    for index, hypothesis in enumerate(hypotheses):
+        prefix = f"hypotheses[{index}]"
+        require_object(hypothesis, prefix)
+        require_text(hypothesis.get("title"), f"{prefix}.title")
+        require_text(hypothesis.get("evidence"), f"{prefix}.evidence")
+        if "next_step" in hypothesis:
+            require_text(hypothesis["next_step"], f"{prefix}.next_step")
+    return data
+
+
+def summary(data):
+    counts = {severity: 0 for severity in SEVERITIES}
+    for finding in data["vulnerabilities"]:
+        counts[finding["severity"]] += 1
     return {
-        'critical': '🔴',
-        'high': '🟠',
-        'medium': '🟡',
-        'low': '🟢',
-    }.get(severity.lower(), '⚪')
-
-
-def severity_badge(severity: str) -> str:
-    """Get text badge for severity."""
-    return f"**{severity.upper()}**"
-
-
-def generate_markdown_report(data: dict, project_name: str) -> str:
-    """Generate Markdown report."""
-    vulns = data.get('vulnerabilities', [])
-    
-    # Count by severity
-    counts = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
-    for v in vulns:
-        sev = v.get('severity', 'low').lower()
-        counts[sev] = counts.get(sev, 0) + 1
-    
-    total = len(vulns)
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Determine overall risk
-    if counts['critical'] > 0:
-        overall_risk = 'Critical'
-    elif counts['high'] > 0:
-        overall_risk = 'High'
-    elif counts['medium'] > 0:
-        overall_risk = 'Medium'
-    else:
-        overall_risk = 'Low'
-    
-    report = f"""# Security Audit Report
-
-**Project:** {project_name}  
-**Date:** {timestamp}  
-**Generated by:** Claude Security Audit Skill
-
----
-
-## Executive Summary
-
-### Overview
-Automated security audit performed using multi-phase analysis including architecture assessment, STRIDE threat modeling, and code review with evidence validation.
-
-### Key Findings
-
-| Severity | Count |
-|----------|-------|
-| {severity_emoji('critical')} Critical | {counts['critical']} |
-| {severity_emoji('high')} High | {counts['high']} |
-| {severity_emoji('medium')} Medium | {counts['medium']} |
-| {severity_emoji('low')} Low | {counts['low']} |
-| **Total** | **{total}** |
-
-### Overall Risk Level: **{overall_risk}**
-
----
-
-## Detailed Findings
-
-"""
-    
-    # Sort vulnerabilities by severity
-    severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
-    sorted_vulns = sorted(vulns, key=lambda x: severity_order.get(x.get('severity', 'low').lower(), 4))
-    
-    for i, vuln in enumerate(sorted_vulns, 1):
-        vuln_id = vuln.get('id', f'VULN-{i:03d}')
-        title = vuln.get('title', 'Untitled Vulnerability')
-        severity = vuln.get('severity', 'low')
-        cwe = vuln.get('cwe_id', 'N/A')
-        cvss = vuln.get('cvss_score', 'N/A')
-        file_path = vuln.get('file_path', 'Unknown')
-        line_num = vuln.get('line_number', '')
-        
-        location = f"`{file_path}"
-        if line_num:
-            location += f":{line_num}"
-        location += "`"
-        
-        report += f"""### {vuln_id}: {title}
-
-| Attribute | Value |
-|-----------|-------|
-| **Severity** | {severity_emoji(severity)} {severity.upper()} |
-| **CWE** | {cwe} |
-| **CVSS** | {cvss} |
-| **Location** | {location} |
-| **Exploitability** | {vuln.get('exploitability', 'Unknown')} |
-
-#### Description
-{vuln.get('description', 'No description provided.')}
-
-"""
-        
-        if vuln.get('code_snippet'):
-            report += f"""#### Vulnerable Code
-```
-{vuln.get('code_snippet')}
-```
-
-"""
-        
-        if vuln.get('evidence'):
-            report += f"""#### Evidence
-{vuln.get('evidence')}
-
-"""
-        
-        if vuln.get('attack_vector'):
-            report += f"""#### Attack Vector
-{vuln.get('attack_vector')}
-
-"""
-        
-        if vuln.get('recommendation'):
-            report += f"""#### Recommendation
-{vuln.get('recommendation')}
-
-"""
-        
-        if vuln.get('references'):
-            report += "#### References\n"
-            for ref in vuln.get('references', []):
-                report += f"- {ref}\n"
-            report += "\n"
-        
-        report += "---\n\n"
-    
-    # Recommendations summary
-    report += """## Recommendations Summary
-
-### Immediate Actions (Critical/High)
-"""
-    
-    critical_high = [v for v in sorted_vulns if v.get('severity', '').lower() in ['critical', 'high']]
-    for i, v in enumerate(critical_high, 1):
-        report += f"{i}. [ ] Fix {v.get('title', 'issue')} in `{v.get('file_path', 'unknown')}`\n"
-    
-    if not critical_high:
-        report += "No critical or high severity issues found.\n"
-    
-    report += """
-### Medium Priority
-"""
-    
-    medium = [v for v in sorted_vulns if v.get('severity', '').lower() == 'medium']
-    for i, v in enumerate(medium, 1):
-        report += f"{i}. [ ] Address {v.get('title', 'issue')}\n"
-    
-    if not medium:
-        report += "No medium severity issues found.\n"
-    
-    report += f"""
----
-
-## Appendix
-
-### Scan Statistics
-- **Files Analyzed:** {data.get('scan_stats', {}).get('files_analyzed', 'N/A')}
-- **Threats Modeled:** {data.get('scan_stats', {}).get('threats_validated', 'N/A')}
-- **Vulnerabilities Confirmed:** {total}
-
-### Methodology
-1. **Phase 1 - Assessment:** Architecture and data flow mapping
-2. **Phase 2 - Threat Modeling:** STRIDE-based threat identification
-3. **Phase 3 - Code Review:** Vulnerability validation with evidence
-4. **Phase 4 - Reporting:** Findings compilation and prioritization
-
----
-
-*Report generated by Claude Security Audit Skill*
-*Timestamp: {timestamp}*
-"""
-    
-    return report
-
-
-def generate_json_report(data: dict, project_name: str) -> str:
-    """Generate JSON report."""
-    vulns = data.get('vulnerabilities', [])
-    
-    counts = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
-    for v in vulns:
-        sev = v.get('severity', 'low').lower()
-        counts[sev] = counts.get(sev, 0) + 1
-    
-    report = {
-        'metadata': {
-            'project': project_name,
-            'generated': datetime.now().isoformat(),
-            'version': '1.0.0',
-            'generator': 'Claude Security Audit Skill'
-        },
-        'summary': {
-            'total_vulnerabilities': len(vulns),
-            'by_severity': counts,
-            'overall_risk': 'critical' if counts['critical'] > 0 else 
-                           'high' if counts['high'] > 0 else
-                           'medium' if counts['medium'] > 0 else 'low'
-        },
-        'vulnerabilities': vulns,
-        'scan_stats': data.get('scan_stats', {})
+        "confirmed_vulnerabilities": len(data["vulnerabilities"]),
+        "by_severity": counts,
+        "hypotheses": len(data.get("hypotheses", [])),
     }
-    
-    return json.dumps(report, indent=2)
 
 
-def generate_sarif_report(data: dict, project_name: str) -> str:
-    """Generate SARIF format report for CI/CD integration."""
-    vulns = data.get('vulnerabilities', [])
-    
-    severity_to_level = {
-        'critical': 'error',
-        'high': 'error',
-        'medium': 'warning',
-        'low': 'note'
-    }
-    
+def lines_for_list(items):
+    return [f"- {item}" for item in items] if items else ["- None recorded"]
+
+
+def generate_markdown_report(data, generated_at):
+    counts = summary(data)
+    scope = data["scope"]
+    coverage = data["coverage"]
+    parts = [
+        "# Security Audit Report",
+        "",
+        f"**Target:** {scope['target']}",
+        f"**Generated:** {generated_at}",
+        f"**Confirmed vulnerabilities:** {counts['confirmed_vulnerabilities']}",
+        f"**Hypotheses:** {counts['hypotheses']}",
+        "",
+        "## Scope",
+        "",
+    ]
+    if scope.get("revision"):
+        parts.append(f"**Revision:** {scope['revision']}")
+        parts.append("")
+    parts.extend(["### Included", "", *lines_for_list(scope["included"]), "", "### Excluded", "", *lines_for_list(scope["excluded"]), ""])
+    parts.extend([
+        "## Coverage",
+        "",
+        f"**Files reviewed:** {coverage['files_reviewed']}",
+        "",
+        "### Checks completed",
+        "",
+        *lines_for_list(coverage["checks_completed"]),
+        "",
+        "### Skipped",
+        "",
+        *lines_for_list(coverage["skipped"]),
+        "",
+        "### Scan errors",
+        "",
+        *lines_for_list(coverage["errors"]),
+        "",
+        "## Limitations",
+        "",
+        *lines_for_list(data["limitations"]),
+        "",
+        "## Confirmed findings",
+        "",
+    ])
+    if not data["vulnerabilities"]:
+        parts.extend(["No confirmed vulnerabilities were recorded in this review.", ""])
+    for finding in sorted(data["vulnerabilities"], key=lambda item: SEVERITIES.index(item["severity"])):
+        validation = "Confirmed by code" if finding["validation_status"] == "confirmed_by_code" else "Confirmed by test"
+        parts.extend([
+            f"### {finding['id']}: {finding['title']}",
+            "",
+            f"**Severity:** {finding['severity'].title()}",
+            f"**Validation:** {validation}",
+            f"**Finding type:** {finding['finding_type'].title()}",
+        ])
+        if "file_path" in finding:
+            parts.append(f"**Location:** `{finding['file_path']}:{finding['line_number']}`")
+        if finding.get("cwe_id"):
+            parts.append(f"**CWE:** {finding['cwe_id']}")
+        if "cvss_score" in finding:
+            parts.append(f"**CVSS {finding['cvss_version']}:** {finding['cvss_score']} ({finding['cvss_vector']})")
+        parts.extend([
+            "",
+            "#### Description",
+            "",
+            finding["description"],
+            "",
+            "#### Evidence",
+            "",
+            finding["evidence"],
+            "",
+            "#### Impact",
+            "",
+            finding["impact"],
+            "",
+            "#### Recommendation",
+            "",
+            finding["recommendation"],
+            "",
+        ])
+        if finding.get("references"):
+            parts.extend(["#### References", "", *lines_for_list(finding["references"]), ""])
+    parts.extend(["## Hypotheses requiring validation", ""])
+    hypotheses = data.get("hypotheses", [])
+    if not hypotheses:
+        parts.extend(["None recorded.", ""])
+    for hypothesis in hypotheses:
+        parts.extend([f"### {hypothesis['title']}", "", hypothesis["evidence"], ""])
+        if hypothesis.get("next_step"):
+            parts.extend([f"**Next step:** {hypothesis['next_step']}", ""])
+    return "\n".join(parts).rstrip() + "\n"
+
+
+def generate_json_report(data, generated_at):
+    return json.dumps(
+        {
+            "metadata": {"generated": generated_at, "generator": "Security Audit"},
+            "scope": data["scope"],
+            "coverage": data["coverage"],
+            "limitations": data["limitations"],
+            "summary": summary(data),
+            "vulnerabilities": data["vulnerabilities"],
+            "hypotheses": data.get("hypotheses", []),
+        },
+        indent=2,
+    ) + "\n"
+
+
+def generate_sarif_report(data, generated_at):
+    levels = {"critical": "error", "high": "error", "medium": "warning", "low": "note"}
     results = []
-    for vuln in vulns:
+    for finding in data["vulnerabilities"]:
         result = {
-            'ruleId': vuln.get('cwe_id', 'UNKNOWN'),
-            'level': severity_to_level.get(vuln.get('severity', 'low').lower(), 'note'),
-            'message': {
-                'text': f"{vuln.get('title', 'Vulnerability')}: {vuln.get('description', '')}"
+            "ruleId": finding.get("cwe_id", finding["id"]),
+            "level": levels[finding["severity"]],
+            "message": {"text": f"{finding['title']}: {finding['description']}"},
+            "properties": {
+                "validation_status": finding["validation_status"],
+                "finding_type": finding["finding_type"],
+                "evidence": finding["evidence"],
+                "impact": finding["impact"],
+                "recommendation": finding["recommendation"],
             },
-            'locations': [
-                {
-                    'physicalLocation': {
-                        'artifactLocation': {
-                            'uri': vuln.get('file_path', 'unknown')
-                        },
-                        'region': {
-                            'startLine': vuln.get('line_number', 1)
-                        }
-                    }
-                }
-            ]
         }
-        results.append(result)
-    
-    sarif = {
-        '$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
-        'version': '2.1.0',
-        'runs': [
-            {
-                'tool': {
-                    'driver': {
-                        'name': 'Claude Security Audit',
-                        'version': '1.0.0',
-                        'informationUri': 'https://claude.ai'
-                    }
-                },
-                'results': results
+        if "cvss_score" in finding:
+            result["properties"]["cvss"] = {
+                "version": finding["cvss_version"],
+                "score": finding["cvss_score"],
+                "vector": finding["cvss_vector"],
             }
-        ]
+        if "file_path" in finding:
+            result["locations"] = [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": quote(finding["file_path"], safe="/-._~")},
+                    "region": {"startLine": finding["line_number"]},
+                }
+            }]
+        results.append(result)
+    sarif = {
+        "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {"driver": {"name": "Security Audit"}},
+            "properties": {
+                "generated_at": generated_at,
+                "scope": data["scope"],
+                "coverage": data["coverage"],
+                "limitations": data["limitations"],
+                "hypotheses": data.get("hypotheses", []),
+            },
+            "results": results,
+        }],
     }
-    
-    return json.dumps(sarif, indent=2)
+    return json.dumps(sarif, indent=2) + "\n"
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 generate_report.py /path/to/project [--format markdown|json|sarif]")
-        sys.exit(1)
-    
-    project_path = Path(sys.argv[1]).resolve()
-    
-    # Parse format argument
-    output_format = 'markdown'
-    if '--format' in sys.argv:
-        idx = sys.argv.index('--format')
-        if idx + 1 < len(sys.argv):
-            output_format = sys.argv[idx + 1].lower()
-    
-    # Load vulnerabilities
-    data = load_vulnerabilities(project_path)
-    
-    if not data:
-        print(f"Error: No VULNERABILITIES.json found in {project_path}/.security-audit/")
-        print("Run the security audit first to generate vulnerability data.")
-        sys.exit(1)
-    
-    project_name = project_path.name
-    
-    # Generate report
-    if output_format == 'json':
-        report = generate_json_report(data, project_name)
-        output_file = project_path / '.security-audit' / 'scan_results.json'
-    elif output_format == 'sarif':
-        report = generate_sarif_report(data, project_name)
-        output_file = project_path / '.security-audit' / 'scan_results.sarif'
-    else:
-        report = generate_markdown_report(data, project_name)
-        output_file = project_path / '.security-audit' / 'scan_report.md'
-    
-    # Write report
-    output_file.write_text(report)
-    print(f"Report generated: {output_file}")
-    
-    # Also print to stdout
-    print("\n" + "="*60)
-    print(report)
+def write_private(path, content):
+    """Atomically replace a report without following an existing output symlink."""
+    fd, temp_path = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            fd = -1
+            handle.write(content)
+        os.replace(temp_path, path)
+    finally:
+        if fd >= 0:
+            os.close(fd)
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 
-if __name__ == '__main__':
-    main()
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("project", type=Path, help="project being audited")
+    parser.add_argument("--input", type=Path, help="validated audit JSON input")
+    parser.add_argument("--output-dir", type=Path, help="directory for generated reports")
+    parser.add_argument("--format", choices=OUTPUT_NAMES, default="markdown")
+    args = parser.parse_args(argv)
+    project = args.project.resolve()
+    if not project.is_dir():
+        parser.error("project must be an existing directory")
+    input_file = args.input or project / ".security-audit" / "VULNERABILITIES.json"
+    output_dir = args.output_dir or project / ".security-audit"
+    try:
+        data = validate_audit(json.loads(input_file.read_text(encoding="utf-8")))
+        generated_at = datetime.now(timezone.utc).isoformat()
+        if args.format == "json":
+            report = generate_json_report(data, generated_at)
+        elif args.format == "sarif":
+            report = generate_sarif_report(data, generated_at)
+        else:
+            report = generate_markdown_report(data, generated_at)
+        output_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        output_file = output_dir / OUTPUT_NAMES[args.format]
+        write_private(output_file, report)
+    except (OSError, UnicodeError, json.JSONDecodeError, InvalidAudit) as exc:
+        print(f"Report generation failed: {exc}", file=sys.stderr)
+        return 1
+    print(output_file)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
