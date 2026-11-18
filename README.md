@@ -18,6 +18,8 @@ Automated setup for a minimal, consistent Linux environment with:
 
 ## Install
 
+The [team workflow for Codex and pi](docs/agents/team-skills.md) is available directly from this checkout.
+
 ```bash
 git clone https://github.com/mswell/dotfiles.git
 cd dotfiles

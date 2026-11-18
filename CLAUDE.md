@@ -10,6 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Agent skills
 
+The Codex and pi team workflow is documented in [docs/agents/team-skills.md](docs/agents/team-skills.md).
+When an imported skill calls another skill by name, load that skill's project-local `SKILL.md` using the host's available mechanism.
+Use the repository's `CONTEXT.md` for the domain glossary referenced by those skills.
+
 ### Issue tracker
 
 Issues are tracked in GitHub Issues for `mswell/dotfiles`, using the `gh` CLI. See `docs/agents/issue-tracker.md`.
