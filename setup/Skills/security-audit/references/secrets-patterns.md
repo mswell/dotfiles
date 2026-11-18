@@ -1,5 +1,8 @@
 # Secrets Detection Patterns
 
+These patterns identify candidates for manual triage and can match examples or inactive values.
+Record type and location without copying a matched value into reports or conversation output.
+
 ## Cloud Provider Credentials
 
 ### AWS
@@ -18,10 +21,7 @@ aws_secret_access_key\s*=\s*['"]?[A-Za-z0-9/+=]{40}['"]?
 aws_session_token\s*=\s*['"]?[A-Za-z0-9/+=]{100,}['"]?
 ```
 
-**Grep command:**
-```bash
-grep -rEn "(AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}" --include="*.{js,ts,py,go,java,env,yaml,yml,json,tf}"
-```
+Search source and configuration files with the patterns above.
 
 ### Google Cloud Platform (GCP)
 ```regex
@@ -38,11 +38,7 @@ AIza[0-9A-Za-z\-_]{35}
 [a-zA-Z0-9_-]{24}
 ```
 
-**Grep command:**
-```bash
-grep -rEn "AIza[0-9A-Za-z_-]{35}" --include="*.{js,ts,py,go,java,env,yaml,yml,json}"
-grep -rEn "service_account" --include="*.json"
-```
+Search source and JSON configuration files with the patterns above.
 
 ### Azure
 ```regex
@@ -59,10 +55,7 @@ DefaultEndpointsProtocol=https;AccountName=[^;]+;AccountKey=[^;]+
 sv=[0-9]{4}-[0-9]{2}-[0-9]{2}&s[a-z]=[a-z]+&sig=[A-Za-z0-9%]+
 ```
 
-**Grep command:**
-```bash
-grep -rEn "AccountKey=[A-Za-z0-9+/=]{88}" --include="*.{js,ts,py,go,java,env,yaml,yml,json,tf}"
-```
+Search source and configuration files with the patterns above.
 
 ## API Keys & Tokens
 
@@ -275,27 +268,13 @@ package-lock\.json|yarn\.lock|Gemfile\.lock|poetry\.lock
 
 ### Context Validation
 Before flagging, verify:
-1. Not in a comment
-2. Not in documentation
-3. Not a test/example value
-4. Looks like actual credential (length, charset)
-5. High entropy if appears random
+1. Whether the value is a placeholder, fixture, or plausible credential.
+2. Whether its format and entropy support the classification.
+3. Whether the location is reachable or distributed, including comments, documentation, and tests.
+4. Whether any claimed access or activity is supported by authorized evidence.
 
-## Combined Grep Command
+## Combined scan
 
-```bash
-# Comprehensive secrets scan
-grep -rEn \
-  "(AKIA|AGPA|AIDA)[A-Z0-9]{16}|\
-AIza[0-9A-Za-z_-]{35}|\
-ghp_[A-Za-z0-9]{36}|\
-sk_live_[0-9a-zA-Z]{24}|\
-xox[bprs]-[0-9]{11}|\
------BEGIN.*PRIVATE KEY-----|\
-eyJ[A-Za-z0-9_-]*\.eyJ|\
-[pP]assword\s*[=:]\s*['\"][^'\"]{8,}['\"]|\
-mongodb(\+srv)?://[^:]+:[^@]+@|\
-postgres://[^:]+:[^@]+@" \
-  --include="*.{js,ts,py,go,java,php,rb,env,yaml,yml,json,xml,tf,sh}" \
-  --exclude-dir={node_modules,vendor,venv,.git,dist,build}
-```
+Invoke `$SKILL_DIR/scripts/scan_secrets.py` with the target path for a local baseline.
+It reports candidate type and location without copying matched values.
+Review its skipped files and errors before claiming coverage.

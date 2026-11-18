@@ -1,5 +1,8 @@
 # STRIDE Threat Modeling Methodology
 
+Use these categories to form testable hypotheses for the audited architecture.
+A category or search match alone is not a confirmed vulnerability.
+
 ## Overview
 
 STRIDE is a threat classification model for identifying security threats. Apply each category to every component and data flow.
@@ -24,11 +27,7 @@ STRIDE is a threat classification model for identifying security threats. Apply 
 | Session fixation | CWE-384 | Session not regenerated after login |
 | Credential stuffing | CWE-307 | No rate limiting on login |
 
-**Search patterns:**
-```bash
-grep -rn "verify\|authenticate\|login\|session" --include="*.{js,ts,py,go}"
-grep -rn "jwt\|token\|bearer" --include="*.{js,ts,py,go}"
-```
+**Search leads:** `verify`, `authenticate`, `login`, `session`, `jwt`, `token`, and `bearer`.
 
 ### T - Tampering (Integrity)
 **Question:** Can an attacker modify data they shouldn't?
@@ -49,12 +48,7 @@ grep -rn "jwt\|token\|bearer" --include="*.{js,ts,py,go}"
 | XML injection | CWE-91 | Unvalidated XML parsing |
 | Prototype pollution | CWE-1321 | `__proto__`, `constructor.prototype` |
 
-**Search patterns:**
-```bash
-grep -rn "SELECT.*\+\|INSERT.*\+\|UPDATE.*\+" --include="*.{js,ts,py}"
-grep -rn "\.assign\|spread\|merge" --include="*.{js,ts}"
-grep -rn "open\|read\|write" --include="*.py"
-```
+**Search leads:** SQL text built by concatenation or interpolation; object assignment or merge of request data; file paths assembled from user input.
 
 ### R - Repudiation (Audit)
 **Question:** Can an attacker deny performing an action?
@@ -73,11 +67,7 @@ grep -rn "open\|read\|write" --include="*.py"
 | Missing timestamps | CWE-223 | Events without timestamps |
 | No user attribution | CWE-778 | Actions without user ID |
 
-**Search patterns:**
-```bash
-grep -rn "log\.\|logger\.\|console\." --include="*.{js,ts,py,go}"
-grep -rn "audit\|track\|record" --include="*.{js,ts,py,go}"
-```
+**Search leads:** `log`, `logger`, `console`, `audit`, `track`, and `record` near security-sensitive actions.
 
 ### I - Information Disclosure (Confidentiality)
 **Question:** Can an attacker access data they shouldn't?
@@ -98,11 +88,7 @@ grep -rn "audit\|track\|record" --include="*.{js,ts,py,go}"
 | Hardcoded secrets | CWE-798 | API keys, passwords in code |
 | GraphQL introspection | CWE-200 | Introspection enabled in prod |
 
-**Search patterns:**
-```bash
-grep -rn "stack\|trace\|debug\|dump" --include="*.{js,ts,py,go}"
-grep -rn "password\|secret\|api.key\|token" --include="*.{js,ts,py,env,yaml}"
-```
+**Search leads:** `stack`, `trace`, `debug`, `dump`, `password`, `secret`, `apiKey`, and `token` in responses or logs.
 
 ### D - Denial of Service (Availability)
 **Question:** Can an attacker disrupt service availability?
@@ -123,12 +109,7 @@ grep -rn "password\|secret\|api.key\|token" --include="*.{js,ts,py,env,yaml}"
 | Missing rate limiting | CWE-770 | No throttling on endpoints |
 | Uncontrolled recursion | CWE-674 | Recursive functions with user input |
 
-**Search patterns:**
-```bash
-grep -rn "while\|for\|recursion" --include="*.{js,ts,py,go}"
-grep -rn "upload\|file\|stream" --include="*.{js,ts,py,go}"
-grep -rn "rate.limit\|throttle" --include="*.{js,ts,py,go}"
-```
+**Search leads:** Loops or recursion over request data, upload and stream handlers, pagination limits, and throttling controls.
 
 ### E - Elevation of Privilege (Authorization)
 **Question:** Can an attacker gain unauthorized permissions?
@@ -148,12 +129,7 @@ grep -rn "rate.limit\|throttle" --include="*.{js,ts,py,go}"
 | Insecure defaults | CWE-276 | Default admin/root permissions |
 | JWT claim manipulation | CWE-287 | Role/permission in JWT without server validation |
 
-**Search patterns:**
-```bash
-grep -rn "role\|admin\|permission\|isAdmin" --include="*.{js,ts,py,go}"
-grep -rn "user.id\|userId\|user_id" --include="*.{js,ts,py,go}"
-grep -rn "authorize\|can\|allow\|deny" --include="*.{js,ts,py,go}"
-```
+**Search leads:** `role`, `admin`, `permission`, `isAdmin`, `userId`, `user_id`, `authorize`, `allow`, and `deny`.
 
 ## STRIDE Analysis Template
 
@@ -203,22 +179,8 @@ For each component/flow, document:
 }
 ```
 
-## Severity Rating Guide
+## Interpreting hypotheses
 
-| Severity | CVSS | Criteria |
-|----------|------|----------|
-| Critical | 9.0-10.0 | Remote code execution, auth bypass, data breach |
-| High | 7.0-8.9 | Privilege escalation, significant data access |
-| Medium | 4.0-6.9 | Limited data exposure, requires user interaction |
-| Low | 0.1-3.9 | Information disclosure, minor impact |
-
-## Bug Bounty Relevance
-
-High-value targets for bounty programs:
-1. **Authentication bypass** - Almost always critical
-2. **IDOR** - Very common, often high severity
-3. **SSRF** - Can lead to internal network access
-4. **SQL injection** - Classic, always valuable
-5. **Privilege escalation** - Horizontal and vertical
-6. **Business logic flaws** - Often missed by automated tools
-7. **Race conditions** - Hard to find, valuable
+These categories and search patterns generate leads for review.
+Confirm the reachable path, attacker prerequisites, effective controls, and impact before adding a vulnerability to the report.
+Assign severity from the validated case rather than the STRIDE category.
